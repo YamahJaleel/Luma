@@ -106,8 +106,8 @@ const HomeScreen = () => {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Community Feed</Text>
-        <Text style={styles.headerSubtitle}>Stay informed, stay safe</Text>
+        <Text style={styles.headerTitle}>Luma</Text>
+        <Text style={styles.headerSubtitle}>Safer dating through community</Text>
       </View>
 
       {/* Community Posts */}

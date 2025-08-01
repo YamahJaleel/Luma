@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Dimensions,
   ScrollView,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +15,10 @@ const { width, height } = Dimensions.get('window');
 
 const OnboardingScreen = ({ onComplete }) => {
   const [currentPage, setCurrentPage] = useState(0);
+  const [showLearnMore, setShowLearnMore] = useState(false);
+  const [hasSeenLearnMore, setHasSeenLearnMore] = useState(false);
+  const scrollViewRef = useRef(null);
+  const learnMoreAnimation = useRef(new Animated.Value(0)).current;
 
   const onboardingData = [
     {
@@ -44,19 +49,73 @@ const OnboardingScreen = ({ onComplete }) => {
       icon: 'people',
       color: '#FAF7F3',
     },
+    {
+      title: 'Protected by Encryption',
+      subtitle: 'Your data is secure',
+      description: 'All your information is encrypted and protected. Your privacy and security are our highest priorities.',
+      icon: 'lock-closed',
+      color: '#E8D5C4',
+      hasLearnMore: true,
+    },
   ];
 
+  const animatedValues = useRef(
+    onboardingData.map(() => new Animated.Value(0))
+  ).current;
+
+  // Initialize first dot as active
+  React.useEffect(() => {
+    animatePagination(0);
+  }, []);
+
+  const animatePagination = (newPage) => {
+    // Reset all dots
+    animatedValues.forEach((value, index) => {
+      Animated.timing(value, {
+        toValue: index === newPage ? 1 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    });
+  };
+
+  const handleLearnMore = () => {
+    setShowLearnMore(true);
+    setHasSeenLearnMore(true);
+    Animated.timing(learnMoreAnimation, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const closeLearnMore = () => {
+    Animated.timing(learnMoreAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => {
+      setShowLearnMore(false);
+    });
+  };
+
   const nextPage = () => {
-    if (currentPage < onboardingData.length - 1) {
-      setCurrentPage(currentPage + 1);
+    if (onboardingData[currentPage]?.hasLearnMore && !hasSeenLearnMore) {
+      handleLearnMore();
+    } else if (currentPage < onboardingData.length - 1) {
+      const nextPageIndex = currentPage + 1;
+      setCurrentPage(nextPageIndex);
+      animatePagination(nextPageIndex);
+      scrollViewRef.current?.scrollTo({
+        x: nextPageIndex * width,
+        animated: true,
+      });
     } else {
       onComplete();
     }
   };
 
-  const skipOnboarding = () => {
-    onComplete();
-  };
+
 
   return (
     <View style={styles.container}>
@@ -65,12 +124,14 @@ const OnboardingScreen = ({ onComplete }) => {
         style={styles.gradient}
       >
         <ScrollView
+          ref={scrollViewRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={(event) => {
             const page = Math.round(event.nativeEvent.contentOffset.x / width);
             setCurrentPage(page);
+            animatePagination(page);
           }}
           style={styles.scrollView}
         >
@@ -92,24 +153,30 @@ const OnboardingScreen = ({ onComplete }) => {
         <View style={styles.footer}>
           <View style={styles.pagination}>
             {onboardingData.map((_, index) => (
-              <View
+              <Animated.View
                 key={index}
                 style={[
                   styles.paginationDot,
-                  index === currentPage && styles.paginationDotActive,
+                  {
+                    width: animatedValues[index].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [8, 24],
+                    }),
+                    backgroundColor: animatedValues[index].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['#E2E8F0', '#D9A299'],
+                    }),
+                  },
                 ]}
               />
             ))}
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={skipOnboarding} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
-            
             <TouchableOpacity onPress={nextPage} style={styles.nextButton}>
               <Text style={styles.nextText}>
-                {currentPage === onboardingData.length - 1 ? 'Get Started' : 'Next'}
+                {onboardingData[currentPage]?.hasLearnMore && !hasSeenLearnMore ? 'Learn More' : 
+                 currentPage === onboardingData.length - 1 ? 'Get Started' : 'Next'}
               </Text>
               <Ionicons 
                 name="arrow-forward" 
@@ -121,6 +188,57 @@ const OnboardingScreen = ({ onComplete }) => {
           </View>
         </View>
       </LinearGradient>
+
+      {/* Learn More Overlay */}
+      {showLearnMore && (
+        <Animated.View
+          style={[
+            styles.learnMoreOverlay,
+            {
+              opacity: learnMoreAnimation,
+              transform: [
+                {
+                  scale: learnMoreAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <View style={styles.learnMoreContent}>
+            <View style={styles.learnMoreHeader}>
+              <Text style={styles.learnMoreTitle}>Protected by Encryption</Text>
+              <TouchableOpacity onPress={closeLearnMore} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color="#2D3748" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.learnMoreScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.learnMoreSectionTitle}>End-to-End Encryption</Text>
+              <Text style={styles.learnMoreText}>
+                Your data is protected using multiple layers of end-to-end encryption. Whether it's messages, posts, or personal details, your information stays private and secure throughout its entire journey.
+              </Text>
+              
+              <Text style={styles.learnMoreSectionTitle}>Privacy First</Text>
+              <Text style={styles.learnMoreText}>
+                We do not store your personal information in readable formats. Your identity remains private while still enabling meaningful and safe interactions within the community.
+              </Text>
+              
+              <Text style={styles.learnMoreSectionTitle}>Secure Communication</Text>
+              <Text style={styles.learnMoreText}>
+                All connections between your device and our servers are encrypted using secure communication protocols, preventing interception or tampering during data transmission.
+              </Text>
+              
+              <Text style={styles.learnMoreSectionTitle}>Data Protection</Text>
+              <Text style={styles.learnMoreText}>
+                We adhere to strict data protection principles and never share your information with third parties. Your trust and privacy are at the core of our platform.
+              </Text>
+            </ScrollView>
+          </View>
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -202,17 +320,8 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  skipButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  skipText: {
-    color: '#A0AEC0',
-    fontSize: 16,
-    fontWeight: '500',
   },
   nextButton: {
     backgroundColor: '#D9A299',
@@ -237,6 +346,64 @@ const styles = StyleSheet.create({
   },
   arrowIcon: {
     marginLeft: 8,
+  },
+  learnMoreOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  learnMoreContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    margin: 20,
+    maxHeight: height * 0.8,
+    width: width - 40,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  learnMoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  learnMoreTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2D3748',
+  },
+  closeButton: {
+    padding: 5,
+  },
+  learnMoreScroll: {
+    padding: 20,
+  },
+  learnMoreSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#D9A299',
+    marginBottom: 10,
+    marginTop: 20,
+  },
+  learnMoreText: {
+    fontSize: 16,
+    color: '#718096',
+    lineHeight: 24,
+    marginBottom: 15,
   },
 });
 
