@@ -8,12 +8,10 @@ const AnimatedTabBar = () => {
   const navigation = useNavigation();
   const { currentTab, setCurrentTab } = useTabContext();
 
-  const theme = {
-    colors: {
-      primary: '#D9A299',
-      placeholder: '#A0AEC0',
-      surface: '#FFFFFF',
-    },
+  const colors = {
+    primary: '#3E5F44', // Deep forest green
+    placeholder: '#A0AEC0',
+    surface: '#FFFFFF',
   };
 
   const getIconName = (routeName, focused) => {
@@ -64,7 +62,7 @@ const AnimatedTabBar = () => {
               <Ionicons
                 name={iconName}
                 size={24}
-                color={isFocused ? theme.colors.primary : theme.colors.placeholder}
+                color={isFocused ? colors.primary : colors.placeholder}
               />
             </View>
           </TouchableOpacity>

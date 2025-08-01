@@ -116,12 +116,15 @@ const ProfileScreen = () => {
           key={item.id}
           title={item.title}
           description={item.subtitle}
-          left={(props) => <List.Icon {...props} icon={item.icon} color="#D4A574" />}
+          left={(props) => <List.Icon {...props} icon={item.icon} color="#3E5F44" />} // Deep forest green
+          titleStyle={styles.menuItemTitle}
+          descriptionStyle={styles.menuItemDescription}
           right={() => (
             <Switch
               value={item.value}
               onValueChange={item.onValueChange}
-              color="#D4A574"
+              trackColor={{ false: '#E2E8F0', true: '#3E5F44' }} // Deep forest green
+              thumbColor={item.value ? '#FFFFFF' : '#FFFFFF'}
             />
           )}
           style={styles.menuItem}
@@ -134,7 +137,9 @@ const ProfileScreen = () => {
         key={item.id}
         title={item.title}
         description={item.subtitle}
-        left={(props) => <List.Icon {...props} icon={item.icon} color="#D4A574" />}
+        left={(props) => <List.Icon {...props} icon={item.icon} color="#3E5F44" />} // Deep forest green
+        titleStyle={styles.menuItemTitle}
+        descriptionStyle={styles.menuItemDescription}
         right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
         style={styles.menuItem}
         onPress={() => Alert.alert('Feature', `${item.title} coming soon!`)}
@@ -160,7 +165,7 @@ const ProfileScreen = () => {
               {isVerified ? (
                 <View style={styles.verifiedBadge}>
                   <Ionicons name="checkmark-circle" size={16} color="#68D391" />
-                  <Text style={styles.verifiedText}>Verified</Text>
+                  <Text style={styles.verificationText}>Verified Profile</Text>
                 </View>
               ) : (
                 <TouchableOpacity style={styles.verifyButton} onPress={handleVerification}>
@@ -228,16 +233,16 @@ const ProfileScreen = () => {
           <Text style={styles.sectionTitle}>Safety Features</Text>
           <View style={styles.safetyFeatures}>
             <View style={styles.safetyFeature}>
-              <Ionicons name="shield-checkmark" size={20} color="#68D391" />
-              <Text style={styles.safetyFeatureText}>Anonymous Posting</Text>
+              <Ionicons name="shield-checkmark" size={20} color="#F1B8B2" /> {/* Soft coral */}
+              <Text style={styles.safetyFeatureText}>Block & Report</Text>
             </View>
             <View style={styles.safetyFeature}>
-              <Ionicons name="eye-off" size={20} color="#68D391" />
-              <Text style={styles.safetyFeatureText}>Privacy Protected</Text>
+              <Ionicons name="eye-off" size={20} color="#F1B8B2" /> {/* Soft coral */}
+              <Text style={styles.safetyFeatureText}>Privacy Controls</Text>
             </View>
             <View style={styles.safetyFeature}>
-              <Ionicons name="lock-closed" size={20} color="#68D391" />
-              <Text style={styles.safetyFeatureText}>Data Encrypted</Text>
+              <Ionicons name="lock-closed" size={20} color="#F1B8B2" /> {/* Soft coral */}
+              <Text style={styles.safetyFeatureText}>Secure Messaging</Text>
             </View>
           </View>
         </Card.Content>
@@ -464,6 +469,73 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderColor: '#FC8181',
     borderRadius: 8,
+  },
+  primaryButton: {
+    backgroundColor: '#3E5F44', // Deep forest green
+    marginBottom: 12,
+    borderRadius: 8,
+  },
+  secondaryButton: {
+    borderColor: '#FC8181',
+    borderRadius: 8,
+  },
+  verificationText: {
+    color: '#68D391',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  safetyText: {
+    color: '#3E5F44', // Deep forest green
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  sectionTitle: {
+    color: '#718096',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  verificationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  safetyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  menuItemTitle: {
+    color: '#2D3748',
+    fontSize: 16,
+  },
+  menuItemDescription: {
+    color: '#718096',
+    fontSize: 14,
+  },
+  verificationSection: {
+    backgroundColor: '#E2E8F0',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  warningSection: {
+    backgroundColor: '#FEF5E7',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderColor: '#F6AD55',
+    borderWidth: 1,
+  },
+  warningTitle: {
+    color: '#C05621',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  warningText: {
+    color: '#DD6B20',
+    fontSize: 14,
   },
 });
 

@@ -10,7 +10,7 @@ import {
 import { Card, Chip, Avatar, Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
 
   // Mock data for community posts
@@ -91,7 +91,7 @@ const HomeScreen = () => {
       case 'positive':
         return '#68D391';
       case 'experience':
-        return '#D9A299';
+        return '#3E5F44'; // Deep forest green
       default:
         return '#A0AEC0';
     }
@@ -106,8 +106,18 @@ const HomeScreen = () => {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Luma</Text>
-        <Text style={styles.headerSubtitle}>Safer dating through community</Text>
+        <View style={styles.headerContent}>
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle}>Luma</Text>
+            <Text style={styles.headerSubtitle}>Designed for Your Peace</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.dmButton}
+            onPress={() => navigation.navigate('Messages')}
+          >
+            <Ionicons name="chatbubble" size={24} color="#3E5F44" /> {/* Deep forest green */}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Community Posts */}
@@ -149,7 +159,7 @@ const HomeScreen = () => {
 
               <View style={styles.postActions}>
                 <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="arrow-up" size={20} color="#D9A299" />
+                  <Ionicons name="arrow-up" size={20} color="#3E5F44" /> {/* Deep forest green */}
                   <Text style={styles.actionText}>{post.upvotes}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.actionButton}>
@@ -177,6 +187,14 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
   },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerText: {
+    flex: 1,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -186,6 +204,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#718096',
     marginTop: 4,
+  },
+  dmButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   section: {
     marginBottom: 20,
@@ -204,7 +238,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: '#D9A299',
+    color: '#3E5F44', // Deep forest green
     fontWeight: '500',
   },
   postCard: {

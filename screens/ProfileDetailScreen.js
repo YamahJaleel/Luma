@@ -187,8 +187,8 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           </TouchableOpacity>
           
           <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
-            <Ionicons name="flag" size={20} color="#D9A299" />
-            <Text style={[styles.actionButtonText, { color: '#D9A299' }]}>Report</Text>
+            <Ionicons name="flag" size={20} color="#E6D7C3" />
+            <Text style={[styles.actionButtonText, { color: '#E6D7C3' }]}>Report</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -364,15 +364,11 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#D9A299',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    flex: 1,
-    marginHorizontal: 5,
+    backgroundColor: '#3E5F44', // Deep forest green
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginHorizontal: 8,
   },
   secondaryButton: {
     backgroundColor: 'transparent',
@@ -380,10 +376,25 @@ const styles = StyleSheet.create({
     borderColor: '#D9A299',
   },
   actionButtonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#FFFFFF',
     fontWeight: '600',
-    marginLeft: 8,
+  },
+  flagContainer: {
+    backgroundColor: '#F7FAFC',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  reportButton: {
+    backgroundColor: '#3E5F44', // Deep forest green
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  reportButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 });
 

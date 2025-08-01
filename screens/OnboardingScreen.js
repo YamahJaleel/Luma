@@ -26,35 +26,35 @@ const OnboardingScreen = ({ onComplete }) => {
       subtitle: 'Your safety companion in the dating world',
       description: 'Connect with a community that prioritizes your safety and well-being while dating.',
       icon: 'shield-checkmark',
-      color: '#D9A299',
+      color: '#3E5F44', // Deep forest green
     },
     {
       title: 'Anonymous Sharing',
       subtitle: 'Share experiences safely',
       description: 'Post about your dating experiences anonymously. Your privacy is our top priority.',
       icon: 'eye-off',
-      color: '#DCC5B2',
+      color: '#3E5F44', // Deep forest green
     },
     {
       title: 'Search & Verify',
       subtitle: 'Check before you connect',
       description: 'Search names to see if others have shared experiences or red flags about someone.',
       icon: 'search',
-      color: '#F0E4D3',
+      color: '#3E5F44', // Deep forest green
     },
     {
       title: 'Community Support',
       subtitle: 'You\'re not alone',
       description: 'Get advice, share stories, and support each other in a safe, moderated environment.',
       icon: 'people',
-      color: '#FAF7F3',
+      color: '#3E5F44', // Deep forest green
     },
     {
       title: 'Protected by Encryption',
       subtitle: 'Your data is secure',
       description: 'All your information is encrypted and protected. Your privacy and security are our highest priorities.',
       icon: 'lock-closed',
-      color: '#E8D5C4',
+      color: '#3E5F44', // Deep forest green
       hasLearnMore: true,
     },
   ];
@@ -164,7 +164,7 @@ const OnboardingScreen = ({ onComplete }) => {
                     }),
                     backgroundColor: animatedValues[index].interpolate({
                       inputRange: [0, 1],
-                      outputRange: ['#E2E8F0', '#D9A299'],
+                      outputRange: ['#E2E8F0', '#3E5F44'], // Deep forest green
                     }),
                   },
                 ]}
@@ -223,7 +223,7 @@ const OnboardingScreen = ({ onComplete }) => {
               
               <Text style={styles.learnMoreSectionTitle}>Privacy First</Text>
               <Text style={styles.learnMoreText}>
-                We do not store your personal information in readable formats. Your identity remains private while still enabling meaningful and safe interactions within the community.
+                We do not store information in readable formats. Your identity remains private while still enabling meaningful and safe interactions within the community.
               </Text>
               
               <Text style={styles.learnMoreSectionTitle}>Secure Communication</Text>
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#D9A299',
+    color: '#3E5F44', // Deep forest green
     textAlign: 'center',
     marginBottom: 20,
     fontWeight: '600',
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   paginationDotActive: {
-    backgroundColor: '#D9A299',
+    backgroundColor: '#3E5F44', // Deep forest green
     width: 24,
   },
   buttonContainer: {
@@ -324,13 +324,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nextButton: {
-    backgroundColor: '#D9A299',
+    backgroundColor: '#3E5F44', // Deep forest green
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#D9A299',
+    shadowColor: '#3E5F44', // Deep forest green
     shadowOffset: {
       width: 0,
       height: 4,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   learnMoreSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#D9A299',
+    color: '#3E5F44', // Deep forest green
     marginBottom: 10,
     marginTop: 20,
   },

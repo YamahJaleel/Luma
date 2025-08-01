@@ -309,11 +309,12 @@ const SearchScreen = ({ navigation }) => {
         <ExpandingSearchBox
           onSearch={handleSearch}
           placeholder=""
-          searchIconColor="#D9A299"
+          searchIconColor="#3E5F44" // Deep forest green
           backgroundColor="white"
           borderRadius={12}
           fontSize={16}
           animationSpeed={300}
+          onDirectMessagePress={() => navigation.navigate('Messages')}
         />
       </View>
 

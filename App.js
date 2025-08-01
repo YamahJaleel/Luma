@@ -16,19 +16,19 @@ const Stack = createStackNavigator();
 
 // Custom theme with Luma's new warm color palette
 const theme = {
-  ...DefaultTheme,
   colors: {
-    ...DefaultTheme.colors,
-    primary: '#D9A299', // Warm pink
-    secondary: '#DCC5B2', // Light warm brown
+    primary: '#3E5F44', // Deep forest green
+    secondary: '#F1B8B2', // Soft coral
     background: '#FDF8F3', // Very light cream (unchanged)
     surface: '#FFFFFF',
     text: '#2D3748',
     placeholder: '#A0AEC0',
-    accent: '#F0E4D3', // Light warm cream
+    accent: '#F0E4D3', // Light warm cream (unchanged)
     success: '#68D391',
     warning: '#F6AD55',
     error: '#FC8181',
+    blue: '#7C9AFF', // Blue accent
+    lightBlue: '#A8B8FF', // Light blue for secondary accents
   },
 };
 

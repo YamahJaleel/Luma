@@ -118,14 +118,14 @@ const PostScreen = () => {
 
   const getPostTypeColor = (type) => {
     switch (type) {
-      case 'warning':
+      case 'red-flag':
         return '#FC8181';
-      case 'question':
+      case 'warning':
         return '#F6AD55';
       case 'positive':
         return '#68D391';
       case 'experience':
-        return '#D9A299';
+        return '#3E5F44'; // Deep forest green
       default:
         return '#A0AEC0';
     }
@@ -170,13 +170,13 @@ const PostScreen = () => {
           <Card.Content>
             <View style={styles.anonymousContainer}>
               <View style={styles.anonymousTextContainer}>
-                <Ionicons name="eye-off" size={20} color="#D9A299" />
-                <Text style={styles.anonymousTitle}>Post Anonymously</Text>
+                <Ionicons name="eye-off" size={20} color="#3E5F44" /> {/* Deep forest green */}
+                <Text style={styles.anonymousTitle}>Anonymous Post</Text>
               </View>
               <Switch
                 value={isAnonymous}
                 onValueChange={setIsAnonymous}
-                color="#D9A299"
+                color="#E6D7C3"
               />
             </View>
             <Text style={styles.anonymousSubtitle}>
@@ -291,8 +291,8 @@ const PostScreen = () => {
             loading={isSubmitting}
             disabled={isSubmitting}
             style={styles.submitButton}
-            buttonColor="#D9A299"
-            textColor="white"
+            buttonColor="#3E5F44" // Deep forest green
+            textColor="#FFFFFF"
           >
             {isSubmitting ? 'Posting...' : 'Share Anonymously'}
           </Button>
@@ -385,18 +385,18 @@ const styles = StyleSheet.create({
   },
   tag: {
     marginRight: 8,
-    marginBottom: 8,
+    marginBottom: 4,
     backgroundColor: '#F7FAFC',
   },
   selectedTag: {
-    backgroundColor: '#D9A299',
+    backgroundColor: '#3E5F44', // Deep forest green
   },
   tagText: {
     fontSize: 12,
     color: '#718096',
   },
   selectedTagText: {
-    color: 'white',
+    color: '#FFFFFF',
   },
   guidelineItem: {
     flexDirection: 'row',
@@ -416,6 +416,21 @@ const styles = StyleSheet.create({
   submitButton: {
     paddingVertical: 8,
     borderRadius: 8,
+  },
+  primaryButton: {
+    backgroundColor: '#3E5F44', // Deep forest green
+    marginBottom: 12,
+    borderRadius: 8,
+  },
+  verificationText: {
+    color: '#68D391',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  visibilityText: {
+    color: '#3E5F44', // Deep forest green
+    fontSize: 14,
+    marginLeft: 8,
   },
 });
 

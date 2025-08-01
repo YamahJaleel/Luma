@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions,
   StyleSheet,
+  Text,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -14,11 +15,12 @@ const { width } = Dimensions.get('window');
 const ExpandingSearchBox = ({ 
   onSearch, 
   placeholder = "", 
-  searchIconColor = "#D9A299",
+  searchIconColor = "#3E5F44", // Deep forest green
   backgroundColor = "white",
   borderRadius = 12,
   fontSize = 16,
-  animationSpeed = 300 
+  animationSpeed = 300,
+  onDirectMessagePress
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -113,18 +115,33 @@ const ExpandingSearchBox = ({
           )}
         </Animated.View>
       ) : (
-        <TouchableOpacity
-          style={[
-            styles.searchButton,
-            {
-              backgroundColor,
-              borderRadius,
-            },
-          ]}
-          onPress={expandSearch}
-        >
-          <Ionicons name="search" size={24} color={searchIconColor} />
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[
+              styles.searchButton,
+              {
+                backgroundColor,
+                borderRadius,
+              },
+            ]}
+            onPress={expandSearch}
+          >
+            <Ionicons name="search" size={24} color={searchIconColor} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.dmButton,
+              {
+                backgroundColor,
+                borderRadius,
+              },
+            ]}
+            onPress={onDirectMessagePress}
+          >
+            <Ionicons name="chatbubble" size={24} color={searchIconColor} />
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -134,6 +151,11 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -162,6 +184,42 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  dmButton: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  searchButtonContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dmButtonContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchButtonText: {
+    marginTop: 4,
+    fontSize: 10,
+    color: '#A0AEC0',
+    fontWeight: '400',
+  },
+  dmButtonText: {
+    marginTop: 4,
+    fontSize: 10,
+    color: '#A0AEC0',
+    fontWeight: '400',
   },
   searchIcon: {
     marginRight: 12,
