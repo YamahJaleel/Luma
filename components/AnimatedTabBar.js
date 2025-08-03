@@ -20,8 +20,8 @@ const AnimatedTabBar = () => {
         return focused ? 'home' : 'home-outline';
       case 'Search':
         return focused ? 'search' : 'search-outline';
-      case 'Post':
-        return focused ? 'add-circle' : 'add-circle-outline';
+      case 'Notifications':
+        return focused ? 'notifications' : 'notifications-outline';
       case 'Profile':
         return focused ? 'person' : 'person-outline';
       default:
@@ -32,7 +32,7 @@ const AnimatedTabBar = () => {
   const tabs = [
     { name: 'Home', icon: 'home' },
     { name: 'Search', icon: 'search' },
-    { name: 'Post', icon: 'add-circle' },
+    { name: 'Notifications', icon: 'notifications' },
     { name: 'Profile', icon: 'person' },
   ];
 

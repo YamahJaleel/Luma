@@ -11,7 +11,7 @@ import {
 import { Card, List, Button, Divider, Avatar } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
@@ -110,13 +110,17 @@ const ProfileScreen = () => {
   ];
 
   const renderMenuItem = (item) => {
+    if (!item || !item.id) {
+      return null;
+    }
+    
     if (item.type === 'toggle') {
       return (
         <List.Item
           key={item.id}
-          title={item.title}
-          description={item.subtitle}
-          left={(props) => <List.Icon {...props} icon={item.icon} color="#3E5F44" />} // Deep forest green
+          title={item.title || ''}
+          description={item.subtitle || ''}
+          left={(props) => <List.Icon {...props} icon={item.icon || 'help-circle-outline'} color="#3E5F44" />} // Deep forest green
           titleStyle={styles.menuItemTitle}
           descriptionStyle={styles.menuItemDescription}
           right={() => (
@@ -135,14 +139,14 @@ const ProfileScreen = () => {
     return (
       <List.Item
         key={item.id}
-        title={item.title}
-        description={item.subtitle}
-        left={(props) => <List.Icon {...props} icon={item.icon} color="#3E5F44" />} // Deep forest green
+        title={item.title || ''}
+        description={item.subtitle || ''}
+        left={(props) => <List.Icon {...props} icon={item.icon || 'help-circle-outline'} color="#3E5F44" />} // Deep forest green
         titleStyle={styles.menuItemTitle}
         descriptionStyle={styles.menuItemDescription}
         right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
         style={styles.menuItem}
-        onPress={() => Alert.alert('Feature', `${item.title} coming soon!`)}
+        onPress={() => Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`)}
       />
     );
   };
@@ -151,60 +155,52 @@ const ProfileScreen = () => {
     <ScrollView style={styles.container}>
       {/* Profile Header */}
       <View style={styles.header}>
-        <View style={styles.profileInfo}>
-          <Avatar.Text
-            size={80}
-            label="LU"
-            style={styles.avatar}
-            color="white"
-            labelStyle={styles.avatarLabel}
-          />
-          <View style={styles.profileText}>
-            <Text style={styles.profileName}>Luma User</Text>
-            <View style={styles.verificationContainer}>
-              {isVerified ? (
-                <View style={styles.verifiedBadge}>
-                  <Ionicons name="checkmark-circle" size={16} color="#68D391" />
-                  <Text style={styles.verificationText}>Verified Profile</Text>
-                </View>
-              ) : (
-                <TouchableOpacity style={styles.verifyButton} onPress={handleVerification}>
-                  <Ionicons name="warning" size={16} color="#F6AD55" />
-                  <Text style={styles.verifyText}>Verify Account</Text>
-                </TouchableOpacity>
-              )}
+        <View style={styles.headerContent}>
+          <View style={styles.profileInfo}>
+            <Avatar.Text
+              size={80}
+              label="LU"
+              style={styles.avatar}
+              color="white"
+              labelStyle={styles.avatarLabel}
+              labelProps={{ numberOfLines: 1 }}
+            />
+            <View style={styles.profileText}>
+              <Text style={styles.profileName}>Luma User</Text>
+              <View style={styles.verificationContainer}>
+                {isVerified ? (
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={16} color="#68D391" />
+                    <Text style={styles.verificationText}>Verified Profile</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity style={styles.verifyButton} onPress={handleVerification}>
+                    <Ionicons name="warning" size={16} color="#F6AD55" />
+                    <Text style={styles.verifyText}>Verify Account</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Posts</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>45</Text>
-            <Text style={styles.statLabel}>Helped</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>8</Text>
-            <Text style={styles.statLabel}>Watched</Text>
-          </View>
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Ionicons name="settings-outline" size={24} color="#3E5F44" />
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Verification Card */}
       {!isVerified && (
         <Card style={styles.verificationCard}>
-          <Card.Content>
+          <Card.Content style={{ padding: 16 }}>
             <View style={styles.verificationContent}>
               <Ionicons name="shield-checkmark" size={24} color="#F6AD55" />
               <View style={styles.verificationText}>
                 <Text style={styles.verificationTitle}>Verify Your Account</Text>
                 <Text style={styles.verificationSubtitle}>
-                  Verification helps keep our community safe and prevents spam
+                  Verification helps keep our community safe
                 </Text>
               </View>
             </View>
@@ -212,7 +208,7 @@ const ProfileScreen = () => {
               mode="contained"
               onPress={handleVerification}
               style={styles.verifyAccountButton}
-              buttonColor="#D9A299"
+              buttonColor="#3E5F44"
             >
               Verify Now
             </Button>
@@ -220,10 +216,31 @@ const ProfileScreen = () => {
         </Card>
       )}
 
+            {/* User Statistics */}
+      <Card style={styles.userStatsCard}>
+        <Card.Content>
+          <Text style={styles.sectionTitle}>My Activity</Text>
+          <View style={styles.userStats}>
+            <View style={styles.userStat}>
+              <Text style={styles.userStatNumber}>12</Text>
+              <Text style={styles.userStatLabel}>Posts</Text>
+            </View>
+            <View style={styles.userStat}>
+              <Text style={styles.userStatNumber}>45</Text>
+              <Text style={styles.userStatLabel}>Helped</Text>
+            </View>
+            <View style={styles.userStat}>
+              <Text style={styles.userStatNumber}>8</Text>
+              <Text style={styles.userStatLabel}>Watched</Text>
+            </View>
+          </View>
+        </Card.Content>
+      </Card>
+
       {/* Settings Menu */}
       <Card style={styles.menuCard}>
         <Card.Content style={styles.menuContent}>
-          {menuItems.map(renderMenuItem)}
+          {menuItems && menuItems.length > 0 ? menuItems.map(renderMenuItem) : null}
         </Card.Content>
       </Card>
 
@@ -233,15 +250,15 @@ const ProfileScreen = () => {
           <Text style={styles.sectionTitle}>Safety Features</Text>
           <View style={styles.safetyFeatures}>
             <View style={styles.safetyFeature}>
-              <Ionicons name="shield-checkmark" size={20} color="#F1B8B2" /> {/* Soft coral */}
+              <Ionicons name="shield-checkmark" size={20} color="#3E5F44" />
               <Text style={styles.safetyFeatureText}>Block & Report</Text>
             </View>
             <View style={styles.safetyFeature}>
-              <Ionicons name="eye-off" size={20} color="#F1B8B2" /> {/* Soft coral */}
+              <Ionicons name="eye-off" size={20} color="#3E5F44" />
               <Text style={styles.safetyFeatureText}>Privacy Controls</Text>
             </View>
             <View style={styles.safetyFeature}>
-              <Ionicons name="lock-closed" size={20} color="#F1B8B2" /> {/* Soft coral */}
+              <Ionicons name="lock-closed" size={20} color="#3E5F44" />
               <Text style={styles.safetyFeatureText}>Secure Messaging</Text>
             </View>
           </View>
@@ -249,37 +266,7 @@ const ProfileScreen = () => {
       </Card>
 
       {/* App Info */}
-      <Card style={styles.infoCard}>
-        <Card.Content>
-          <Text style={styles.appVersion}>Luma v1.0.0</Text>
-          <Text style={styles.appDescription}>
-            Your safety companion in the dating world
-          </Text>
-          <View style={styles.appLinks}>
-            <TouchableOpacity style={styles.appLink}>
-              <Text style={styles.appLinkText}>Privacy Policy</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.appLink}>
-              <Text style={styles.appLinkText}>Terms of Service</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.appLink}>
-              <Text style={styles.appLinkText}>Community Guidelines</Text>
-            </TouchableOpacity>
-          </View>
-        </Card.Content>
-      </Card>
-
       {/* Logout Button */}
-      <View style={styles.logoutContainer}>
-        <Button
-          mode="outlined"
-          onPress={handleLogout}
-          style={styles.logoutButton}
-          textColor="#FC8181"
-        >
-          Logout
-        </Button>
-      </View>
     </ScrollView>
   );
 };
@@ -293,13 +280,19 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
   },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
   profileInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    flex: 1,
   },
   avatar: {
-    backgroundColor: '#D9A299',
+    backgroundColor: '#3E5F44',
     marginRight: 15,
   },
   avatarLabel: {
@@ -339,31 +332,29 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 4,
   },
-  statsContainer: {
-    flexDirection: 'row',
+  userStatsCard: {
+    marginHorizontal: 20,
+    marginBottom: 15,
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
     elevation: 2,
   },
-  statItem: {
-    flex: 1,
+  userStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  userStat: {
     alignItems: 'center',
   },
-  statNumber: {
+  userStatNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#D9A299',
+    color: '#3E5F44',
   },
-  statLabel: {
+  userStatLabel: {
     fontSize: 14,
     color: '#718096',
     marginTop: 4,
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: '#E2E8F0',
-    marginHorizontal: 10,
+    textAlign: 'center',
   },
   verificationCard: {
     marginHorizontal: 20,
@@ -371,15 +362,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF5E7',
     borderColor: '#F6AD55',
     borderWidth: 1,
+    borderRadius: 12,
   },
   verificationContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 15,
   },
   verificationText: {
     flex: 1,
     marginLeft: 12,
+    paddingRight: 8,
   },
   verificationTitle: {
     fontSize: 16,
@@ -390,6 +383,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#DD6B20',
     marginTop: 2,
+    lineHeight: 18,
   },
   verifyAccountButton: {
     borderRadius: 8,
@@ -459,7 +453,7 @@ const styles = StyleSheet.create({
   },
   appLinkText: {
     fontSize: 12,
-    color: '#D9A299',
+    color: '#3E5F44',
     textDecorationLine: 'underline',
   },
   logoutContainer: {
@@ -469,6 +463,23 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderColor: '#FC8181',
     borderRadius: 8,
+  },
+  settingsButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginTop: 10,
   },
   primaryButton: {
     backgroundColor: '#3E5F44', // Deep forest green

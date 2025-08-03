@@ -7,9 +7,9 @@ import {
   Image,
   FlatList,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import ExpandingSearchBox from '../components/ExpandingSearchBox';
 
 const { width } = Dimensions.get('window');
 const screenPadding = 20;
@@ -306,16 +306,21 @@ const SearchScreen = ({ navigation }) => {
     <View style={styles.container}>
       {/* Search Container */}
       <View style={styles.searchContainer}>
-        <ExpandingSearchBox
-          onSearch={handleSearch}
-          placeholder=""
-          searchIconColor="#3E5F44" // Deep forest green
-          backgroundColor="white"
-          borderRadius={12}
-          fontSize={16}
-          animationSpeed={300}
-          onDirectMessagePress={() => navigation.navigate('Messages')}
-        />
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#3E5F44" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search profiles..."
+            placeholderTextColor="#A0AEC0"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Ionicons name="close-circle" size={20} color="#A0AEC0" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Profile Grid */}
@@ -359,7 +364,31 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
     backgroundColor: '#FDF8F3',
-    alignItems: 'flex-start',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#2D3748',
+    paddingVertical: 0,
   },
   gridContainer: {
     paddingHorizontal: 20,
