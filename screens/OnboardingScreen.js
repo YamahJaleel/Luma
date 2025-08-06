@@ -218,7 +218,7 @@ const OnboardingScreen = ({ onComplete }) => {
             <ScrollView style={styles.learnMoreScroll} showsVerticalScrollIndicator={false}>
               <Text style={styles.learnMoreSectionTitle}>End-to-End Encryption</Text>
               <Text style={styles.learnMoreText}>
-                Your data is protected using multiple layers of end-to-end encryption. Whether it's messages, posts, or personal details, your information stays private and secure throughout its entire journey.
+                Your data is protected using multiple layers of end-to-end encryption. Your information stays private and secure throughout its entire journey.
               </Text>
               
               <Text style={styles.learnMoreSectionTitle}>Privacy First</Text>
