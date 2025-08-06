@@ -367,7 +367,7 @@ const SettingsScreen = ({ navigation }) => {
                 `Luma is a safety-first platform made to provide a truly protected space in the dating world.
 
  Our Mission:
- Help women share experiences, verify concerns, and feel empowered without fear of exposure.
+ Help you share experiences, verify concerns, and feel empowered without fear of exposure.
 
  Key Features:
  Women-Only Access
