@@ -9,6 +9,10 @@ import NotificationsScreen from '../screens/NotificationsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AnimatedTabBar from './AnimatedTabBar';
+import CreatePostScreen from '../screens/CreatePostScreen';
+import BrowseCommunitiesScreen from '../screens/BrowseCommunitiesScreen';
+import LikedPostsScreen from '../screens/LikedPostsScreen';
+import PostDetailScreen from '../screens/PostDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -34,11 +38,15 @@ const MainStackNavigator = () => {
           },
         }}
       >
-                      <Stack.Screen name="Home" component={HomeScreen} />
-              <Stack.Screen name="Search" component={SearchScreen} />
-              <Stack.Screen name="Notifications" component={NotificationsScreen} />
-              <Stack.Screen name="Profile" component={ProfileScreen} />
-              <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Search" component={SearchScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="CreatePost" component={CreatePostScreen} />
+        <Stack.Screen name="BrowseCommunities" component={BrowseCommunitiesScreen} />
+        <Stack.Screen name="LikedPosts" component={LikedPostsScreen} />
+        <Stack.Screen name="PostDetail" component={PostDetailScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>

@@ -3,15 +3,21 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTabContext } from './TabContext';
+import { useSettings } from './SettingsContext';
+import { useTheme } from 'react-native-paper';
 
 const AnimatedTabBar = () => {
   const navigation = useNavigation();
   const { currentTab, setCurrentTab } = useTabContext();
+  const { notificationsEnabled } = useSettings();
+  const theme = useTheme();
 
   const colors = {
-    primary: '#3E5F44', // Deep forest green
-    placeholder: '#A0AEC0',
-    surface: '#FFFFFF',
+    primary: theme.colors.primary,
+    placeholder: theme.colors.placeholder,
+    surface: theme.colors.surface,
+    badge: theme.colors.error || '#EF4444',
+    accent: theme.colors.accent,
   };
 
   const getIconName = (routeName, focused) => {
@@ -36,8 +42,10 @@ const AnimatedTabBar = () => {
     { name: 'Profile', icon: 'person' },
   ];
 
+  const hasUnread = true; // Placeholder
+
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { backgroundColor: colors.surface, borderTopColor: colors.surface }]}>
       {tabs.map((tab) => {
         const isFocused = currentTab === tab.name;
         const iconName = getIconName(tab.name, isFocused);
@@ -50,20 +58,12 @@ const AnimatedTabBar = () => {
         };
 
         return (
-          <TouchableOpacity
-            key={tab.name}
-            style={styles.tab}
-            onPress={onPress}
-          >
-            <View style={[
-              styles.iconContainer,
-              isFocused && styles.activeIconContainer
-            ]}>
-              <Ionicons
-                name={iconName}
-                size={24}
-                color={isFocused ? colors.primary : colors.placeholder}
-              />
+          <TouchableOpacity key={tab.name} style={styles.tab} onPress={onPress}>
+            <View style={[styles.iconContainer, isFocused && { backgroundColor: colors.accent }]}>
+              <Ionicons name={iconName} size={24} color={isFocused ? colors.primary : colors.placeholder} />
+              {tab.name === 'Notifications' && notificationsEnabled && hasUnread && (
+                <View style={[styles.badgeDot, { backgroundColor: colors.badge }]} />
+              )}
             </View>
           </TouchableOpacity>
         );
@@ -75,27 +75,26 @@ const AnimatedTabBar = () => {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderTopColor: '#FFFFFF',
     borderTopWidth: 1,
     paddingBottom: 23,
     paddingTop: 0,
     height: 63,
     marginBottom: 0,
   },
-  tab: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  tab: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   iconContainer: {
     padding: 8,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  activeIconContainer: {
-    backgroundColor: '#F0E4D3',
+  badgeDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });
 

@@ -10,13 +10,17 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '../components/SettingsContext';
+import { useTheme } from 'react-native-paper';
 
 const { width } = Dimensions.get('window');
 const screenPadding = 20;
-const availableWidth = width - (screenPadding * 2);
+const availableWidth = width - screenPadding * 2;
 const gap = 10;
 
 const SearchScreen = ({ navigation }) => {
+  const theme = useTheme();
+  const { dataUsageEnabled } = useSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProfiles, setFilteredProfiles] = useState([]);
 
@@ -249,75 +253,69 @@ const SearchScreen = ({ navigation }) => {
   const getSizeStyle = (size) => {
     switch (size) {
       case 'large':
-        // Two large squares per row with gap
         const largeSize = (availableWidth - gap) / 2;
         return { width: largeSize, height: largeSize };
       case 'small':
-        // Three small squares per row with gaps
-        const smallSize = (availableWidth - (gap * 2)) / 3;
+        const smallSize = (availableWidth - gap * 2) / 3;
         return { width: smallSize, height: smallSize };
       default:
         return { width: 100, height: 100 };
     }
   };
 
+  const withDataSaver = (uri) => {
+    if (!dataUsageEnabled) return uri;
+    const hasParams = uri.includes('?');
+    const joiner = hasParams ? '&' : '?';
+    return `${uri}${joiner}q=40&auto=format`;
+  };
+
   const renderProfileSquare = ({ item }) => (
-    <TouchableOpacity 
-      style={[styles.profileSquare, getSizeStyle(item.size)]}
-      onPress={() => navigation.navigate('ProfileDetail', { profile: item })}
-    >
-      <Image source={{ uri: item.avatar }} style={styles.profileImage} />
+    <TouchableOpacity style={[styles.profileSquare, getSizeStyle(item.size)]} onPress={() => navigation.navigate('ProfileDetail', { profile: item })}>
+      <Image source={{ uri: withDataSaver(item.avatar) }} style={styles.profileImage} />
     </TouchableOpacity>
   );
 
-  const displayProfiles = searchQuery.trim() === '' ? mockProfiles : filteredProfiles;
+  const fullList = searchQuery.trim() === '' ? mockProfiles : filteredProfiles;
+  const displayProfiles = dataUsageEnabled ? fullList.slice(0, 18) : fullList;
 
   // Create rows for the alternating pattern
   const createRows = () => {
     const rows = [];
     let currentIndex = 0;
-    
+
     while (currentIndex < displayProfiles.length) {
-      // Large row (2 squares)
       if (currentIndex < displayProfiles.length) {
-        rows.push({
-          type: 'large',
-          items: displayProfiles.slice(currentIndex, currentIndex + 2)
-        });
+        rows.push({ type: 'large', items: displayProfiles.slice(currentIndex, currentIndex + 2) });
         currentIndex += 2;
       }
-      
-      // Small row (3 squares)
       if (currentIndex < displayProfiles.length) {
-        rows.push({
-          type: 'small',
-          items: displayProfiles.slice(currentIndex, currentIndex + 3)
-        });
+        rows.push({ type: 'small', items: displayProfiles.slice(currentIndex, currentIndex + 3) });
         currentIndex += 3;
       }
     }
-    
+
     return rows;
   };
 
   const rows = createRows();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Search Container */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#3E5F44" style={styles.searchIcon} />
+        <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}>
+          <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.colors.text } ]}
             placeholder="Search profiles..."
-            placeholderTextColor="#A0AEC0"
+            placeholderTextColor={theme.colors.placeholder}
             value={searchQuery}
             onChangeText={handleSearch}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')}>
-              <Ionicons name="close-circle" size={20} color="#A0AEC0" />
+              <Ionicons name="close-circle" size={20} color={theme.colors.placeholder} />
             </TouchableOpacity>
           )}
         </View>
@@ -326,7 +324,7 @@ const SearchScreen = ({ navigation }) => {
       {/* Profile Grid */}
       <FlatList
         data={rows}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <View style={styles.row}>
             {item.items.map((profile) => (
               <View key={profile.id} style={styles.squareContainer}>
@@ -338,14 +336,17 @@ const SearchScreen = ({ navigation }) => {
         keyExtractor={(item, index) => `row-${index}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.gridContainer}
+        initialNumToRender={dataUsageEnabled ? 4 : 8}
+        windowSize={dataUsageEnabled ? 3 : 5}
+        removeClippedSubviews={true}
       />
 
       {/* Empty State */}
       {searchQuery.trim() !== '' && filteredProfiles.length === 0 && (
         <View style={styles.emptyContainer}>
           <Ionicons name="search" size={64} color="#E2E8F0" />
-          <Text style={styles.emptyTitle}>No Results Found</Text>
-          <Text style={styles.emptySubtitle}>
+          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Results Found</Text>
+          <Text style={[styles.emptySubtitle, theme.dark && { color: theme.colors.text }]}>
             No profiles found for "{searchQuery}". Try searching with a different name or username.
           </Text>
         </View>
@@ -355,90 +356,38 @@ const SearchScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FDF8F3',
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FDF8F3',
-  },
+  container: { flex: 1 },
+  searchContainer: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  searchIcon: {
-    marginRight: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#2D3748',
-    paddingVertical: 0,
-  },
-  gridContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  squareContainer: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
+  searchIcon: { marginRight: 12 },
+  searchInput: { flex: 1, fontSize: 16, paddingVertical: 0 },
+  gridContainer: { paddingHorizontal: 20, paddingBottom: 20 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  squareContainer: { flex: 1, marginHorizontal: 5 },
   profileSquare: {
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#F0F0F0',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2D3748',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: '#718096',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
+  profileImage: { width: '100%', height: '100%', backgroundColor: '#F0F0F0' },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
+  emptyTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
+  emptySubtitle: { fontSize: 16, color: '#718096', textAlign: 'center', lineHeight: 24 },
 });
 
 export default SearchScreen; 
