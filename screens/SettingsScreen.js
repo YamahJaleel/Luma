@@ -198,8 +198,8 @@ const SettingsScreen = ({ navigation }) => {
           onPress={() => {
             if (item.id === 'clear_cache') {
               Alert.alert('Clear Cache', 'This will free up storage space. Continue?', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Clear', onPress: () => Alert.alert('Success', 'Cache cleared successfully!') },
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Clear', onPress: () => Alert.alert('Success', 'Cache cleared successfully!') },
               ]);
             }
           }}
@@ -232,10 +232,10 @@ const SettingsScreen = ({ navigation }) => {
         right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
         style={styles.menuItem}
         onPress={() => {
-          if (item.id === 'about_luma') {
-            Alert.alert(
-              '',
-              `Luma is a safety-first platform made to provide a truly protected space in the dating world.
+                     if (item.id === 'about_luma') {
+                          Alert.alert(
+                '',
+                `Luma is a safety-first platform made to provide a truly protected space in the dating world.
 
  Our Mission:
  Help you share experiences, verify concerns, and feel empowered without fear of exposure.
@@ -249,7 +249,7 @@ const SettingsScreen = ({ navigation }) => {
 
  Privacy is our foundation we use secure systems to ensure user information is never exposed.`,
               [{ text: 'OK', style: 'default' }]
-            );
+             );
           } else {
             Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }
@@ -264,7 +264,7 @@ const SettingsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Settings</Text>
           <View style={styles.headerSpacer} />
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { Card, Chip, Avatar, Button, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, route }) => {
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState('dating-advice');
@@ -438,6 +439,29 @@ const HomeScreen = ({ navigation }) => {
   );
   const currentSortOption = sortOptions.find(option => option.id === selectedSort);
 
+  // Handle serializable return params from other screens
+  useFocusEffect(
+    useCallback(() => {
+      const params = route?.params || {};
+      if (params.selectedCommunityId && params.selectedCommunityMeta) {
+        setSelectedCommunity(params.selectedCommunityId);
+        setSelectedCommunityMeta(params.selectedCommunityMeta);
+        setSelectedSort('recent');
+        // clear params
+        navigation.setParams({ selectedCommunityId: undefined, selectedCommunityMeta: undefined });
+      }
+      if (params.favoriteToggle && params.favoriteToggle.id) {
+        const community = params.favoriteToggle;
+        setFavoriteCommunities((prev) => {
+          const exists = prev.some((c) => c.id === community.id);
+          if (exists) return prev.filter((c) => c.id !== community.id);
+          return [community, ...prev];
+        });
+        navigation.setParams({ favoriteToggle: undefined });
+      }
+    }, [route?.params])
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
@@ -458,12 +482,12 @@ const HomeScreen = ({ navigation }) => {
           style={[styles.communitiesButton, { backgroundColor: theme.colors.surface }]}
           onPress={() =>
             navigation.navigate('BrowseCommunities', {
-              onSelectCommunity: (c) => {
-                setSelectedCommunity(c.id);
-                setSelectedCommunityMeta(c);
-              },
-              onToggleFavoriteCommunity: (c) => handleToggleFavoriteCommunity(c),
-              favoriteIds: favoriteCommunities.map((f) => f.id),
+              // Defaults are favorited initially
+              favoriteIds: Array.from(new Set([
+                ...favoriteCommunities.map((f) => f.id),
+                ...defaultSubcommunities.map((d) => d.id),
+              ])),
+              defaultCommunities: defaultSubcommunities,
             })
           }
         >

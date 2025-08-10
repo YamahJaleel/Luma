@@ -81,7 +81,7 @@ const ProfileScreen = ({ navigation }) => {
         </Card>
       )}
 
-      {/* User Statistics */}
+            {/* User Statistics */}
       <Card style={[styles.userStatsCard, { backgroundColor: theme.colors.surface }]}>
         <Card.Content>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>My Activity</Text>

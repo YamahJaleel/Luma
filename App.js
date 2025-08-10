@@ -65,20 +65,20 @@ const AppContent = () => {
             {!isOnboarded ? (
               <OnboardingScreen onComplete={() => setIsOnboarded(true)} />
             ) : (
-              <Stack.Navigator
-                screenOptions={{
+              <Stack.Navigator 
+                screenOptions={{ 
                   headerShown: false,
                   cardStyleInterpolator: ({ current, layouts }) => ({
-                    cardStyle: {
-                      transform: [
-                        {
-                          translateX: current.progress.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [layouts.screen.width, 0],
-                          }),
-                        },
-                      ],
-                    },
+                      cardStyle: {
+                        transform: [
+                          {
+                            translateX: current.progress.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [layouts.screen.width, 0],
+                            }),
+                          },
+                        ],
+                      },
                   }),
                 }}
               >

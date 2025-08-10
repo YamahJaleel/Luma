@@ -236,15 +236,17 @@ const SearchScreen = ({ navigation }) => {
     },
   ];
 
+  const [profiles, setProfiles] = useState(mockProfiles);
+
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query.trim() === '') {
       setFilteredProfiles([]);
     } else {
-      const filtered = mockProfiles.filter(
+      const filtered = profiles.filter(
         (profile) =>
           profile.name.toLowerCase().includes(query.toLowerCase()) ||
-          profile.username.toLowerCase().includes(query.toLowerCase())
+          profile.username?.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredProfiles(filtered);
     }
@@ -276,7 +278,7 @@ const SearchScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
-  const fullList = searchQuery.trim() === '' ? mockProfiles : filteredProfiles;
+  const fullList = searchQuery.trim() === '' ? profiles : filteredProfiles;
   const displayProfiles = dataUsageEnabled ? fullList.slice(0, 18) : fullList;
 
   // Create rows for the alternating pattern
@@ -301,23 +303,40 @@ const SearchScreen = ({ navigation }) => {
   const rows = createRows();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       {/* Search Container */}
       <View style={styles.searchContainer}>
-        <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}>
-          <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.colors.text } ]}
-            placeholder="Search profiles..."
-            placeholderTextColor={theme.colors.placeholder}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')}>
-              <Ionicons name="close-circle" size={20} color={theme.colors.placeholder} />
-            </TouchableOpacity>
-          )}
+        <View style={styles.searchHeaderRow}>
+          <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}> 
+            <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.colors.text } ]}
+              placeholder="Search profiles..."
+              placeholderTextColor={theme.colors.placeholder}
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => handleSearch('')}>
+                <Ionicons name="close-circle" size={20} color={theme.colors.placeholder} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: theme.colors.surface }]}
+            onPress={() =>
+              navigation.navigate('CreateProfile', {
+                onSubmit: (newProfile) => {
+                  setProfiles((prev) => [newProfile, ...prev]);
+                  if (searchQuery.trim()) {
+                    handleSearch(searchQuery);
+                  }
+                },
+              })
+            }
+          >
+            <Ionicons name="add" size={22} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -346,7 +365,7 @@ const SearchScreen = ({ navigation }) => {
         <View style={styles.emptyContainer}>
           <Ionicons name="search" size={64} color="#E2E8F0" />
           <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Results Found</Text>
-          <Text style={[styles.emptySubtitle, theme.dark && { color: theme.colors.text }]}>
+          <Text style={[styles.emptySubtitle, theme.dark && { color: theme.colors.text }]}> 
             No profiles found for "{searchQuery}". Try searching with a different name or username.
           </Text>
         </View>
@@ -357,8 +376,10 @@ const SearchScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  searchContainer: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20 },
+  searchContainer: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 12 },
+  searchHeaderRow: { flexDirection: 'row', alignItems: 'center' },
   searchBar: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
@@ -368,6 +389,19 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  addBtn: {
+    width: 44,
+    height: 44,
+    marginLeft: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
     shadowRadius: 4,
   },
   searchIcon: { marginRight: 12 },

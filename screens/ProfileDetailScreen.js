@@ -127,10 +127,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             <Image source={{ uri: profile.avatar }} style={styles.profileImage} />
             <View style={[styles.onlineIndicator, { backgroundColor: profile.isOnline ? '#4CAF50' : '#9E9E9E' }]} />
           </View>
-
+          
           <Text style={[styles.profileName, { color: theme.colors.text }]}>{profile.name}</Text>
           <Text style={[styles.profileUsername, theme.dark && { color: theme.colors.text }]}>{profile.username}</Text>
-
+          
           <View style={styles.statusContainer}>
             <View style={[styles.statusDot, { backgroundColor: profile.isOnline ? '#4CAF50' : '#9E9E9E' }]} />
             <Text style={[styles.statusText, theme.dark && { color: theme.colors.text }]}>
@@ -143,10 +143,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Risk Assessment</Text>
           <View style={[styles.riskBadge, { backgroundColor: getRiskLevelColor(profile.riskLevel) }]}>
-            <Ionicons
-              name={profile.riskLevel === 'green' ? 'shield-checkmark' : profile.riskLevel === 'yellow' ? 'warning' : 'alert'}
-              size={20}
-              color="white"
+            <Ionicons 
+              name={profile.riskLevel === 'green' ? 'shield-checkmark' : profile.riskLevel === 'yellow' ? 'warning' : 'alert'} 
+              size={20} 
+              color="white" 
             />
             <Text style={styles.riskText}>{getRiskLevelText(profile.riskLevel)}</Text>
           </View>
@@ -193,7 +193,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             <Ionicons name="chatbubble" size={20} color="white" />
             <Text style={styles.actionButtonText}>Message</Text>
           </TouchableOpacity>
-
+          
           <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
             <Ionicons name="flag" size={20} color="#E6D7C3" />
             <Text style={[styles.actionButtonText, { color: '#E6D7C3' }]}>Report</Text>

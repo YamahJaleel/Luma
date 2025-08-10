@@ -21,23 +21,34 @@ const createMockCommunities = (count = 2000) => {
 
 const BrowseCommunitiesScreen = ({ route, navigation }) => {
   const theme = useTheme();
-  const { onSelectCommunity, onToggleFavoriteCommunity, favoriteIds = [] } = route.params || {};
+  const { favoriteIds = [], defaultCommunities = [] } = route.params || {};
   const [query, setQuery] = useState('');
   const [localFavs, setLocalFavs] = useState(new Set(favoriteIds));
 
-  const communities = useMemo(() => createMockCommunities(3000), []);
+  const baseCommunities = useMemo(() => createMockCommunities(3000), []);
+
+  const mergedCommunities = useMemo(() => {
+    const map = new Map();
+    // Put defaults first
+    defaultCommunities.forEach((c) => map.set(c.id, c));
+    baseCommunities.forEach((c) => {
+      if (!map.has(c.id)) map.set(c.id, c);
+    });
+    return Array.from(map.values());
+  }, [defaultCommunities, baseCommunities]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return communities;
+    const list = mergedCommunities;
+    if (!query.trim()) return list;
     const q = query.toLowerCase();
-    return communities.filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
-  }, [query, communities]);
+    return list.filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
+  }, [query, mergedCommunities]);
 
   const renderItem = ({ item }) => {
     const isFavorited = localFavs.has(item.id);
     return (
-      <View style={[styles.row, { backgroundColor: theme.colors.surface }]}>
-        <View style={[styles.iconBox, { backgroundColor: `${item.color}25` }]}>
+      <View style={[styles.row, { backgroundColor: theme.colors.surface }]}> 
+        <View style={[styles.iconBox, { backgroundColor: `${item.color}25` }]}> 
           <Ionicons name={item.icon} size={18} color={item.color} />
         </View>
         <View style={styles.rowText}>
@@ -48,7 +59,7 @@ const BrowseCommunitiesScreen = ({ route, navigation }) => {
             {item.memberCount} members
           </Text>
         </View>
-        <View style={styles.actions}>
+        <View style={styles.actions}> 
           <TouchableOpacity
             style={[styles.iconBoxBtn, { backgroundColor: theme.colors.surface }]}
             onPress={() => {
@@ -57,7 +68,7 @@ const BrowseCommunitiesScreen = ({ route, navigation }) => {
                 if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
                 return next;
               });
-              if (typeof onToggleFavoriteCommunity === 'function') onToggleFavoriteCommunity(item);
+              navigation.navigate('Home', { favoriteToggle: item });
             }}
           >
             <Ionicons name={isFavorited ? 'heart' : 'heart-outline'} size={18} color={isFavorited ? '#EF4444' : theme.colors.placeholder} />
@@ -65,8 +76,7 @@ const BrowseCommunitiesScreen = ({ route, navigation }) => {
           <TouchableOpacity
             style={[styles.iconBoxBtn, { backgroundColor: theme.colors.surface }]}
             onPress={() => {
-              if (typeof onSelectCommunity === 'function') onSelectCommunity(item);
-              navigation.goBack();
+              navigation.navigate('Home', { selectedCommunityId: item.id, selectedCommunityMeta: item });
             }}
           >
             <Ionicons name="chevron-forward" size={18} color={theme.colors.placeholder} />
@@ -134,19 +144,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: '600' },
   meta: { fontSize: 12 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iconBoxBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-  },
-  iconOnlyBtn: { padding: 6, borderRadius: 8 },
+  iconBoxBtn: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
 });
 
 export default BrowseCommunitiesScreen; 

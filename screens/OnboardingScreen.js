@@ -20,7 +20,7 @@ const OnboardingScreen = ({ onComplete }) => {
   const [showLearnMore, setShowLearnMore] = useState(false);
   const [hasSeenLearnMore, setHasSeenLearnMore] = useState(false);
   const scrollViewRef = useRef(null);
-  const learnMoreAnimation = useRef(new Animated.Value(0)).current;
+  const learnMoreAnimation = useRef(new Animated.Value(0)).current; // 0 -> hidden, 1 -> visible (bottom sheet up)
 
   const onboardingData = [
     {
@@ -80,11 +80,11 @@ const OnboardingScreen = ({ onComplete }) => {
   const handleLearnMore = () => {
     setShowLearnMore(true);
     setHasSeenLearnMore(true);
-    Animated.timing(learnMoreAnimation, { toValue: 1, duration: 400, useNativeDriver: false }).start();
+    Animated.timing(learnMoreAnimation, { toValue: 1, duration: 350, useNativeDriver: true }).start();
   };
 
   const closeLearnMore = () => {
-    Animated.timing(learnMoreAnimation, { toValue: 0, duration: 300, useNativeDriver: false }).start(() => {
+    Animated.timing(learnMoreAnimation, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => {
       setShowLearnMore(false);
     });
   };
@@ -127,7 +127,7 @@ const OnboardingScreen = ({ onComplete }) => {
                   <Ionicons name={item.icon} size={60} color="white" />
                 </View>
               </View>
-
+              
               <Text style={[styles.title, { color: theme.colors.text }]}>{item.title}</Text>
               <Text style={[styles.subtitle, { color: theme.colors.text }]}>{item.subtitle}</Text>
               <Text style={[styles.description, { color: theme.colors.text }]}>{item.description}</Text>
@@ -170,39 +170,42 @@ const OnboardingScreen = ({ onComplete }) => {
         <Animated.View
           style={[
             styles.learnMoreOverlay,
-            { opacity: learnMoreAnimation, transform: [{ scale: learnMoreAnimation.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }] },
+            {
+              opacity: learnMoreAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+            },
           ]}
         >
-          <View style={[styles.learnMoreContent, { backgroundColor: theme.colors.surface }]}>
+          <Animated.View
+            style={[
+              styles.learnMoreContent,
+              { backgroundColor: theme.colors.surface },
+              {
+                transform: [
+                  {
+                    translateY: learnMoreAnimation.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }),
+                  },
+                ],
+              },
+            ]}
+          >
             <View style={styles.learnMoreHeader}>
               <Text style={[styles.learnMoreTitle, { color: theme.colors.text }]}>Protected by Encryption</Text>
               <TouchableOpacity onPress={closeLearnMore} style={styles.closeButton}>
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-
             <ScrollView style={styles.learnMoreScroll} showsVerticalScrollIndicator={false}>
+              {/* End-to-end encryption, Privacy First, etc. */}
               <Text style={[styles.learnMoreSectionTitle, { color: theme.colors.primary }]}>End-to-End Encryption</Text>
-              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>
-                Your data is protected using multiple layers of end-to-end encryption. Your information stays private and secure throughout its entire journey.
-              </Text>
-
+              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>Your data is protected using multiple layers of end-to-end encryption. Your information stays private and secure throughout its entire journey.</Text>
               <Text style={[styles.learnMoreSectionTitle, { color: theme.colors.primary }]}>Privacy First</Text>
-              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>
-                We do not store information in readable formats. Your identity remains private while still enabling meaningful and safe interactions within the community.
-              </Text>
-
+              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>We do not store information in readable formats. Your identity remains private while still enabling meaningful and safe interactions within the community.</Text>
               <Text style={[styles.learnMoreSectionTitle, { color: theme.colors.primary }]}>Secure Communication</Text>
-              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>
-                All connections between your device and our servers are encrypted using secure communication protocols, preventing interception or tampering during data transmission.
-              </Text>
-
+              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>All connections between your device and our servers are encrypted using secure communication protocols, preventing interception or tampering during data transmission.</Text>
               <Text style={[styles.learnMoreSectionTitle, { color: theme.colors.primary }]}>Data Protection</Text>
-              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>
-                We adhere to strict data protection principles and never share your information with third parties. Your trust and privacy are at the core of our platform.
-              </Text>
+              <Text style={[styles.learnMoreText, { color: theme.colors.text }]}>We adhere to strict data protection principles and never share your information with third parties. Your trust and privacy are at the core of our platform.</Text>
             </ScrollView>
-          </View>
+          </Animated.View>
         </Animated.View>
       )}
     </View>
@@ -248,12 +251,13 @@ const styles = StyleSheet.create({
   },
   nextText: { color: 'white', fontSize: 16, fontWeight: '600' },
   arrowIcon: { marginLeft: 8 },
-  learnMoreOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+  learnMoreOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end', alignItems: 'stretch', zIndex: 1000 },
   learnMoreContent: {
-    borderRadius: 20,
-    margin: 20,
-    maxHeight: height * 0.8,
-    width: width - 40,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 10,
+    maxHeight: height * 0.85,
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
