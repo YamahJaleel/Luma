@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,10 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
@@ -109,14 +113,175 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     }
   };
 
+  // Simple AI overview text synthesized from profile signals
+  const overviewText = (() => {
+    const risk = getRiskLevelText(profile.riskLevel);
+    const positives = profile.flags.filter((f) => ['trustworthy','responsive','genuine','verified','helpful','community_leader','trusted','friendly','active','new_user'].includes(f));
+    const cautions = profile.flags.filter((f) => ['inconsistent','ghosting','unreliable','catfish','fake_profile','harassment','aggressive','inappropriate'].includes(f));
+    const posPart = positives.length ? `Positive signals: ${positives.map((f) => f.replace('_',' ')).join(', ')}.` : '';
+    const cauPart = cautions.length ? ` Cautionary signals: ${cautions.map((f) => f.replace('_',' ')).join(', ')}.` : '';
+    return `Overview: ${risk} overall. ${posPart}${cauPart}`.trim();
+  })();
+
+  // Threaded comments (profile discussion)
+  const makeMockComments = () => ([
+    {
+      id: 1,
+      author: 'Alex R.',
+      avatarColor: '#3E5F44',
+      text: 'Great communicator and respectful.',
+      timestamp: '12m ago',
+      replies: [
+        { id: 11, author: 'Sam T.', avatarColor: '#8B5CF6', text: 'Agree!', timestamp: '8m ago', replies: [] },
+      ],
+    },
+    {
+      id: 2,
+      author: 'Mike J.',
+      avatarColor: '#10B981',
+      text: 'Had a positive experience, punctual and clear.',
+      timestamp: '1h ago',
+      replies: [],
+    },
+  ]);
+
+  const flattenComments = (nodes, depth = 0) => {
+    const out = [];
+    nodes.forEach((n) => {
+      out.push({ node: n, depth });
+      if (n.replies && n.replies.length > 0) {
+        out.push(...flattenComments(n.replies, depth + 1));
+      }
+    });
+    return out;
+  };
+
+  const addReplyById = (nodes, targetId, newReply) => {
+    return nodes.map((n) => {
+      if (n.id === targetId) {
+        const replies = Array.isArray(n.replies) ? n.replies : [];
+        return { ...n, replies: [...replies, newReply] };
+      }
+      if (n.replies && n.replies.length) {
+        return { ...n, replies: addReplyById(n.replies, targetId, newReply) };
+      }
+      return n;
+    });
+  };
+
+  const [comments, setComments] = useState(makeMockComments());
+  const [replyText, setReplyText] = useState('');
+  const [replyTarget, setReplyTarget] = useState(null); // null for profile-level comment
+  const [expandedThreads, setExpandedThreads] = useState(new Set()); // top-level ids expanded
+  // Count total nested replies for a node
+  const countReplies = (node) => {
+    if (!node?.replies || node.replies.length === 0) return 0;
+    return node.replies.reduce((acc, r) => acc + 1 + countReplies(r), 0);
+  };
+
+  // Visible comments depend on which top-level threads are expanded
+  const flattenVisible = (nodes, depth = 0) => {
+    const out = [];
+    nodes.forEach((n) => {
+      out.push({ node: n, depth });
+      const shouldIncludeChildren = depth === 0 ? expandedThreads.has(n.id) : true;
+      if (shouldIncludeChildren && n.replies && n.replies.length > 0) {
+        out.push(...flattenVisible(n.replies, depth + 1));
+      }
+    });
+    return out;
+  };
+  const flatComments = useMemo(() => flattenVisible(comments), [comments, expandedThreads]);
+
+  const handleSend = () => {
+    const text = replyText.trim();
+    if (!text) return;
+    const newItem = {
+      id: Date.now(),
+      author: 'You',
+      avatarColor: '#7C9AFF',
+      text,
+      timestamp: 'now',
+      replies: [],
+    };
+    if (replyTarget && replyTarget.id) {
+      // Auto-expand the top-level thread that contains the target
+      const findRootId = (nodes, targetId) => {
+        for (const n of nodes) {
+          if (n.id === targetId) return n.id;
+          const stack = [...(n.replies || [])];
+          while (stack.length) {
+            const cur = stack.pop();
+            if (cur.id === targetId) return n.id;
+            if (cur.replies && cur.replies.length) stack.push(...cur.replies);
+          }
+        }
+        return null;
+      };
+      const rootId = findRootId(comments, replyTarget.id) || replyTarget.id;
+      setExpandedThreads((prev) => {
+        const next = new Set(prev);
+        next.add(rootId);
+        return next;
+      });
+      setComments((prev) => addReplyById(prev, replyTarget.id, newItem));
+    } else {
+      setComments((prev) => [...prev, newItem]);
+    }
+    setReplyText('');
+    setReplyTarget(null);
+  };
+
+  const renderComment = ({ item }) => {
+    const c = item.node;
+    const depth = item.depth;
+    return (
+      <View style={[styles.commentRow, { backgroundColor: theme.colors.surface, marginLeft: depth * 16 }]}>
+        <View style={[styles.avatarCircle, { backgroundColor: c.avatarColor }]}>
+          <Text style={styles.avatarInitial}>{c.author.charAt(0)}</Text>
+        </View>
+        <View style={styles.commentBody}>
+          <View style={styles.commentHeader}>
+            <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
+              {c.author}
+            </Text>
+            <Text style={[styles.commentTime, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{c.timestamp}</Text>
+          </View>
+          <Text style={[styles.commentText, { color: theme.colors.text }]}>{c.text}</Text>
+          <View style={styles.linkRow}>
+            <TouchableOpacity style={styles.replyLink} onPress={() => setReplyTarget({ id: c.id, author: c.author })}>
+              <Text style={[styles.replyText, { color: theme.colors.primary }]}>Reply</Text>
+            </TouchableOpacity>
+            {depth === 0 && countReplies(c) > 0 && (
+              <TouchableOpacity
+                style={styles.replyLink}
+                onPress={() =>
+                  setExpandedThreads((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
+                    return next;
+                  })
+                }
+              >
+                <Text style={[styles.replyText, { color: theme.colors.primary }]}>
+                  {expandedThreads.has(c.id) ? 'Hide replies' : `Show replies (${countReplies(c)})`}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: theme.colors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Profile Details</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{profile?.name}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -125,61 +290,24 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={[styles.profileSection, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.imageContainer}>
             <Image source={{ uri: profile.avatar }} style={styles.profileImage} />
-            <View style={[styles.onlineIndicator, { backgroundColor: profile.isOnline ? '#4CAF50' : '#9E9E9E' }]} />
+
           </View>
-          
-          <Text style={[styles.profileName, { color: theme.colors.text }]}>{profile.name}</Text>
-          <Text style={[styles.profileUsername, theme.dark && { color: theme.colors.text }]}>{profile.username}</Text>
-          
-          <View style={styles.statusContainer}>
-            <View style={[styles.statusDot, { backgroundColor: profile.isOnline ? '#4CAF50' : '#9E9E9E' }]} />
-            <Text style={[styles.statusText, theme.dark && { color: theme.colors.text }]}>
-              {profile.isOnline ? 'Online' : `Last seen ${profile.lastSeen}`}
-            </Text>
-          </View>
+
         </View>
 
-        {/* Risk Level */}
+        {/* AI Overview */}
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Risk Assessment</Text>
-          <View style={[styles.riskBadge, { backgroundColor: getRiskLevelColor(profile.riskLevel) }]}>
-            <Ionicons 
-              name={profile.riskLevel === 'green' ? 'shield-checkmark' : profile.riskLevel === 'yellow' ? 'warning' : 'alert'} 
-              size={20} 
-              color="white" 
-            />
-            <Text style={styles.riskText}>{getRiskLevelText(profile.riskLevel)}</Text>
-          </View>
-        </View>
-
-        {/* Mutual Friends */}
-        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Mutual Connections</Text>
-          <View style={styles.mutualContainer}>
-            <Ionicons name="people" size={20} color="#718096" />
-            <Text style={[styles.mutualText, theme.dark && { color: theme.colors.text }]}>{profile.mutualFriends} mutual friends</Text>
-          </View>
-        </View>
-
-        {/* Reports */}
-        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Community Reports</Text>
-          <View style={styles.reportsContainer}>
-            <Ionicons name="document-text" size={20} color="#718096" />
-            <Text style={[styles.reportsText, theme.dark && { color: theme.colors.text }]}>
-              {profile.reports} report{profile.reports !== 1 ? 's' : ''} filed
-            </Text>
-          </View>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>AI Overview</Text>
+          <Text style={[styles.aiText, theme.dark && { color: theme.colors.text }]}>{overviewText}</Text>
         </View>
 
         {/* Flags */}
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Flags & Indicators</Text>
           <View style={styles.flagsContainer}>
             {profile.flags.map((flag, index) => (
-              <View key={index} style={styles.flagItem}>
+              <View key={index} style={[styles.flagItem, theme.dark ? styles.flagItemDark : styles.flagItemLight]}>
                 <Ionicons name={getFlagIcon(flag)} size={16} color={getFlagColor(flag)} />
-                <Text style={[styles.flagText, { color: getFlagColor(flag) }, theme.dark && { color: theme.colors.text }]}>
+                <Text style={[styles.flagText, { color: getFlagColor(flag) }]}>
                   {flag.replace('_', ' ')}
                 </Text>
               </View>
@@ -187,20 +315,46 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="chatbubble" size={20} color="white" />
-            <Text style={styles.actionButtonText}>Message</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
-            <Ionicons name="flag" size={20} color="#E6D7C3" />
-            <Text style={[styles.actionButtonText, { color: '#E6D7C3' }]}>Report</Text>
-          </TouchableOpacity>
+        {/* Discussion */}
+        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}> 
+          <View style={styles.commentsHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Discussion</Text>
+            <Text style={[styles.commentsCount, { color: theme.dark ? theme.colors.text : '#6B7280' }]}>{flatComments.length}</Text>
+          </View>
+          <FlatList
+            data={flatComments}
+            renderItem={renderComment}
+            keyExtractor={(item) => `${item.node.id}`}
+            ItemSeparatorComponent={() => <View style={styles.commentSeparator} />}
+            scrollEnabled={false}
+          />
         </View>
       </ScrollView>
-    </View>
+
+      <View style={[styles.replyBarWrap, { backgroundColor: theme.colors.surface, borderTopColor: '#E5E7EB' }]}> 
+        {replyTarget && (
+          <View style={styles.replyingTo}>
+            <Text style={[styles.replyingText, { color: theme.colors.text }]}>Replying to {replyTarget.author}</Text>
+            <TouchableOpacity onPress={() => setReplyTarget(null)}>
+              <Ionicons name="close" size={16} color={theme.colors.placeholder} />
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={styles.replyRow}>
+          <TextInput
+            style={[styles.replyInput, { color: theme.colors.text }]}
+            placeholder={replyTarget ? 'Write a reply...' : 'Write a comment...'}
+            placeholderTextColor={theme.colors.placeholder}
+            value={replyText}
+            onChangeText={setReplyText}
+            multiline
+          />
+          <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSend}>
+            <Ionicons name="send" size={16} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -220,7 +374,9 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   profileSection: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
     marginHorizontal: 20,
     marginBottom: 20,
     borderRadius: 16,
@@ -230,14 +386,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  imageContainer: { position: 'relative', marginBottom: 16 },
-  profileImage: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#F0F0F0' },
-  onlineIndicator: { position: 'absolute', bottom: 4, right: 4, width: 20, height: 20, borderRadius: 10, borderWidth: 3, borderColor: 'white' },
+    imageContainer: { position: 'relative', marginBottom: 10, width: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
+  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: '#F0F0F0' },
+  
   profileName: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
-  profileUsername: { fontSize: 16, color: '#718096', marginBottom: 12 },
-  statusContainer: { flexDirection: 'row', alignItems: 'center' },
-  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  statusText: { fontSize: 14, color: '#718096' },
+
+
   section: {
     marginHorizontal: 20,
     marginBottom: 20,
@@ -250,19 +404,41 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-  riskBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12 },
-  riskText: { color: 'white', fontSize: 16, fontWeight: '600', marginLeft: 8 },
-  mutualContainer: { flexDirection: 'row', alignItems: 'center' },
-  mutualText: { fontSize: 16, color: '#718096', marginLeft: 12 },
-  reportsContainer: { flexDirection: 'row', alignItems: 'center' },
-  reportsText: { fontSize: 16, color: '#718096', marginLeft: 12 },
+  aiText: { fontSize: 14, lineHeight: 20, color: '#4B5563' },
   flagsContainer: { flexDirection: 'row', flexWrap: 'wrap' },
-  flagItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
-  flagText: { fontSize: 12, fontWeight: '500', marginLeft: 4, textTransform: 'capitalize' },
-  actionsContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 30 },
-  actionButton: { backgroundColor: '#3E5F44', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, marginHorizontal: 8 },
-  secondaryButton: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#D9A299' },
-  actionButtonText: { color: '#FFFFFF', fontWeight: '600' },
+  flagItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
+  flagItemLight: { backgroundColor: '#F7FAFC', borderWidth: 1, borderColor: '#E5E7EB' },
+  flagItemDark: { backgroundColor: '#1F2937', borderWidth: 1, borderColor: '#374151' },
+  flagText: { fontSize: 12, fontWeight: '700', marginLeft: 4, textTransform: 'capitalize' },
+  commentsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  commentsCount: { fontSize: 12, fontWeight: '600' },
+  commentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 12,
+    borderRadius: 12,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+  },
+  avatarCircle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  avatarInitial: { color: 'white', fontWeight: '700', fontSize: 12 },
+  commentBody: { flex: 1 },
+  commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  commentAuthor: { fontSize: 14, fontWeight: '700' },
+  commentTime: { fontSize: 12 },
+  commentText: { fontSize: 14, lineHeight: 20, marginTop: 4 },
+  replyLink: { fontSize: 12, fontWeight: '700' },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 6 },
+  commentSeparator: { height: 10 },
+  replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, marginBottom: 12 },
+  replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  replyingText: { fontSize: 12, fontWeight: '600' },
+  replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  replyInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10 },
+  sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });
 
 export default ProfileDetailScreen; 

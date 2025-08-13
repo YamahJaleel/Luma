@@ -180,14 +180,14 @@ const OnboardingScreen = ({ onComplete }) => {
               styles.learnMoreContent,
               { backgroundColor: theme.colors.surface },
               {
-                transform: [
-                  {
+              transform: [
+                {
                     translateY: learnMoreAnimation.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }),
-                  },
-                ],
-              },
-            ]}
-          >
+                },
+              ],
+            },
+          ]}
+        >
             <View style={styles.learnMoreHeader}>
               <Text style={[styles.learnMoreTitle, { color: theme.colors.text }]}>Protected by Encryption</Text>
               <TouchableOpacity onPress={closeLearnMore} style={styles.closeButton}>

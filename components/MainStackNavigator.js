@@ -14,6 +14,9 @@ import BrowseCommunitiesScreen from '../screens/BrowseCommunitiesScreen';
 import LikedPostsScreen from '../screens/LikedPostsScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import CreateProfileScreen from '../screens/CreateProfileScreen';
+import MessagesScreen from '../screens/MessagesScreen';
+import MessageThreadScreen from '../screens/MessageThreadScreen';
+import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 
 const Stack = createStackNavigator();
 
@@ -49,6 +52,9 @@ const MainStackNavigator = () => {
         <Stack.Screen name="LikedPosts" component={LikedPostsScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />
+        <Stack.Screen name="Messages" component={MessagesScreen} />
+        <Stack.Screen name="MessageThread" component={MessageThreadScreen} />
+        <Stack.Screen name="CreateCommunity" component={CreateCommunityScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>

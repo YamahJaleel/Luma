@@ -7,22 +7,49 @@ import {
   Image,
   FlatList,
   Dimensions,
-  TextInput,
-} from 'react-native';
+    TextInput,
+  Modal,
+ } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
 import { useTheme } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const screenPadding = 20;
 const availableWidth = width - screenPadding * 2;
 const gap = 10;
 
-const SearchScreen = ({ navigation }) => {
+const SearchScreen = ({ navigation, route }) => {
   const theme = useTheme();
   const { dataUsageEnabled } = useSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProfiles, setFilteredProfiles] = useState([]);
+  const [location, setLocation] = useState('Toronto, ON');
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationInput, setLocationInput] = useState('Toronto, ON');
+  const CAN_LOCATIONS = React.useMemo(
+    () => [
+      'Toronto, ON','Vancouver, BC','Montreal, QC','Calgary, AB','Edmonton, AB','Ottawa, ON','Winnipeg, MB','Quebec City, QC','Hamilton, ON','Kitchener, ON',
+      'Mississauga, ON','Brampton, ON','Surrey, BC','Halifax, NS','Victoria, BC','Saskatoon, SK','Regina, SK','London, ON','Markham, ON','Burnaby, BC'
+    ],
+    []
+  );
+  const OTHER_LOCATIONS = React.useMemo(
+    () => [
+      'New York, NY','Los Angeles, CA','Chicago, IL','Houston, TX','Phoenix, AZ','Philadelphia, PA','San Antonio, TX','San Diego, CA','Dallas, TX','San Jose, CA',
+      'Austin, TX','Jacksonville, FL','San Francisco, CA','Columbus, OH','Fort Worth, TX','Indianapolis, IN','Charlotte, NC','Seattle, WA','Denver, CO','Washington, DC',
+      'Boston, MA','El Paso, TX','Nashville, TN','Detroit, MI','Oklahoma City, OK','Portland, OR','Las Vegas, NV','Memphis, TN','Louisville, KY','Baltimore, MD',
+      'Miami, FL','Atlanta, GA','Vancouver, BC','London, UK','Paris, FR','Berlin, DE','Sydney, AU','Melbourne, AU','Tokyo, JP','Seoul, KR','Singapore'
+    ],
+    []
+  );
+  const ALL_LOCATIONS = React.useMemo(() => [...CAN_LOCATIONS, ...OTHER_LOCATIONS], [CAN_LOCATIONS, OTHER_LOCATIONS]);
+  const filteredLocations = React.useMemo(() => {
+    const q = locationInput.trim().toLowerCase();
+    if (!q) return CAN_LOCATIONS.slice(0, 8);
+    return ALL_LOCATIONS.filter((name) => name.toLowerCase().includes(q)).slice(0, 8);
+  }, [locationInput, CAN_LOCATIONS, ALL_LOCATIONS]);
 
   // Mock profile data with different sizes
   const mockProfiles = [
@@ -252,6 +279,19 @@ const SearchScreen = ({ navigation }) => {
     }
   };
 
+  // Receive serializable return from CreateProfile
+  useFocusEffect(
+    React.useCallback(() => {
+      const params = route?.params || {};
+      if (params.newProfile && params.newProfile.id) {
+        const np = params.newProfile;
+        setProfiles((prev) => [np, ...prev]);
+        if (searchQuery.trim()) handleSearch(searchQuery);
+        navigation.setParams({ newProfile: undefined });
+      }
+    }, [route?.params, searchQuery])
+  );
+
   const getSizeStyle = (size) => {
     switch (size) {
       case 'large':
@@ -285,7 +325,7 @@ const SearchScreen = ({ navigation }) => {
   const createRows = () => {
     const rows = [];
     let currentIndex = 0;
-
+    
     while (currentIndex < displayProfiles.length) {
       if (currentIndex < displayProfiles.length) {
         rows.push({ type: 'large', items: displayProfiles.slice(currentIndex, currentIndex + 2) });
@@ -296,7 +336,7 @@ const SearchScreen = ({ navigation }) => {
         currentIndex += 3;
       }
     }
-
+    
     return rows;
   };
 
@@ -309,35 +349,36 @@ const SearchScreen = ({ navigation }) => {
         <View style={styles.searchHeaderRow}>
           <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}> 
             <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
-            <TextInput
+          <TextInput
               style={[styles.searchInput, { color: theme.colors.text } ]}
-              placeholder="Search profiles..."
+            placeholder="Search"
               placeholderTextColor={theme.colors.placeholder}
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => handleSearch('')}>
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
                 <Ionicons name="close-circle" size={20} color={theme.colors.placeholder} />
-              </TouchableOpacity>
-            )}
+            </TouchableOpacity>
+          )}
           </View>
           <TouchableOpacity
             style={[styles.addBtn, { backgroundColor: theme.colors.surface }]}
             onPress={() =>
-              navigation.navigate('CreateProfile', {
-                onSubmit: (newProfile) => {
-                  setProfiles((prev) => [newProfile, ...prev]);
-                  if (searchQuery.trim()) {
-                    handleSearch(searchQuery);
-                  }
-                },
-              })
+              navigation.navigate('CreateProfile')
             }
           >
             <Ionicons name="add" size={22} color={theme.colors.primary} />
           </TouchableOpacity>
         </View>
+        <TouchableOpacity
+          style={[styles.locationRow, { backgroundColor: theme.colors.surface }]}
+          onPress={() => { setLocationInput(location); setShowLocationModal(true); }}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="location" size={14} color={theme.colors.primary} />
+          <Text style={[styles.locationText, { color: theme.colors.text }]}>{location}</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Profile Grid */}
@@ -370,6 +411,48 @@ const SearchScreen = ({ navigation }) => {
           </Text>
         </View>
       )}
+
+      {/* Location Modal */}
+      <Modal visible={showLocationModal} transparent animationType="fade" onRequestClose={() => setShowLocationModal(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowLocationModal(false)}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Change Location</Text>
+              <TouchableOpacity onPress={() => setShowLocationModal(false)}>
+                <Ionicons name="close" size={22} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <TextInput
+                style={[styles.locationInput, { color: theme.colors.text }]}
+                placeholder="City, State"
+                placeholderTextColor={theme.colors.placeholder}
+                value={locationInput}
+                onChangeText={setLocationInput}
+                autoFocus
+              />
+              <FlatList
+                data={filteredLocations}
+                keyExtractor={(item) => item}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.suggestionRow} onPress={() => setLocationInput(item)}>
+                    <Ionicons name="location-outline" size={16} color={theme.colors.primary} />
+                    <Text style={[styles.suggestionText, { color: theme.colors.text }]} numberOfLines={1}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                contentContainerStyle={styles.suggestionsList}
+              />
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: theme.colors.primary }]}
+                onPress={() => { setLocation(locationInput); setShowLocationModal(false); }}
+              >
+                <Text style={styles.saveBtnText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -422,6 +505,84 @@ const styles = StyleSheet.create({
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   emptyTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
   emptySubtitle: { fontSize: 16, color: '#718096', textAlign: 'center', lineHeight: 24 },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  locationText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: '#718096',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  locationInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#374151',
+    marginBottom: 15,
+  },
+  saveBtn: {
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  suggestionsList: { paddingBottom: 8 },
+  suggestionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
+  suggestionText: { fontSize: 14, flex: 1 },
 });
 
 export default SearchScreen; 

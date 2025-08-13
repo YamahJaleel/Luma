@@ -51,6 +51,11 @@ const AnimatedTabBar = () => {
         const iconName = getIconName(tab.name, isFocused);
 
         const onPress = () => {
+          if (tab.name === 'Home') {
+            navigation.popToTop();
+            setCurrentTab('Home');
+            return;
+          }
           if (!isFocused) {
             navigation.navigate(tab.name);
             setCurrentTab(tab.name);

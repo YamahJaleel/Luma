@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 const CreateProfileScreen = ({ route, navigation }) => {
   const theme = useTheme();
-  const { onSubmit } = route.params || {};
 
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -29,8 +28,8 @@ const CreateProfileScreen = ({ route, navigation }) => {
       reports: 0,
       bio: bio.trim(),
     };
-    if (typeof onSubmit === 'function') onSubmit(newProfile);
-    navigation.goBack();
+    // Navigate back to Search with a serializable param
+    navigation.navigate('Search', { newProfile });
   };
 
   return (

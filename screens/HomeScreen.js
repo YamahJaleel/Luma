@@ -24,6 +24,8 @@ const HomeScreen = ({ navigation, route }) => {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteCommunities, setFavoriteCommunities] = useState([]); // array of {id,name,icon,color,memberCount}
+  const [showCommunitiesMenu, setShowCommunitiesMenu] = useState(false);
+  const COMMUNITY_MENU_ENABLED = false;
 
   // Mock data for subcommunities
   const defaultSubcommunities = [
@@ -459,6 +461,18 @@ const HomeScreen = ({ navigation, route }) => {
         });
         navigation.setParams({ favoriteToggle: undefined });
       }
+      if (params.newCommunity && params.newCommunity.id) {
+        const c = params.newCommunity;
+        setFavoriteCommunities((prev) => {
+          const exists = prev.some((x) => x.id === c.id);
+          return exists ? prev : [c, ...prev];
+        });
+        setSelectedCommunity(c.id);
+        setSelectedCommunityMeta(c);
+        setSelectedSort('recent');
+        setPostsByCommunity((prev) => (prev[c.id] ? prev : { ...prev, [c.id]: [] }));
+        navigation.setParams({ newCommunity: undefined });
+      }
     }, [route?.params])
   );
 
@@ -478,22 +492,16 @@ const HomeScreen = ({ navigation, route }) => {
 
       {/* Subcommunities */}
       <View style={styles.communitiesSection}>
-        <TouchableOpacity
-          style={[styles.communitiesButton, { backgroundColor: theme.colors.surface }]}
-          onPress={() =>
-            navigation.navigate('BrowseCommunities', {
-              // Defaults are favorited initially
-              favoriteIds: Array.from(new Set([
-                ...favoriteCommunities.map((f) => f.id),
-                ...defaultSubcommunities.map((d) => d.id),
-              ])),
-              defaultCommunities: defaultSubcommunities,
-            })
-          }
-        >
-          <Ionicons name="search" size={16} color={theme.colors.primary} style={{ marginRight: 8 }} />
-          <Text style={[styles.communitiesButtonText, { color: theme.colors.text }]}>Communities</Text>
-        </TouchableOpacity>
+        {COMMUNITY_MENU_ENABLED ? (
+          <TouchableOpacity
+            style={[styles.communitiesButton, { backgroundColor: theme.colors.surface }]}
+            onPress={() => setShowCommunitiesMenu(true)}
+          >
+            <Text style={[styles.communitiesButtonText, { color: theme.colors.text }]}>Communities</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={[styles.communitiesTitle, { color: theme.colors.text }]}>Communities</Text>
+        )}
         <FlatList
           data={displayedSubcommunities}
           renderItem={renderCommunityItem}
@@ -608,6 +616,48 @@ const HomeScreen = ({ navigation, route }) => {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Communities Menu */}
+      {COMMUNITY_MENU_ENABLED && (
+        <Modal visible={showCommunitiesMenu} transparent={true} animationType="fade" onRequestClose={() => setShowCommunitiesMenu(false)}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCommunitiesMenu(false)}>
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}> 
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Communities</Text>
+                <TouchableOpacity onPress={() => setShowCommunitiesMenu(false)}>
+                  <Ionicons name="close" size={24} color="#6B7280" />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.sortOption]}
+                onPress={() => {
+                  setShowCommunitiesMenu(false);
+                  navigation.navigate('BrowseCommunities', {
+                    favoriteIds: Array.from(new Set([
+                      ...favoriteCommunities.map((f) => f.id),
+                      ...defaultSubcommunities.map((d) => d.id),
+                    ])),
+                    defaultCommunities: defaultSubcommunities,
+                  });
+                }}
+              >
+                <Ionicons name="compass" size={16} color="#6B7280" />
+                <Text style={styles.sortOptionText}>Browse Communities</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.sortOption]}
+                onPress={() => {
+                  setShowCommunitiesMenu(false);
+                  navigation.navigate('CreateCommunity');
+                }}
+              >
+                <Ionicons name="add-circle" size={16} color="#6B7280" />
+                <Text style={styles.sortOptionText}>Create Community</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 };

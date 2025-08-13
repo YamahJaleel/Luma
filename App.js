@@ -38,8 +38,8 @@ const darkTheme = {
   colors: {
     primary: '#9FE6B8',
     secondary: '#F1B8B2',
-    background: '#0F172A',
-    surface: '#111827',
+    background: '#111827',
+    surface: '#1F2937',
     text: '#FFFFFF',
     placeholder: '#D1D5DB',
     accent: '#1F2937',
