@@ -14,10 +14,13 @@ import {
 import { Card, Chip, Avatar, Button, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTabContext } from '../components/TabContext';
 
 const HomeScreen = ({ navigation, route }) => {
   const theme = useTheme();
+  const { setTabHidden } = useTabContext();
   const [refreshing, setRefreshing] = useState(false);
+  const scrollYRef = React.useRef(0);
   const [selectedCommunity, setSelectedCommunity] = useState('dating-advice');
   const [selectedCommunityMeta, setSelectedCommunityMeta] = useState(null);
   const [selectedSort, setSelectedSort] = useState('recent');
@@ -346,7 +349,6 @@ const HomeScreen = ({ navigation, route }) => {
       <Text style={[styles.communityName, selectedCommunity === item.id && styles.selectedCommunityName]}>
         {item.name}
       </Text>
-      <Text style={[styles.memberCount, theme.dark && { color: theme.colors.text }]}>{item.memberCount} members</Text>
     </TouchableOpacity>
   );
 
@@ -562,6 +564,18 @@ const HomeScreen = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={styles.postsList}
+          onScroll={(e) => {
+            const y = e.nativeEvent.contentOffset.y;
+            const prevY = scrollYRef.current || 0;
+            const dy = y - prevY;
+            if (dy > 5 && y > 20) {
+              setTabHidden(true); // scrolling down
+            } else if (dy < -5 || y <= 20) {
+              setTabHidden(false); // scrolling up or near top
+            }
+            scrollYRef.current = y;
+          }}
+          scrollEventThrottle={16}
         />
       </View>
 

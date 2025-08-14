@@ -2,11 +2,12 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { TabProvider } from './components/TabContext';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
+import * as Notifications from 'expo-notifications';
 
 // Import screens
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -14,6 +15,11 @@ import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import MainStackNavigator from './components/MainStackNavigator';
 
 const Stack = createStackNavigator();
+
+// Configure notification behavior (foreground)
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: false, shouldSetBadge: false }),
+});
 
 const lightTheme = {
   dark: false,
@@ -52,9 +58,39 @@ const darkTheme = {
 };
 
 const AppContent = () => {
-  const { darkModeEnabled } = useSettings();
+  const { darkModeEnabled, notificationsEnabled } = useSettings();
   const theme = darkModeEnabled ? darkTheme : lightTheme;
   const [isOnboarded, setIsOnboarded] = React.useState(false);
+
+  React.useEffect(() => {
+    const ensurePermissions = async () => {
+      if (!notificationsEnabled) return;
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        console.log('Notifications permission not granted');
+        return;
+      }
+      // Get expo push token (requires EAS or Expo Go support)
+      try {
+        const token = await Notifications.getExpoPushTokenAsync();
+        console.log('Expo push token', token?.data);
+      } catch (e) {
+        console.log('Failed to get push token', e);
+      }
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.DEFAULT,
+        });
+      }
+    };
+    ensurePermissions();
+  }, [notificationsEnabled]);
 
   return (
     <PaperProvider theme={theme}>

@@ -9,9 +9,12 @@ import {
 } from 'react-native';
 import { Card, List, Button, Avatar, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useTabContext } from '../components/TabContext';
 
 const ProfileScreen = ({ navigation }) => {
   const theme = useTheme();
+  const { setTabHidden } = useTabContext();
+  const scrollYRef = React.useRef(0);
   const [isVerified, setIsVerified] = useState(false);
 
   const handleVerification = () => {
@@ -34,7 +37,21 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      onScroll={(e) => {
+        const y = e.nativeEvent.contentOffset.y;
+        const prevY = scrollYRef.current || 0;
+        const dy = y - prevY;
+        if (dy > 5 && y > 20) {
+          setTabHidden(true);
+        } else if (dy < -5 || y <= 20) {
+          setTabHidden(false);
+        }
+        scrollYRef.current = y;
+      }}
+      scrollEventThrottle={16}
+    >
       {/* Profile Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -124,16 +141,6 @@ const ProfileScreen = ({ navigation }) => {
       <Card style={[styles.menuCard, { backgroundColor: theme.colors.surface }]}>
         <Card.Content style={styles.menuContent}>
           <List.Item
-            title="Edit Profile"
-            description="Update your profile information"
-            left={(props) => <List.Icon {...props} icon="account-outline" color={theme.colors.primary} />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
-            titleStyle={{ color: theme.colors.text }}
-            descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
-            style={styles.menuItem}
-            onPress={() => Alert.alert('Feature', 'Edit Profile coming soon!')}
-          />
-          <List.Item
             title="Liked Posts"
             description="See posts you've liked"
             left={(props) => <List.Icon {...props} icon="heart" color={theme.colors.primary} />} 
@@ -151,8 +158,31 @@ const ProfileScreen = ({ navigation }) => {
             titleStyle={{ color: theme.colors.text }}
             descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
             style={styles.menuItem}
-            onPress={() => Alert.alert('About', 'Luma is a safety-first platform built for a better dating world.')}
+            onPress={() => Alert.alert('About Luma', `Luma is a safety-first platform made to provide a truly protected space in the dating world.
+
+Our Mission:
+Help you share experiences, verify concerns, and feel empowered without fear of exposure.
+
+Key Features:
+Women-Only Access
+Anonymous Experience Sharing  
+Search & Verify
+Community Support Forum
+Secure & Private by Design
+
+Privacy is our foundation we use secure systems to ensure user information is never exposed.`)}
           />
+        </Card.Content>
+      </Card>
+      <Card style={[styles.menuCard, { backgroundColor: theme.colors.surface }]}> 
+        <Card.Content style={styles.menuContent}>
+          <TouchableOpacity style={[styles.logoutRow]} onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Logout', style: 'destructive', onPress: () => Alert.alert('Logged Out', 'You have been successfully logged out.') }
+            ])}>
+            <Ionicons name="log-out-outline" size={20} color="#FC8181" />
+            <Text style={[styles.logoutText, { color: '#FC8181' }]}>Logout</Text>
+          </TouchableOpacity>
         </Card.Content>
       </Card>
     </ScrollView>
@@ -202,6 +232,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     marginTop: 10,
   },
+  logoutRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, gap: 8 },
+  logoutText: { fontSize: 16, fontWeight: '500', marginLeft: 4 },
 });
 
 export default ProfileScreen; 

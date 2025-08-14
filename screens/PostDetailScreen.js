@@ -216,6 +216,7 @@ const PostDetailScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
+      <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
     </KeyboardAvoidingView>
   );
 };
@@ -273,7 +274,7 @@ const styles = StyleSheet.create({
   replyLink: { marginTop: 6 },
   replyText: { fontSize: 12, fontWeight: '700' },
   commentSeparator: { height: 10 },
-  replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1 },
+  replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   replyingText: { fontSize: 12, fontWeight: '600' },
   replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },

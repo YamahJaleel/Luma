@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
 import { useTheme } from 'react-native-paper';
+import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
@@ -23,6 +24,7 @@ const gap = 10;
 const SearchScreen = ({ navigation, route }) => {
   const theme = useTheme();
   const { dataUsageEnabled } = useSettings();
+  const { setTabHidden } = useTabContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProfiles, setFilteredProfiles] = useState([]);
   const [location, setLocation] = useState('Toronto, ON');
@@ -399,6 +401,18 @@ const SearchScreen = ({ navigation, route }) => {
         initialNumToRender={dataUsageEnabled ? 4 : 8}
         windowSize={dataUsageEnabled ? 3 : 5}
         removeClippedSubviews={true}
+        onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          const prevY = scrollYRef.current || 0;
+          const dy = y - prevY;
+          if (dy > 5 && y > 20) {
+            setTabHidden(true);
+          } else if (dy < -5 || y <= 20) {
+            setTabHidden(false);
+          }
+          scrollYRef.current = y;
+        }}
+        scrollEventThrottle={16}
       />
 
       {/* Empty State */}

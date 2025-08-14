@@ -4,9 +4,10 @@ const TabContext = createContext();
 
 export const TabProvider = ({ children }) => {
   const [currentTab, setCurrentTab] = useState('Home');
+  const [tabHidden, setTabHidden] = useState(false);
 
   return (
-    <TabContext.Provider value={{ currentTab, setCurrentTab }}>
+    <TabContext.Provider value={{ currentTab, setCurrentTab, tabHidden, setTabHidden }}>
       {children}
     </TabContext.Provider>
   );

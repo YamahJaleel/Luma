@@ -373,6 +373,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
+      <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
     </KeyboardAvoidingView>
   );
 };
@@ -405,7 +406,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-    imageContainer: { position: 'relative', marginBottom: 10, width: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
+    imageContainer: { position: 'relative', marginBottom: 16, width: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
   profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: '#F0F0F0' },
   
   profileName: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
@@ -451,7 +452,7 @@ const styles = StyleSheet.create({
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 6 },
 
   commentSeparator: { height: 10 },
-  replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, marginBottom: 12 },
+  replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   replyingText: { fontSize: 12, fontWeight: '600' },
   replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },

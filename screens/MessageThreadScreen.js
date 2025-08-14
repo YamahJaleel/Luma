@@ -80,6 +80,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
           <Ionicons name="send" size={16} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
+      <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
     </KeyboardAvoidingView>
   );
 };

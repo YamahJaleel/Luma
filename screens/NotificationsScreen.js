@@ -10,10 +10,13 @@ import {
 import { Card, Avatar, Chip, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
+import { useTabContext } from '../components/TabContext';
 
 const NotificationsScreen = ({ navigation }) => {
   const theme = useTheme();
   const { notificationsEnabled } = useSettings();
+  const { setTabHidden } = useTabContext();
+  const scrollYRef = React.useRef(0);
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -183,6 +186,18 @@ const NotificationsScreen = ({ navigation }) => {
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.notificationsList}
+        onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          const prevY = scrollYRef.current || 0;
+          const dy = y - prevY;
+          if (dy > 5 && y > 20) {
+            setTabHidden(true);
+          } else if (dy < -5 || y <= 20) {
+            setTabHidden(false);
+          }
+          scrollYRef.current = y;
+        }}
+        scrollEventThrottle={16}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="notifications-off" size={64} color="#E2E8F0" />

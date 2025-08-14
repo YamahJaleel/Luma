@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Pressable, Text } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { useTabContext } from './TabContext';
 import { useSettings } from './SettingsContext';
 import { useTheme } from 'react-native-paper';
@@ -9,9 +9,23 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } f
 
 const AnimatedTabBar = () => {
   const navigation = useNavigation();
-  const { currentTab, setCurrentTab } = useTabContext();
+  const { currentTab, setCurrentTab, tabHidden } = useTabContext();
   const { notificationsEnabled } = useSettings();
   const theme = useTheme();
+
+  // Determine if we should hide (checks nested routes too)
+  const shouldHide = useNavigationState((state) => {
+    const contains = (s) => {
+      if (!s || !s.routes) return false;
+      for (let i = 0; i < s.routes.length; i++) {
+        const route = s.routes[i];
+        if (route?.name === 'PostDetail' || route?.name === 'MessageThread') return true;
+        if (route?.state && contains(route.state)) return true;
+      }
+      return false;
+    };
+    return contains(state);
+  });
 
   // Colors updated per request
   const BAR_BG = '#FFFFFF';
@@ -40,11 +54,11 @@ const AnimatedTabBar = () => {
     setDims({ width, height });
   }, []);
 
-  // inner horizontal padding inside wrapper (paddingHorizontal: 6)
-  const WRAP_PAD_X = 6;
+  // inner horizontal padding inside wrapper (paddingHorizontal: 4)
+  const WRAP_PAD_X = 4;
   const ACTIVE_INSET_X = 0; // activeBg style left offset
   const effectiveLeft = WRAP_PAD_X + ACTIVE_INSET_X;
-  const NUDGE_RIGHT = 6; // small rightward tweak
+  const NUDGE_RIGHT = 3.5; // fine-tune right by 0.5px
 
   // store measured centers per tab (relative to wrapper content)
   const centersRef = useRef([]);
@@ -54,9 +68,9 @@ const AnimatedTabBar = () => {
   };
 
   const indicatorWidth = useMemo(() => {
-    // keep a consistent visual bubble size across tabs
-    const w = buttonWidth ? Math.min(buttonWidth - 12, 56) : 56;
-    return Math.max(44, w);
+    // slightly larger bubble
+    const w = buttonWidth ? Math.min(buttonWidth - 6, 58) : 58;
+    return Math.max(40, w);
   }, [buttonWidth]);
 
   const computeX = (index) => {
@@ -97,6 +111,36 @@ const AnimatedTabBar = () => {
     }
   };
 
+  // Now safe to early-return (after all hooks are declared)
+  if (shouldHide || tabHidden) return null;
+
+  const TabItem = ({ isFocused, iconName, tint, label, onPress, onLayout, showBadge }) => {
+    const scale = useSharedValue(isFocused ? 1 : 0);
+    useEffect(() => {
+      scale.value = withSpring(isFocused ? 1 : 0, { duration: 300 });
+    }, [isFocused]);
+
+    const iconWrapStyle = useAnimatedStyle(() => {
+      const s = interpolate(scale.value, [0, 1], [1, 1.1]);
+      const top = interpolate(scale.value, [0, 1], [0, 4]);
+      return { transform: [{ scale: s }], top };
+    });
+    const labelStyle = useAnimatedStyle(() => {
+      const opacity = interpolate(scale.value, [0, 1], [1, 0.85]);
+      return { opacity };
+    });
+
+    return (
+      <Pressable onPress={onPress} onLayout={onLayout} style={styles.item} android_ripple={{ foreground: true }}>
+        <Animated.View style={[styles.iconWrap, iconWrapStyle]}>
+          <Ionicons name={iconName} size={21} color={tint} />
+          {showBadge && <View style={[styles.badgeDot]} />}
+        </Animated.View>
+        <Animated.Text style={[styles.label, labelStyle, { color: isFocused ? '#FFFFFF' : '#6B7280' }]}>{label}</Animated.Text>
+      </Pressable>
+    );
+  };
+
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <View style={[styles.wrapper, { backgroundColor: BAR_BG }]} onLayout={onBarLayout}>
@@ -104,7 +148,7 @@ const AnimatedTabBar = () => {
           <Animated.View
             style={[
               styles.activeBg,
-              { width: indicatorWidth, height: Math.max(44, dims.height - 15), backgroundColor: ACTIVE_BG },
+              { width: indicatorWidth, height: Math.max(46, dims.height - 12), backgroundColor: ACTIVE_BG },
               indicatorStyle,
             ]}
           />
@@ -128,41 +172,20 @@ const AnimatedTabBar = () => {
             }
           };
 
-          // Animations per button
-          const scale = useSharedValue(isFocused ? 1 : 0);
-          useEffect(() => {
-            scale.value = withSpring(isFocused ? 1 : 0, { duration: 300 });
-          }, [isFocused]);
-
-          const iconWrapStyle = useAnimatedStyle(() => {
-            const s = interpolate(scale.value, [0, 1], [1, 1.1]);
-            const top = interpolate(scale.value, [0, 1], [0, 4]);
-            return { transform: [{ scale: s }], top };
-          });
-          const labelStyle = useAnimatedStyle(() => {
-            const opacity = interpolate(scale.value, [0, 1], [1, 0.85]);
-            return { opacity };
-          });
-
           const iconName = getIconName(tab.name, isFocused);
           const tint = isFocused ? ICON_ACTIVE : ICON_INACTIVE;
 
           return (
-            <Pressable
+            <TabItem
               key={tab.name}
+              isFocused={isFocused}
+              iconName={iconName}
+              tint={tint}
+              label={tab.label}
               onPress={onPress}
               onLayout={(e) => setCenter(index, e.nativeEvent.layout.x, e.nativeEvent.layout.width)}
-              style={styles.item}
-              android_ripple={{ foreground: true }}
-            >
-              <Animated.View style={[styles.iconWrap, iconWrapStyle]}>
-                <Ionicons name={iconName} size={22} color={tint} />
-                {tab.name === 'Notifications' && notificationsEnabled && hasUnread && (
-                  <View style={[styles.badgeDot]} />
-                )}
-              </Animated.View>
-              <Animated.Text style={[styles.label, labelStyle]}>{tab.label}</Animated.Text>
-            </Pressable>
+              showBadge={tab.name === 'Notifications' && notificationsEnabled && hasUnread}
+            />
           );
         })}
       </View>
@@ -175,38 +198,38 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 28,
-    borderRadius: 32,
+    bottom: 22,
+    borderRadius: 24,
     paddingVertical: 10,
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     shadowColor: '#000000',
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
   activeBg: {
     position: 'absolute',
     left: 0,
-    borderRadius: 28,
+    borderRadius: 20,
   },
   item: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    paddingVertical: 6,
-    borderRadius: 28,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
   iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#6B7280',
   },
   badgeDot: {

@@ -7,13 +7,20 @@ import {
   TouchableOpacity,
   Alert,
   Switch,
+  Modal,
 } from 'react-native';
 import { Card, List, Button, Divider, Avatar, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
+import * as Location from 'expo-location';
+import * as LocalAuthentication from 'expo-local-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTabContext } from '../components/TabContext';
 
 const SettingsScreen = ({ navigation }) => {
   const theme = useTheme();
+  const { setTabHidden } = useTabContext();
+  const scrollYRef = React.useRef(0);
   const {
     notificationsEnabled,
     setNotificationsEnabled,
@@ -43,6 +50,34 @@ const SettingsScreen = ({ navigation }) => {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => { Alert.alert('Account Deleted', 'Your account has been deleted.'); } },
     ]);
+  };
+
+  const onToggleLocation = async (next) => {
+    if (next) {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Location permission was not granted.');
+        return;
+      }
+    }
+    setLocationEnabled(next);
+  };
+
+  const onToggleBiometric = async (next) => {
+    if (next) {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const supported = await LocalAuthentication.supportedAuthenticationTypesAsync();
+      if (!hasHardware || (supported || []).length === 0) {
+        Alert.alert('Not supported', 'Biometric authentication is not available on this device.');
+        return;
+      }
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!enrolled) {
+        Alert.alert('Not set up', 'No biometrics enrolled on this device. Set up Face/Touch ID first.');
+        return;
+      }
+    }
+    setBiometricEnabled(next);
   };
 
   const settingsSections = [
@@ -79,7 +114,7 @@ const SettingsScreen = ({ navigation }) => {
           icon: 'map-marker-outline',
           type: 'toggle',
           value: locationEnabled,
-          onValueChange: setLocationEnabled,
+          onValueChange: onToggleLocation,
         },
         {
           id: 'biometric_lock',
@@ -88,7 +123,7 @@ const SettingsScreen = ({ navigation }) => {
           icon: 'fingerprint',
           type: 'toggle',
           value: biometricEnabled,
-          onValueChange: setBiometricEnabled,
+          onValueChange: onToggleBiometric,
         },
         { id: 'privacy_settings', title: 'Privacy Settings', subtitle: 'Manage your data and privacy', icon: 'shield-check-outline', type: 'navigate' },
         { id: 'safety_resources', title: 'Safety Resources', subtitle: 'Access safety tips and resources', icon: 'medical-bag', type: 'navigate' },
@@ -101,7 +136,6 @@ const SettingsScreen = ({ navigation }) => {
         { id: 'edit_profile', title: 'Edit Profile', subtitle: 'Update your profile information', icon: 'account-outline', type: 'navigate' },
         { id: 'change_password', title: 'Change Password', subtitle: 'Update your account password', icon: 'lock-outline', type: 'navigate' },
         { id: 'two_factor', title: 'Two-Factor Authentication', subtitle: 'Add an extra layer of security', icon: 'shield-outline', type: 'navigate' },
-        { id: 'connected_accounts', title: 'Connected Accounts', subtitle: 'Manage linked social accounts', icon: 'link-variant', type: 'navigate' },
       ],
     },
     {
@@ -134,14 +168,12 @@ const SettingsScreen = ({ navigation }) => {
           value: dataUsageEnabled,
           onValueChange: setDataUsageEnabled,
         },
-        { id: 'language', title: 'Language', subtitle: 'English', icon: 'translate', type: 'navigate' },
         { id: 'clear_cache', title: 'Clear Cache', subtitle: 'Free up storage space', icon: 'trash-can-outline', type: 'action' },
       ],
     },
     {
       title: 'Support',
       items: [
-        { id: 'help_center', title: 'Help Center', subtitle: 'Get help and find answers', icon: 'information-outline', type: 'navigate' },
         { id: 'contact_support', title: 'Contact Support', subtitle: 'Get in touch with our team', icon: 'chat-outline', type: 'navigate' },
         { id: 'report_bug', title: 'Report a Bug', subtitle: 'Help us improve the app', icon: 'bug-outline', type: 'navigate' },
         { id: 'feedback', title: 'Send Feedback', subtitle: 'Share your thoughts with us', icon: 'message-outline', type: 'navigate' },
@@ -150,7 +182,6 @@ const SettingsScreen = ({ navigation }) => {
     {
       title: 'About',
       items: [
-        { id: 'about_luma', title: 'About Luma', subtitle: 'Learn more about Luma', icon: 'information-outline', type: 'navigate' },
         { id: 'privacy_policy', title: 'Privacy Policy', subtitle: 'Read our privacy policy', icon: 'file-document-outline', type: 'navigate' },
         { id: 'terms_of_service', title: 'Terms of Service', subtitle: 'Read our terms of service', icon: 'file-outline', type: 'navigate' },
         { id: 'community_guidelines', title: 'Community Guidelines', subtitle: 'Our community standards', icon: 'account-group', type: 'navigate' },
@@ -161,6 +192,7 @@ const SettingsScreen = ({ navigation }) => {
 
   const renderMenuItem = (item) => {
     if (!item || !item.id) return null;
+    if (item.id === 'about_luma') return null;
 
     if (item.type === 'toggle') {
       return (
@@ -195,11 +227,11 @@ const SettingsScreen = ({ navigation }) => {
           descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
           right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
           style={styles.menuItem}
-          onPress={() => {
+          onPress={async () => {
             if (item.id === 'clear_cache') {
               Alert.alert('Clear Cache', 'This will free up storage space. Continue?', [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'Clear', onPress: () => Alert.alert('Success', 'Cache cleared successfully!') },
+                  { text: 'Clear', onPress: async () => { await AsyncStorage.clear(); Alert.alert('Success', 'Cache cleared successfully!'); } },
               ]);
             }
           }}
@@ -259,7 +291,21 @@ const SettingsScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      onScroll={(e) => {
+        const y = e.nativeEvent.contentOffset.y;
+        const prevY = scrollYRef.current || 0;
+        const dy = y - prevY;
+        if (dy > 5 && y > 20) {
+          setTabHidden(true);
+        } else if (dy < -5 || y <= 20) {
+          setTabHidden(false);
+        }
+        scrollYRef.current = y;
+      }}
+      scrollEventThrottle={16}
+    >
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -285,10 +331,6 @@ const SettingsScreen = ({ navigation }) => {
       <Card style={[styles.dangerCard, { backgroundColor: theme.colors.surface }]}>
         <Card.Content style={styles.sectionContent}>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Account Actions</Text>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#FC8181" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
             <Ionicons name="trash-outline" size={20} color="#FC8181" />
             <Text style={styles.deleteText}>Delete Account</Text>
@@ -346,6 +388,22 @@ const styles = StyleSheet.create({
   logoutText: { color: '#FC8181', fontSize: 16, fontWeight: '500', marginLeft: 12 },
   deleteButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16 },
   deleteText: { color: '#FC8181', fontSize: 16, fontWeight: '500', marginLeft: 12 },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
 });
 
 export default SettingsScreen; 
