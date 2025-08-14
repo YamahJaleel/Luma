@@ -124,26 +124,39 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   })();
 
   // Threaded comments (profile discussion)
-  const makeMockComments = () => ([
-    {
-      id: 1,
-      author: 'Alex R.',
-      avatarColor: '#3E5F44',
-      text: 'Great communicator and respectful.',
-      timestamp: '12m ago',
-      replies: [
-        { id: 11, author: 'Sam T.', avatarColor: '#8B5CF6', text: 'Agree!', timestamp: '8m ago', replies: [] },
-      ],
-    },
-    {
-      id: 2,
-      author: 'Mike J.',
-      avatarColor: '#10B981',
-      text: 'Had a positive experience, punctual and clear.',
-      timestamp: '1h ago',
+  const makeMockComments = () => {
+    const items = [];
+    const ownerNote = (profile?.bio && profile.bio.trim()) ? profile.bio.trim() : 'No overview provided by the creator yet.';
+    items.push({
+      id: 'owner-note',
+      author: 'Profile Owner',
+      avatarColor: '#7C9AFF',
+      text: ownerNote,
+      timestamp: 'now',
       replies: [],
-    },
-  ]);
+    });
+    items.push(
+      {
+        id: 1,
+        author: 'Alex R.',
+        avatarColor: '#3E5F44',
+        text: 'Great communicator and respectful.',
+        timestamp: '12m ago',
+        replies: [
+          { id: 11, author: 'Sam T.', avatarColor: '#8B5CF6', text: 'Agree!', timestamp: '8m ago', replies: [] },
+        ],
+      },
+      {
+        id: 2,
+        author: 'Mike J.',
+        avatarColor: '#10B981',
+        text: 'Had a positive experience, punctual and clear.',
+        timestamp: '1h ago',
+        replies: [],
+      }
+    );
+    return items;
+  };
 
   const flattenComments = (nodes, depth = 0) => {
     const out = [];
@@ -235,8 +248,15 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const renderComment = ({ item }) => {
     const c = item.node;
     const depth = item.depth;
+    const isOwnerNote = c.id === 'owner-note';
     return (
-      <View style={[styles.commentRow, { backgroundColor: theme.colors.surface, marginLeft: depth * 16 }]}>
+      <View
+        style={[
+          styles.commentRow,
+          { backgroundColor: theme.colors.surface, marginLeft: depth * 16 },
+          isOwnerNote && { borderWidth: 1, borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}15` },
+        ]}
+      >
         <View style={[styles.avatarCircle, { backgroundColor: c.avatarColor }]}>
           <Text style={styles.avatarInitial}>{c.author.charAt(0)}</Text>
         </View>
@@ -297,7 +317,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
         {/* AI Overview */}
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>AI Overview</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>What’s being said</Text>
           <Text style={[styles.aiText, theme.dark && { color: theme.colors.text }]}>{overviewText}</Text>
         </View>
 
@@ -305,9 +325,9 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.flagsContainer}>
             {profile.flags.map((flag, index) => (
-              <View key={index} style={[styles.flagItem, theme.dark ? styles.flagItemDark : styles.flagItemLight]}>
+              <View key={index} style={styles.flagItem}>
                 <Ionicons name={getFlagIcon(flag)} size={16} color={getFlagColor(flag)} />
-                <Text style={[styles.flagText, { color: getFlagColor(flag) }]}>
+                <Text style={[styles.flagText, { color: getFlagColor(flag) }, theme.dark && { color: theme.colors.text }]}>
                   {flag.replace('_', ' ')}
                 </Text>
               </View>
@@ -319,7 +339,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}> 
           <View style={styles.commentsHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Discussion</Text>
-            <Text style={[styles.commentsCount, { color: theme.dark ? theme.colors.text : '#6B7280' }]}>{flatComments.length}</Text>
           </View>
           <FlatList
             data={flatComments}
@@ -406,10 +425,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
   aiText: { fontSize: 14, lineHeight: 20, color: '#4B5563' },
   flagsContainer: { flexDirection: 'row', flexWrap: 'wrap' },
-  flagItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
-  flagItemLight: { backgroundColor: '#F7FAFC', borderWidth: 1, borderColor: '#E5E7EB' },
-  flagItemDark: { backgroundColor: '#1F2937', borderWidth: 1, borderColor: '#374151' },
-  flagText: { fontSize: 12, fontWeight: '700', marginLeft: 4, textTransform: 'capitalize' },
+  flagItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
+  flagText: { fontSize: 12, fontWeight: '500', marginLeft: 4, textTransform: 'capitalize' },
   commentsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   commentsCount: { fontSize: 12, fontWeight: '600' },
   commentRow: {
@@ -432,6 +449,7 @@ const styles = StyleSheet.create({
   commentText: { fontSize: 14, lineHeight: 20, marginTop: 4 },
   replyLink: { fontSize: 12, fontWeight: '700' },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 6 },
+
   commentSeparator: { height: 10 },
   replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, marginBottom: 12 },
   replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },

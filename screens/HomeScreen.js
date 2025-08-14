@@ -9,6 +9,7 @@ import {
   FlatList,
   Modal,
   TextInput,
+  Image,
 } from 'react-native';
 import { Card, Chip, Avatar, Button, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -376,48 +377,49 @@ const HomeScreen = ({ navigation, route }) => {
 
   const renderPost = ({ item }) => (
     <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })} activeOpacity={0.9}>
-      <Card style={[styles.postCard, { backgroundColor: theme.colors.surface }]}>
-        <Card.Content style={styles.postContent}>
-          <View style={styles.postHeader}>
-            <View style={styles.postTypeContainer}>
-              <View style={[styles.iconContainer, { backgroundColor: `${getPostColor(item.type)}15` }]}>
-                <Ionicons name={getPostIcon(item.type)} size={14} color={getPostColor(item.type)} />
-              </View>
-              <Text style={[styles.postType, { color: getPostColor(item.type) }]}>
-                {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
-              </Text>
-            </View>
-            <Text style={[styles.timestamp, theme.dark && { color: theme.colors.text }]}>{item.timestamp}</Text>
+      <Card style={[
+        styles.postCard,
+        { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB', borderWidth: 1, elevation: 0, shadowOpacity: 0 }
+      ]}>
+      <Card.Content style={styles.postContent}>
+        <View style={styles.postHeader}>
+          <View style={styles.postTypePill}>
+            <Ionicons name={getPostIcon(item.type)} size={14} color={getPostColor(item.type)} />
+            <Text style={[styles.postTypePillText, { color: getPostColor(item.type) }]}>
+              {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+            </Text>
           </View>
-
+          <Text style={[styles.timestamp, theme.dark && { color: theme.colors.text }]}>{item.timestamp}</Text>
+        </View>
+ 
           <View style={styles.authorRow}>
             <View style={styles.authorAvatar}>
               <Text style={styles.authorInitial}>{(item.author || 'Anonymous').charAt(0)}</Text>
             </View>
             <Text style={[styles.authorName, theme.dark && { color: theme.colors.text }]}>{item.author || 'Anonymous'}</Text>
-          </View>
-
+        </View>
+ 
           <Text style={[styles.postTitle, { color: theme.colors.text }]} numberOfLines={2}>
             {item.title}
           </Text>
           <Text style={[styles.postDescription, theme.dark && { color: theme.colors.text }]} numberOfLines={3}>
             {item.content}
           </Text>
-
-          <View style={styles.divider} />
-
-          <View style={styles.postActions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+ 
+          <View style={[styles.divider, { backgroundColor: theme.dark ? '#1F2937' : '#F1F5F9' }]} />
+ 
+        <View style={styles.postActions}>
+          <TouchableOpacity style={styles.actionButton}>
+              <Ionicons name="chatbubble-outline" size={16} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
               <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{item.comments}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="heart-outline" size={16} color="#6B7280" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+              <Ionicons name="heart-outline" size={16} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
               <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{item.likes}</Text>
-            </TouchableOpacity>
-          </View>
-        </Card.Content>
-      </Card>
+          </TouchableOpacity>
+        </View>
+      </Card.Content>
+    </Card>
     </TouchableOpacity>
   );
 
@@ -461,6 +463,10 @@ const HomeScreen = ({ navigation, route }) => {
         });
         navigation.setParams({ favoriteToggle: undefined });
       }
+      if (params.newPost && params.newPost.id) {
+        handleAddPost(params.newPost);
+        navigation.setParams({ newPost: undefined });
+      }
       if (params.newCommunity && params.newCommunity.id) {
         const c = params.newCommunity;
         setFavoriteCommunities((prev) => {
@@ -482,11 +488,12 @@ const HomeScreen = ({ navigation, route }) => {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerText}>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Luma</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                           <Image source={require('../assets/AppIcon.png')} style={{ width: 40, height: 40, borderRadius: 12, marginRight: 10 }} />
+              <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Luma</Text>
+            </View>
           </View>
-          <TouchableOpacity style={[styles.dmButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.navigate('Messages')}>
-            <Ionicons name="chatbubble" size={24} color="#3E5F44" />
-          </TouchableOpacity>
+          <View style={{ width: 44 }} />
         </View>
       </View>
 
@@ -502,6 +509,7 @@ const HomeScreen = ({ navigation, route }) => {
         ) : (
           <Text style={[styles.communitiesTitle, { color: theme.colors.text }]}>Communities</Text>
         )}
+
         <FlatList
           data={displayedSubcommunities}
           renderItem={renderCommunityItem}
@@ -520,26 +528,31 @@ const HomeScreen = ({ navigation, route }) => {
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {selectedCommunityMeta?.name || displayedSubcommunities.find((c) => c.id === selectedCommunity)?.name || ''}
           </Text>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity style={[styles.sortButton, { backgroundColor: theme.colors.surface }]} onPress={() => setShowSortModal(true)}>
-              <Ionicons name="filter" size={20} color="#3E5F44" />
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.searchButton, { backgroundColor: theme.colors.surface }]} onPress={() => setShowSearchModal(true)}>
-              <Ionicons name="search" size={20} color="#3E5F44" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.addPostButton, { backgroundColor: theme.colors.surface }]
-              }
-              onPress={() =>
-                navigation.navigate('CreatePost', {
-                  communityId: selectedCommunity,
-                  onSubmit: (newPost) => handleAddPost(newPost),
-                })
-              }
-            >
-              <Ionicons name="add" size={20} color="#3E5F44" />
-            </TouchableOpacity>
+
+        </View>
+        {/* Quick actions under community name */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingHorizontal: 16 }}>
+          <View style={[styles.searchPill, { backgroundColor: theme.colors.surface }]}> 
+            <Ionicons name="search" size={16} color={theme.colors.primary} />
+            <TextInput
+              style={[styles.searchPillInput, { color: theme.colors.text }]}
+              placeholder="Search posts"
+              placeholderTextColor={theme.colors.placeholder}
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => handleSearch('')}>
+                <Ionicons name="close-circle" size={18} color={theme.colors.placeholder} />
+              </TouchableOpacity>
+            )}
           </View>
+          <TouchableOpacity style={[styles.iconSquare, { backgroundColor: theme.colors.surface }]} onPress={() => setShowSortModal(true)}>
+            <Ionicons name="filter" size={18} color="#3E5F44" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.iconSquare, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.navigate('CreatePost', { communityId: selectedCommunity })}>
+            <Ionicons name="add" size={18} color="#3E5F44" />
+          </TouchableOpacity>
         </View>
 
         <FlatList
@@ -678,8 +691,8 @@ const styles = StyleSheet.create({
   },
   headerText: { flex: 1 },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: '#2D3748',
     letterSpacing: -0.5,
   },
@@ -727,6 +740,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     letterSpacing: -0.3,
   },
+  searchPill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: '#E5E7EB', marginRight: 10, flex: 1 },
+  searchPillInput: { flex: 1, fontSize: 13, paddingVertical: 0 },
+  iconSquare: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E5E7EB', marginLeft: 8 },
   communitiesList: {
     paddingRight: 16,
     paddingBottom: 2,
@@ -737,13 +753,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: 'white',
-    borderRadius: 14,
+    borderRadius: 12,
     minWidth: 92,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   selectedCommunityItem: { backgroundColor: '#3E5F44' },
   communityIcon: {
@@ -822,35 +835,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: 'white',
     borderRadius: 14,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    elevation: 0,
   },
-  postContent: { padding: 14 },
+  postContent: { padding: 16 },
   postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  postTypeContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  iconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 6,
-  },
-  postType: { fontSize: 12, fontWeight: '600', letterSpacing: 0.2 },
+  postTypePill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: '#F3F4F6' },
+  postTypePillText: { fontSize: 12, fontWeight: '700' },
   dot: { marginHorizontal: 6, color: '#CBD5E1' },
   communityTag: { fontSize: 12, color: '#9CA3AF', fontWeight: '500' },
   timestamp: { fontSize: 12, color: '#9CA3AF', fontWeight: '500' },
   postTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#1F2937',
     marginBottom: 6,
     lineHeight: 22,
@@ -865,7 +866,7 @@ const styles = StyleSheet.create({
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
   tag: { marginRight: 6, marginBottom: 6, backgroundColor: '#F3F4F6', borderRadius: 8, height: 26 },
   tagText: { fontSize: 11, color: '#6B7280', fontWeight: '500' },
-  divider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 8 },
+  divider: { height: 1, marginBottom: 8 },
   postActions: { flexDirection: 'row', alignItems: 'center' },
   actionButton: { flexDirection: 'row', alignItems: 'center', marginRight: 18, paddingVertical: 2 },
   actionText: { fontSize: 13, color: '#6B7280', marginLeft: 4, fontWeight: '500' },

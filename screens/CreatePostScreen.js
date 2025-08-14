@@ -12,7 +12,7 @@ const postTypes = [
 
 const CreatePostScreen = ({ route, navigation }) => {
   const theme = useTheme();
-  const { communityId = 'dating-advice', onSubmit } = route.params || {};
+  const { communityId = 'dating-advice' } = route.params || {};
 
   const [type, setType] = useState('question');
   const [title, setTitle] = useState('');
@@ -36,12 +36,10 @@ const CreatePostScreen = ({ route, navigation }) => {
       comments: 0,
       likes: 0,
       trending: 0,
+      author: 'You',
     };
 
-    if (typeof onSubmit === 'function') {
-      onSubmit(newPost);
-    }
-    navigation.goBack();
+    navigation.navigate('Home', { newPost });
   };
 
   return (
@@ -57,7 +55,7 @@ const CreatePostScreen = ({ route, navigation }) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}> 
+        <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.section}>
             <Text style={[styles.label, { color: theme.colors.text }]}>Post Type</Text>
             <View style={styles.typesRow}>
