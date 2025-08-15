@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import { Card, Avatar, Chip, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
 import { useTabContext } from '../components/TabContext';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NotificationsScreen = ({ navigation }) => {
   const theme = useTheme();
@@ -77,21 +79,68 @@ const NotificationsScreen = ({ navigation }) => {
     },
   };
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'system',
-      title: 'Welcome to Luma!',
-      message: 'Your account has been successfully created. Welcome to our safety-first platform! Before you can access all features, you must verify your profile to ensure a secure and protected environment for all users.',
-      timestamp: '1 day ago',
-      isRead: false,
-      community: 'Welcome',
-      communityId: 'system',
-      postId: null,
-      icon: 'checkmark-circle',
-      color: '#3E5F44',
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+
+  // Load notifications from storage on component mount
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const loadNotifications = async () => {
+    try {
+      const savedNotifications = await AsyncStorage.getItem('notifications');
+      if (savedNotifications) {
+        const parsed = JSON.parse(savedNotifications);
+        setNotifications(parsed);
+      } else {
+        // Set default notifications if none saved
+        const defaultNotifications = [
+          {
+            id: 1,
+            type: 'system',
+            title: 'Welcome to Luma!',
+            message: 'Your account has been successfully created. Welcome to our safety-first platform! Before you can access all features, you must verify your profile to ensure a secure and protected environment for all users.',
+            timestamp: '1 day ago',
+            isRead: false,
+            community: 'Welcome',
+            communityId: 'system',
+            postId: null,
+            icon: 'checkmark-circle',
+            color: '#3E5F44',
+          },
+        ];
+        setNotifications(defaultNotifications);
+        await AsyncStorage.setItem('notifications', JSON.stringify(defaultNotifications));
+      }
+    } catch (error) {
+      console.log('Error loading notifications:', error);
+      // Fallback to default notifications
+      const defaultNotifications = [
+        {
+          id: 1,
+          type: 'system',
+          title: 'Welcome to Luma!',
+          message: 'Your account has been successfully created. Welcome to our safety-first platform! Before you can access all features, you must verify your profile to ensure a secure and protected environment for all users.',
+          timestamp: '1 day ago',
+          isRead: false,
+          community: 'Welcome',
+          communityId: 'system',
+          postId: null,
+          icon: 'checkmark-circle',
+          color: '#3E5F44',
+        },
+      ];
+      setNotifications(defaultNotifications);
+    }
+  };
+
+  const saveNotifications = async (newNotifications) => {
+    try {
+      await AsyncStorage.setItem('notifications', JSON.stringify(newNotifications));
+    } catch (error) {
+      console.log('Error saving notifications:', error);
+    }
+  };
 
   const markAsRead = (id) => {
     setNotifications((prev) => {
@@ -101,9 +150,10 @@ const NotificationsScreen = ({ navigation }) => {
       
       // Check if all notifications are now read
       const allRead = updated.every(notification => notification.isRead);
-      if (allRead) {
-        setHasUnreadNotifications(false);
-      }
+      setHasUnreadNotifications(!allRead);
+      
+      // Save to storage
+      saveNotifications(updated);
       
       return updated;
     });
@@ -155,7 +205,11 @@ const NotificationsScreen = ({ navigation }) => {
       color: getNotificationColor('community'),
     };
 
-    setNotifications(prev => [newNotification, ...prev]);
+    setNotifications(prev => {
+      const updated = [newNotification, ...prev];
+      saveNotifications(updated);
+      return updated;
+    });
   };
 
   // Function to simulate receiving a new post notification (for testing)
@@ -216,7 +270,7 @@ const NotificationsScreen = ({ navigation }) => {
       ? isCommunityNotificationEnabled(item.communityId) 
       : true;
     
-    const isClickable = item.postId && communityNotificationsEnabled;
+    const isClickable = item.postId || item.communityId === 'system'; // System notifications are always clickable
     
     return (
       <TouchableOpacity
@@ -225,7 +279,7 @@ const NotificationsScreen = ({ navigation }) => {
           !item.isRead && styles.unreadCard
         ]}
         onPress={() => handleNotificationPress(item)}
-        disabled={!notificationsEnabled}
+        disabled={!notificationsEnabled || !isClickable}
       >
         <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
           <Card.Content style={styles.cardContent}>
@@ -258,6 +312,14 @@ const NotificationsScreen = ({ navigation }) => {
     const hasUnread = notifications.some(notification => !notification.isRead);
     setHasUnreadNotifications(hasUnread);
   }, [notifications, setHasUnreadNotifications]);
+
+  // Update tab context every time the screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      const hasUnread = notifications.some(notification => !notification.isRead);
+      setHasUnreadNotifications(hasUnread);
+    }, [notifications, setHasUnreadNotifications])
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
