@@ -1,21 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  TextInput,
-  FlatList,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
 import { useTheme } from 'react-native-paper';
-
-const { width } = Dimensions.get('window');
+import { Ionicons } from '@expo/vector-icons';
 
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
@@ -310,7 +296,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={[styles.profileSection, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.imageContainer}>
             <Image source={{ uri: profile.avatar }} style={styles.profileImage} />
-
           </View>
 
         </View>

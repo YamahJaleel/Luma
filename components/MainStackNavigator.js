@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Easing } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 // Import screens
@@ -17,6 +17,7 @@ import CreateProfileScreen from '../screens/CreateProfileScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import MessageThreadScreen from '../screens/MessageThreadScreen';
 import CreateCommunityScreen from '../screens/CreateCommunityScreen';
+import ProfileDetailScreen from '../screens/ProfileDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,17 +27,26 @@ const MainStackNavigator = () => {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
-          cardStyleInterpolator: ({ current, layouts }) => {
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: {
+                duration: 200,
+                easing: Easing.out(Easing.cubic),
+              },
+            },
+            close: {
+              animation: 'timing',
+              config: {
+                duration: 200,
+                easing: Easing.in(Easing.cubic),
+              },
+            },
+          },
+          cardStyleInterpolator: ({ current }) => {
             return {
               cardStyle: {
-                transform: [
-                  {
-                    translateX: current.progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [layouts.screen.width, 0],
-                    }),
-                  },
-                ],
+                opacity: current.progress,
               },
             };
           },
@@ -51,6 +61,7 @@ const MainStackNavigator = () => {
         <Stack.Screen name="BrowseCommunities" component={BrowseCommunitiesScreen} />
         <Stack.Screen name="LikedPosts" component={LikedPostsScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+        <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
         <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />
         <Stack.Screen name="Messages" component={MessagesScreen} />
         <Stack.Screen name="MessageThread" component={MessageThreadScreen} />

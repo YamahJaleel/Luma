@@ -413,7 +413,6 @@ const HomeScreen = ({ navigation, route }) => {
         <View style={styles.postActions}>
           <TouchableOpacity style={styles.actionButton}>
               <Ionicons name="chatbubble-outline" size={16} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
-              <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{item.comments}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
               <Ionicons name="heart-outline" size={16} color={theme.dark ? '#9CA3AF' : '#6B7280'} />

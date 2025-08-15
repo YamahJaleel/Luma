@@ -19,7 +19,7 @@ const AnimatedTabBar = () => {
       if (!s || !s.routes) return false;
       for (let i = 0; i < s.routes.length; i++) {
         const route = s.routes[i];
-        if (route?.name === 'PostDetail' || route?.name === 'MessageThread') return true;
+        if (route?.name === 'PostDetail' || route?.name === 'MessageThread' || route?.name === 'ProfileDetail') return true;
         if (route?.state && contains(route.state)) return true;
       }
       return false;
@@ -35,7 +35,7 @@ const AnimatedTabBar = () => {
 
   const tabs = [
     { name: 'Home', label: 'Home', icon: 'home' },
-    { name: 'Messages', label: 'Messages', icon: 'chatbubble' },
+    { name: 'Messages', label: 'Message', icon: 'chatbubble' },
     { name: 'Search', label: 'Search', icon: 'search' },
     { name: 'Notifications', label: 'Alerts', icon: 'notifications' },
     { name: 'Profile', label: 'Profile', icon: 'person' },

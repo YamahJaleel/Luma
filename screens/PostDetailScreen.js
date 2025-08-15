@@ -1,21 +1,30 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
-import { useTheme } from 'react-native-paper';
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  FlatList,
+  Animated,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from 'react-native-paper';
 
 const getTypeMeta = (type) => {
-  switch (type) {
-    case 'warning':
-      return { icon: 'warning', color: '#EF4444', label: 'Warning' };
-    case 'question':
-      return { icon: 'help-circle', color: '#F59E0B', label: 'Question' };
-    case 'positive':
-      return { icon: 'heart', color: '#10B981', label: 'Positive' };
-    case 'experience':
-      return { icon: 'document-text', color: '#3E5F44', label: 'Experience' };
-    default:
-      return { icon: 'chatbubble', color: '#6B7280', label: 'Post' };
-  }
+  const types = {
+    'dating-advice': { label: 'Dating Advice', icon: 'heart', color: '#EF4444' },
+    'safety-tips': { label: 'Safety Tips', icon: 'shield-checkmark', color: '#10B981' },
+    'meetup-ideas': { label: 'Meetup Ideas', icon: 'location', color: '#3B82F6' },
+    'red-flags': { label: 'Red Flags', icon: 'warning', color: '#F59E0B' },
+    'success-stories': { label: 'Success Stories', icon: 'star', color: '#8B5CF6' },
+  };
+  return types[type] || { label: 'General', icon: 'chatbubble', color: '#6B7280' };
 };
 
 const makeMockComments = () => ([
@@ -78,10 +87,9 @@ const flattenComments = (nodes, depth = 0) => {
 const addReplyById = (nodes, targetId, newReply) => {
   return nodes.map((n) => {
     if (n.id === targetId) {
-      const replies = Array.isArray(n.replies) ? n.replies : [];
-      return { ...n, replies: [...replies, newReply] };
+      return { ...n, replies: [...(n.replies || []), newReply] };
     }
-    if (n.replies && n.replies.length) {
+    if (n.replies && n.replies.length > 0) {
       return { ...n, replies: addReplyById(n.replies, targetId, newReply) };
     }
     return n;
@@ -96,6 +104,7 @@ const PostDetailScreen = ({ route, navigation }) => {
   const [comments, setComments] = useState(Array.isArray(passedComments) ? passedComments : makeMockComments());
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for post, {id, author} for comment
+  const [selectedComment, setSelectedComment] = useState(null); // for long-press selection
 
   const flatComments = useMemo(() => flattenComments(comments), [comments]);
 
@@ -119,11 +128,39 @@ const PostDetailScreen = ({ route, navigation }) => {
     setReplyTarget(null);
   };
 
+  const handleLongPress = (comment) => {
+    setSelectedComment(comment);
+  };
+
+  const handleDirectMessage = (comment) => {
+    setSelectedComment(null);
+    // Navigate to Messages screen and start a new conversation
+    navigation.navigate('Messages', { 
+      startNewChat: true, 
+      recipient: comment.author,
+      recipientId: comment.id 
+    });
+  };
+
+  const handleCancelSelection = () => {
+    setSelectedComment(null);
+  };
+
   const renderComment = ({ item }) => {
     const c = item.node;
     const depth = item.depth;
+    const isSelected = selectedComment && selectedComment.id === c.id;
+    
     return (
-      <View style={[styles.commentRow, { backgroundColor: theme.colors.surface, marginLeft: depth * 16 }]}> 
+      <View
+        style={[
+          styles.commentRow, 
+          { 
+            backgroundColor: theme.colors.surface, 
+            marginLeft: depth * 16,
+          }
+        ]}
+      > 
         <View style={[styles.avatarCircle, { backgroundColor: c.avatarColor }]}>
           <Text style={styles.avatarInitial}>{c.author.charAt(0)}</Text>
         </View>
@@ -135,10 +172,37 @@ const PostDetailScreen = ({ route, navigation }) => {
             <Text style={[styles.commentTime, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{c.timestamp}</Text>
           </View>
           <Text style={[styles.commentText, { color: theme.colors.text }]}>{c.text}</Text>
-          <TouchableOpacity style={styles.replyLink} onPress={() => setReplyTarget({ id: c.id, author: c.author })}>
-            <Text style={[styles.replyText, { color: theme.colors.primary }]}>Reply</Text>
-          </TouchableOpacity>
+          
+          {isSelected ? (
+            <View style={styles.actionRow}>
+              <TouchableOpacity 
+                style={[styles.dmButton, { backgroundColor: theme.colors.primary }]}
+                onPress={() => handleDirectMessage(c)}
+              >
+                <Ionicons name="chatbubble" size={14} color="#FFFFFF" />
+                <Text style={styles.dmButtonText}>Message</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.cancelButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.primary }]}
+                onPress={handleCancelSelection}
+              >
+                <Text style={[styles.cancelButtonText, { color: theme.colors.primary }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.replyLink} onPress={() => setReplyTarget({ id: c.id, author: c.author })}>
+              <Text style={[styles.replyText, { color: theme.colors.primary }]}>Reply</Text>
+            </TouchableOpacity>
+          )}
         </View>
+        
+        {/* 3-dots menu button */}
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => handleLongPress(c)}
+        >
+          <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
+        </TouchableOpacity>
       </View>
     );
   };
@@ -181,7 +245,6 @@ const PostDetailScreen = ({ route, navigation }) => {
 
         <View style={styles.commentsHeader}>
           <Text style={[styles.commentsTitle, { color: theme.colors.text }]}>Comments</Text>
-          <Text style={[styles.commentsCount, { color: theme.dark ? theme.colors.text : '#6B7280' }]}>{flatComments.length}</Text>
         </View>
 
         <FlatList
@@ -266,13 +329,42 @@ const styles = StyleSheet.create({
   },
   avatarCircle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   avatarInitial: { color: 'white', fontWeight: '700', fontSize: 12 },
-  commentBody: { flex: 1 },
+  commentBody: { flex: 1, marginRight: 8 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   commentAuthor: { fontSize: 14, fontWeight: '700' },
   commentTime: { fontSize: 12 },
   commentText: { fontSize: 14, lineHeight: 20, marginTop: 4 },
   replyLink: { marginTop: 6 },
   replyText: { fontSize: 12, fontWeight: '700' },
+  actionRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8, 
+    marginTop: 8 
+  },
+  dmButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4, 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 16 
+  },
+  dmButtonText: { 
+    color: '#FFFFFF', 
+    fontSize: 12, 
+    fontWeight: '600' 
+  },
+  cancelButton: { 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 16, 
+    borderWidth: 1 
+  },
+  cancelButtonText: { 
+    fontSize: 12, 
+    fontWeight: '600' 
+  },
   commentSeparator: { height: 10 },
   replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
@@ -280,6 +372,14 @@ const styles = StyleSheet.create({
   replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   replyInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10 },
   sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  menuButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
 });
 
 export default PostDetailScreen; 

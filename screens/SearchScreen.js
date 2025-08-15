@@ -53,6 +53,8 @@ const SearchScreen = ({ navigation, route }) => {
     return ALL_LOCATIONS.filter((name) => name.toLowerCase().includes(q)).slice(0, 8);
   }, [locationInput, CAN_LOCATIONS, ALL_LOCATIONS]);
 
+  const scrollYRef = React.useRef(0);
+
   // Mock profile data with different sizes
   const mockProfiles = [
     {
@@ -314,8 +316,16 @@ const SearchScreen = ({ navigation, route }) => {
     return `${uri}${joiner}q=40&auto=format`;
   };
 
+  const handleProfilePress = (profile) => {
+    navigation.navigate('ProfileDetail', { profile });
+  };
+
   const renderProfileSquare = ({ item }) => (
-    <TouchableOpacity style={[styles.profileSquare, getSizeStyle(item.size)]} onPress={() => navigation.navigate('ProfileDetail', { profile: item })}>
+    <TouchableOpacity 
+      style={[styles.profileSquare, getSizeStyle(item.size)]} 
+      onPress={() => handleProfilePress(item)}
+      activeOpacity={0.9}
+    >
       <Image source={{ uri: withDataSaver(item.avatar) }} style={styles.profileImage} />
     </TouchableOpacity>
   );
@@ -353,7 +363,7 @@ const SearchScreen = ({ navigation, route }) => {
             <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
           <TextInput
               style={[styles.searchInput, { color: theme.colors.text } ]}
-            placeholder="Search"
+            placeholder="Search name"
               placeholderTextColor={theme.colors.placeholder}
             value={searchQuery}
             onChangeText={handleSearch}
@@ -374,12 +384,12 @@ const SearchScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
         <TouchableOpacity
-          style={[styles.locationRow, { backgroundColor: theme.colors.surface }]}
+          style={styles.locationRow}
           onPress={() => { setLocationInput(location); setShowLocationModal(true); }}
           activeOpacity={0.8}
         >
-          <Ionicons name="location" size={14} color={theme.colors.primary} />
-          <Text style={[styles.locationText, { color: theme.colors.text }]}>{location}</Text>
+          <Ionicons name="location" size={12} color="#3E5F44" />
+          <Text style={[styles.locationText, { color: "#3E5F44" }]}>{location}</Text>
         </TouchableOpacity>
       </View>
 
@@ -523,22 +533,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    marginTop: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    marginTop: 8,
+    paddingVertical: 4,
   },
   locationText: {
-    marginLeft: 5,
-    fontSize: 14,
-    color: '#718096',
+    marginLeft: 4,
+    fontSize: 13,
+    fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
