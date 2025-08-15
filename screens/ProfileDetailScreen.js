@@ -300,19 +300,17 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
         </View>
 
-        {/* AI Overview */}
+        {/* AI Overview with All Community Signals */}
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>What’s being said</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>What's being said</Text>
           <Text style={[styles.aiText, theme.dark && { color: theme.colors.text }]}>{overviewText}</Text>
-        </View>
-
-        {/* Flags */}
-        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.flagsContainer}>
+          
+          {/* All Community Signals */}
+          <View style={styles.trustIndicatorsContainer}>
             {profile.flags.map((flag, index) => (
-              <View key={index} style={styles.flagItem}>
-                <Ionicons name={getFlagIcon(flag)} size={16} color={getFlagColor(flag)} />
-                <Text style={[styles.flagText, { color: getFlagColor(flag) }, theme.dark && { color: theme.colors.text }]}>
+              <View key={index} style={styles.trustIndicatorItem}>
+                <Ionicons name={getFlagIcon(flag)} size={18} color={getFlagColor(flag)} />
+                <Text style={[styles.trustIndicatorText, { color: getFlagColor(flag) }, theme.dark && { color: theme.colors.text }]}>
                   {flag.replace('_', ' ')}
                 </Text>
               </View>
@@ -443,6 +441,9 @@ const styles = StyleSheet.create({
   replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   replyInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10 },
   sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  trustIndicatorsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
+  trustIndicatorItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
+  trustIndicatorText: { fontSize: 12, fontWeight: '500', marginLeft: 4, textTransform: 'capitalize' },
 });
 
 export default ProfileDetailScreen; 

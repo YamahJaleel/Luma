@@ -117,7 +117,7 @@ const CreateProfileScreen = ({ route, navigation }) => {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>Profile Picture</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>Photo</Text>
           
           {selectedImage ? (
             <View style={styles.imageContainer}>

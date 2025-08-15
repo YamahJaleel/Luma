@@ -9,7 +9,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } f
 
 const AnimatedTabBar = () => {
   const navigation = useNavigation();
-  const { currentTab, setCurrentTab, tabHidden } = useTabContext();
+  const { currentTab, setCurrentTab, tabHidden, hasUnreadNotifications } = useTabContext();
   const { notificationsEnabled } = useSettings();
   const theme = useTheme();
 
@@ -92,7 +92,7 @@ const AnimatedTabBar = () => {
     transform: [{ translateX: xPos.value }],
   }));
 
-  const hasUnread = true; // Placeholder
+  const hasUnread = hasUnreadNotifications;
 
   const getIconName = (routeName, focused) => {
     switch (routeName) {

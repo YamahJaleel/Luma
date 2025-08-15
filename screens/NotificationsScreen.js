@@ -14,83 +14,169 @@ import { useTabContext } from '../components/TabContext';
 
 const NotificationsScreen = ({ navigation }) => {
   const theme = useTheme();
-  const { notificationsEnabled } = useSettings();
-  const { setTabHidden } = useTabContext();
+  const { notificationsEnabled, isCommunityNotificationEnabled } = useSettings();
+  const { setTabHidden, setHasUnreadNotifications } = useTabContext();
   const scrollYRef = React.useRef(0);
+  
+  // Mock post data for navigation
+  const mockPosts = {
+    'dating-advice-post-1': {
+      id: 'dating-advice-post-1',
+      title: 'First Date Tips That Actually Work',
+      content: 'I\'ve been on quite a few first dates and here are the things that have consistently made them successful...',
+      author: 'Sarah M.',
+      timestamp: '2 minutes ago',
+      community: 'Dating Advice',
+      type: 'dating-advice',
+      likes: 24,
+      comments: 8,
+    },
+    'red-flags-post-1': {
+      id: 'red-flags-post-1',
+      title: 'Controlling Behavior Warning',
+      content: 'I recently encountered someone who showed several concerning behaviors. Here\'s what to watch out for...',
+      author: 'Emma W.',
+      timestamp: '15 minutes ago',
+      community: 'Red Flags',
+      type: 'red-flags',
+      likes: 156,
+      comments: 42,
+    },
+    'success-stories-post-1': {
+      id: 'success-stories-post-1',
+      title: 'Found Love Through This Community!',
+      content: 'After months of reading advice and sharing experiences here, I finally met someone amazing...',
+      author: 'Jessica L.',
+      timestamp: '1 hour ago',
+      community: 'Success Stories',
+      type: 'success-stories',
+      likes: 89,
+      comments: 23,
+    },
+    'safety-tips-post-1': {
+      id: 'safety-tips-post-1',
+      title: 'Online Dating Safety Checklist',
+      content: 'Before meeting someone from a dating app, make sure you\'ve covered these safety basics...',
+      author: 'Michelle R.',
+      timestamp: '2 hours ago',
+      community: 'Safety Tips',
+      type: 'safety-tips',
+      likes: 203,
+      comments: 67,
+    },
+    'vent-space-post-1': {
+      id: 'vent-space-post-1',
+      title: 'Frustrated with Dating Apps',
+      content: 'I need to vent about the current state of dating apps. It feels like everyone is just playing games...',
+      author: 'Alex T.',
+      timestamp: '3 hours ago',
+      community: 'Vent Space',
+      type: 'vent-space',
+      likes: 45,
+      comments: 31,
+    },
+  };
+
   const [notifications, setNotifications] = useState([
     {
       id: 1,
-      type: 'community',
-      title: 'New post in Dating Advice',
-      message: 'Someone shared a new experience about first dates',
-      timestamp: '2 minutes ago',
-      isRead: false,
-      community: 'Dating Advice',
-      icon: 'heart',
-      color: '#F1B8B2',
-    },
-    {
-      id: 2,
-      type: 'warning',
-      title: 'Red flag alert',
-      message: 'A new warning was posted about controlling behavior',
-      timestamp: '15 minutes ago',
-      isRead: false,
-      community: 'Red Flags',
-      icon: 'warning',
-      color: '#EF4444',
-    },
-    {
-      id: 3,
-      type: 'success',
-      title: 'Success story shared',
-      message: 'Someone found love through the community!',
-      timestamp: '1 hour ago',
-      isRead: true,
-      community: 'Success Stories',
-      icon: 'star',
-      color: '#10B981',
-    },
-    {
-      id: 4,
-      type: 'safety',
-      title: 'New safety tip',
-      message: 'Important safety advice for meeting people online',
-      timestamp: '2 hours ago',
-      isRead: true,
-      community: 'Safety Tips',
-      icon: 'shield',
-      color: '#F59E0B',
-    },
-    {
-      id: 5,
-      type: 'community',
-      title: 'Trending post',
-      message: 'A post in Vent Space is getting lots of attention',
-      timestamp: '3 hours ago',
-      isRead: true,
-      community: 'Vent Space',
-      icon: 'chatbubble',
-      color: '#8B5CF6',
-    },
-    {
-      id: 6,
       type: 'system',
       title: 'Welcome to Luma!',
-      message: 'Your account has been successfully created',
+      message: 'Your account has been successfully created. Welcome to our safety-first platform! Before you can access all features, you must verify your profile to ensure a secure and protected environment for all users.',
       timestamp: '1 day ago',
-      isRead: true,
+      isRead: false,
+      community: 'Welcome',
+      communityId: 'system',
+      postId: null,
       icon: 'checkmark-circle',
       color: '#3E5F44',
     },
   ]);
 
   const markAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
+    setNotifications((prev) => {
+      const updated = prev.map((notification) =>
         notification.id === id ? { ...notification, isRead: true } : notification
-      )
-    );
+      );
+      
+      // Check if all notifications are now read
+      const allRead = updated.every(notification => notification.isRead);
+      if (allRead) {
+        setHasUnreadNotifications(false);
+      }
+      
+      return updated;
+    });
+  };
+
+  const handleNotificationPress = (notification) => {
+    // Mark as read first
+    markAsRead(notification.id);
+    
+    // Check if notifications are enabled for this community
+    if (notification.communityId && notification.communityId !== 'system') {
+      const communityNotificationsEnabled = isCommunityNotificationEnabled(notification.communityId);
+      if (!communityNotificationsEnabled) {
+        // Show a message that notifications are disabled for this community
+        return;
+      }
+    }
+    
+    // Navigate to post if available
+    if (notification.postId && mockPosts[notification.postId]) {
+      const post = mockPosts[notification.postId];
+      navigation.navigate('PostDetail', { 
+        post,
+        comments: [], // Mock comments would go here
+      });
+    }
+  };
+
+  // Function to add a new post notification (this would be called when a new post is created)
+  const addNewPostNotification = (post, community) => {
+    const communityId = post.type; // Using post type as community ID
+    const isEnabled = isCommunityNotificationEnabled(communityId);
+    
+    if (!isEnabled) {
+      return; // Don't add notification if community notifications are disabled
+    }
+
+    const newNotification = {
+      id: Date.now(),
+      type: 'community',
+      title: `New post in ${community}`,
+      message: post.title,
+      timestamp: 'Just now',
+      isRead: false,
+      community: community,
+      communityId: communityId,
+      postId: post.id,
+      icon: getNotificationIcon('community'),
+      color: getNotificationColor('community'),
+    };
+
+    setNotifications(prev => [newNotification, ...prev]);
+  };
+
+  // Function to simulate receiving a new post notification (for testing)
+  const simulateNewPost = () => {
+    const samplePost = {
+      id: `sample-post-${Date.now()}`,
+      title: 'Sample New Post',
+      content: 'This is a sample new post content...',
+      author: 'Test User',
+      timestamp: 'Just now',
+      community: 'Dating Advice',
+      type: 'dating-advice',
+      likes: 0,
+      comments: 0,
+    };
+
+    // Add to mock posts
+    mockPosts[samplePost.id] = samplePost;
+    
+    // Add notification
+    addNewPostNotification(samplePost, 'Dating Advice');
   };
 
   const getNotificationIcon = (type) => {
@@ -125,36 +211,53 @@ const NotificationsScreen = ({ navigation }) => {
     }
   };
 
-  const renderNotification = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.notificationCard, !item.isRead && styles.unreadCard, !notificationsEnabled && styles.disabledCard]}
-      onPress={() => markAsRead(item.id)}
-      disabled={!notificationsEnabled}
-    >
-      <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-        <Card.Content style={styles.cardContent}>
-          <View style={styles.notificationHeader}>
-            <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
-              <Ionicons name={item.icon} size={20} color={item.color} />
-            </View>
-            <View style={styles.notificationInfo}>
-              <Text style={[styles.notificationTitle, { color: theme.colors.text }]}>{item.title}</Text>
-              <Text style={[styles.notificationMessage, theme.dark && { color: theme.colors.text }]}>{item.message}</Text>
-              <View style={styles.notificationMeta}>
-                <Chip style={[styles.communityChip, { backgroundColor: `${item.color}15` }]} textStyle={[styles.communityText, { color: item.color }]}>
-                  {item.community}
-                </Chip>
-                <Text style={styles.timestamp}>{item.timestamp}</Text>
+  const renderNotification = ({ item }) => {
+    const communityNotificationsEnabled = item.communityId && item.communityId !== 'system' 
+      ? isCommunityNotificationEnabled(item.communityId) 
+      : true;
+    
+    const isClickable = item.postId && communityNotificationsEnabled;
+    
+    return (
+      <TouchableOpacity
+        style={[
+          styles.notificationCard, 
+          !item.isRead && styles.unreadCard
+        ]}
+        onPress={() => handleNotificationPress(item)}
+        disabled={!notificationsEnabled}
+      >
+        <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+          <Card.Content style={styles.cardContent}>
+            <View style={styles.notificationHeader}>
+              <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
+                <Ionicons name={item.icon} size={20} color={item.color} />
               </View>
+              <View style={styles.notificationInfo}>
+                <Text style={[styles.notificationTitle, { color: theme.colors.text }]}>{item.title}</Text>
+                <Text style={[styles.notificationMessage, theme.dark && { color: theme.colors.text }]}>{item.message}</Text>
+                <View style={styles.notificationMeta}>
+                  <Chip style={[styles.communityChip, { backgroundColor: `${item.color}15` }]} textStyle={[styles.communityText, { color: item.color }]}>
+                    {item.community}
+                  </Chip>
+                  <Text style={styles.timestamp}>{item.timestamp}</Text>
+                </View>
+              </View>
+              {!item.isRead && notificationsEnabled && <View style={styles.unreadDot} />}
             </View>
-            {!item.isRead && notificationsEnabled && <View style={styles.unreadDot} />}
-          </View>
-        </Card.Content>
-      </Card>
-    </TouchableOpacity>
-  );
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+    );
+  };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Update tab context when notifications change
+  React.useEffect(() => {
+    const hasUnread = notifications.some(notification => !notification.isRead);
+    setHasUnreadNotifications(hasUnread);
+  }, [notifications, setHasUnreadNotifications]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -169,6 +272,13 @@ const NotificationsScreen = ({ navigation }) => {
               </View>
             )}
           </View>
+          <TouchableOpacity 
+            style={[styles.testButton, { backgroundColor: theme.colors.primary }]}
+            onPress={simulateNewPost}
+          >
+            <Ionicons name="add" size={20} color="white" />
+            <Text style={styles.testButtonText}>Test</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -215,6 +325,19 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 60 },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerText: { flexDirection: 'row', alignItems: 'center' },
+  testButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  testButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   headerTitle: { fontSize: 28, fontWeight: 'bold' },
   badge: {
     backgroundColor: '#EF4444',
@@ -248,6 +371,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   communityChip: {
     minHeight: 30,
@@ -265,6 +389,7 @@ const styles = StyleSheet.create({
   },
   timestamp: { fontSize: 12, color: '#9CA3AF' },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginLeft: 8, marginTop: 4 },
+  disabledText: { fontSize: 12, color: '#EF4444', fontStyle: 'italic' },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingTop: 100 },
   emptyTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
   emptySubtitle: { fontSize: 16, color: '#718096', textAlign: 'center', lineHeight: 24 },

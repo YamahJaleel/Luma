@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   autoBackupEnabled: 'settings.autoBackupEnabled',
   dataUsageEnabled: 'settings.dataUsageEnabled',
   darkModeEnabled: 'settings.darkModeEnabled',
+  communityNotificationSettings: 'settings.communityNotificationSettings',
 };
 
 export const SettingsProvider = ({ children }) => {
@@ -21,6 +22,7 @@ export const SettingsProvider = ({ children }) => {
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
   const [dataUsageEnabled, setDataUsageEnabled] = useState(false);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+  const [communityNotificationSettings, setCommunityNotificationSettings] = useState({});
 
   useEffect(() => {
     (async () => {
@@ -34,6 +36,13 @@ export const SettingsProvider = ({ children }) => {
         if (map[STORAGE_KEYS.autoBackupEnabled] != null) setAutoBackupEnabled(map[STORAGE_KEYS.autoBackupEnabled] === 'true');
         if (map[STORAGE_KEYS.dataUsageEnabled] != null) setDataUsageEnabled(map[STORAGE_KEYS.dataUsageEnabled] === 'true');
         if (map[STORAGE_KEYS.darkModeEnabled] != null) setDarkModeEnabled(map[STORAGE_KEYS.darkModeEnabled] === 'true');
+        if (map[STORAGE_KEYS.communityNotificationSettings] != null) {
+          try {
+            setCommunityNotificationSettings(JSON.parse(map[STORAGE_KEYS.communityNotificationSettings]));
+          } catch {
+            setCommunityNotificationSettings({});
+          }
+        }
       } catch {}
     })();
   }, []);
@@ -45,6 +54,18 @@ export const SettingsProvider = ({ children }) => {
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.autoBackupEnabled, String(autoBackupEnabled)); }, [autoBackupEnabled]);
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.dataUsageEnabled, String(dataUsageEnabled)); }, [dataUsageEnabled]);
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.darkModeEnabled, String(darkModeEnabled)); }, [darkModeEnabled]);
+  useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.communityNotificationSettings, JSON.stringify(communityNotificationSettings)); }, [communityNotificationSettings]);
+
+  const updateCommunityNotificationSetting = (communityId, enabled) => {
+    setCommunityNotificationSettings(prev => ({
+      ...prev,
+      [communityId]: enabled
+    }));
+  };
+
+  const isCommunityNotificationEnabled = (communityId) => {
+    return communityNotificationSettings[communityId] === true; // Default to false if not set
+  };
 
   const value = useMemo(
     () => ({
@@ -55,6 +76,9 @@ export const SettingsProvider = ({ children }) => {
       autoBackupEnabled, setAutoBackupEnabled,
       dataUsageEnabled, setDataUsageEnabled,
       darkModeEnabled, setDarkModeEnabled,
+      communityNotificationSettings,
+      updateCommunityNotificationSetting,
+      isCommunityNotificationEnabled,
     }),
     [
       notificationsEnabled,
@@ -64,6 +88,7 @@ export const SettingsProvider = ({ children }) => {
       autoBackupEnabled,
       dataUsageEnabled,
       darkModeEnabled,
+      communityNotificationSettings,
     ]
   );
 

@@ -102,6 +102,13 @@ const SettingsScreen = ({ navigation }) => {
           value: communityAlertsEnabled,
           onValueChange: setCommunityAlertsEnabled,
         },
+        {
+          id: 'community_notification_settings',
+          title: 'Community Notifications',
+          subtitle: 'Manage notifications for specific communities',
+          icon: 'settings-outline',
+          type: 'navigate',
+        },
       ],
     },
     {
@@ -264,10 +271,10 @@ const SettingsScreen = ({ navigation }) => {
         right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
         style={styles.menuItem}
         onPress={() => {
-                     if (item.id === 'about_luma') {
-                          Alert.alert(
-                '',
-                `Luma is a safety-first platform made to provide a truly protected space in the dating world.
+          if (item.id === 'about_luma') {
+            Alert.alert(
+              '',
+              `Luma is a safety-first platform made to provide a truly protected space in the dating world.
 
  Our Mission:
  Help you share experiences, verify concerns, and feel empowered without fear of exposure.
@@ -281,7 +288,9 @@ const SettingsScreen = ({ navigation }) => {
 
  Privacy is our foundation we use secure systems to ensure user information is never exposed.`,
               [{ text: 'OK', style: 'default' }]
-             );
+            );
+          } else if (item.id === 'community_notification_settings') {
+            navigation.navigate('CommunityNotificationSettings');
           } else {
             Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }
