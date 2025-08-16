@@ -15,7 +15,7 @@ import { useTheme } from 'react-native-paper';
 
 const { width, height } = Dimensions.get('window');
 
-const OnboardingScreen = ({ onComplete }) => {
+const OnboardingScreen = ({ navigation }) => {
   const theme = useTheme();
   const [showLearnMore, setShowLearnMore] = useState(false);
   const [hasSeenLearnMore, setHasSeenLearnMore] = useState(false);
@@ -79,7 +79,7 @@ const OnboardingScreen = ({ onComplete }) => {
   };
 
   const handleGetStarted = () => {
-    onComplete();
+    navigation.navigate('CreateAccount');
   };
 
   return (

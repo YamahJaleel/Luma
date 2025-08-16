@@ -11,6 +11,7 @@ import * as Notifications from 'expo-notifications';
 
 // Import screens
 import OnboardingScreen from './screens/OnboardingScreen';
+import CreateAccountScreen from './screens/CreateAccountScreen';
 import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import MainStackNavigator from './components/MainStackNavigator';
 
@@ -99,7 +100,21 @@ const AppContent = () => {
           <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
             <StatusBar style={darkModeEnabled ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
             {!isOnboarded ? (
-              <OnboardingScreen onComplete={() => setIsOnboarded(true)} />
+              <Stack.Navigator 
+                screenOptions={{ headerShown: false }}
+                initialRouteName="Onboarding"
+              >
+                <Stack.Screen 
+                  name="Onboarding" 
+                  component={OnboardingScreen}
+                  initialParams={{ setIsOnboarded }}
+                />
+                <Stack.Screen 
+                  name="CreateAccount" 
+                  component={CreateAccountScreen}
+                  initialParams={{ setIsOnboarded }}
+                />
+              </Stack.Navigator>
             ) : (
               <Stack.Navigator 
                 screenOptions={{ 

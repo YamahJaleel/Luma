@@ -86,6 +86,16 @@ const NotificationsScreen = ({ navigation }) => {
     loadNotifications();
   }, []);
 
+  // Function to reset notifications (for development/testing)
+  const resetNotifications = async () => {
+    try {
+      await AsyncStorage.removeItem('notifications');
+      loadNotifications();
+    } catch (error) {
+      console.log('Error resetting notifications:', error);
+    }
+  };
+
   const loadNotifications = async () => {
     try {
       const savedNotifications = await AsyncStorage.getItem('notifications');
@@ -99,7 +109,7 @@ const NotificationsScreen = ({ navigation }) => {
             id: 1,
             type: 'system',
             title: 'Welcome to Luma!',
-            message: 'Your account has been successfully created. Welcome to our safety-first platform! Before you can access all features, you must verify your profile to ensure a secure and protected environment for all users.',
+            message: 'Welcome to our safety-first platform!',
             timestamp: '1 day ago',
             isRead: false,
             community: 'Welcome',
@@ -120,7 +130,7 @@ const NotificationsScreen = ({ navigation }) => {
           id: 1,
           type: 'system',
           title: 'Welcome to Luma!',
-          message: 'Your account has been successfully created. Welcome to our safety-first platform! Before you can access all features, you must verify your profile to ensure a secure and protected environment for all users.',
+          message: 'Welcome to our safety-first platform!',
           timestamp: '1 day ago',
           isRead: false,
           community: 'Welcome',
@@ -334,13 +344,22 @@ const NotificationsScreen = ({ navigation }) => {
               </View>
             )}
           </View>
-          <TouchableOpacity 
-            style={[styles.testButton, { backgroundColor: theme.colors.primary }]}
-            onPress={simulateNewPost}
-          >
-            <Ionicons name="add" size={20} color="white" />
-            <Text style={styles.testButtonText}>Test</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={[styles.testButton, { backgroundColor: theme.colors.primary }]}
+              onPress={simulateNewPost}
+            >
+              <Ionicons name="add" size={20} color="white" />
+              <Text style={styles.testButtonText}>Test</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.resetButton, { backgroundColor: theme.colors.error }]}
+              onPress={resetNotifications}
+            >
+              <Ionicons name="refresh" size={20} color="white" />
+              <Text style={styles.resetButtonText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -387,6 +406,7 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 60 },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerText: { flexDirection: 'row', alignItems: 'center' },
+  buttonContainer: { flexDirection: 'row', gap: 8 },
   testButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -395,7 +415,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 4,
   },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
   testButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  resetButtonText: {
     color: 'white',
     fontSize: 15,
     fontWeight: '600',
