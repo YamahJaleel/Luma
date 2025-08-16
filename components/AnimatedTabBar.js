@@ -229,8 +229,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#6B7280',
+    fontWeight: '600',
   },
   badgeDot: {
     position: 'absolute',

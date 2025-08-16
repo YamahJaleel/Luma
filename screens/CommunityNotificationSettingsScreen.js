@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  headerTitle: { fontSize: 24, fontWeight: 'bold' },
+  headerTitle: { fontSize: 26, fontWeight: 'bold' },
   headerSpacer: { width: 40 },
   searchContainer: { paddingHorizontal: 20, marginBottom: 16 },
   searchBar: {
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 12,
-    fontSize: 16,
+    fontSize: 15,
   },
   infoCard: {
     marginHorizontal: 20,
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
     color: '#6B7280',
   },
   communitiesList: { flex: 1 },
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   communitiesContent: { padding: 0 },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: 'bold',
     marginBottom: 16,
     paddingHorizontal: 16,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
   },
-  communityTitle: { fontSize: 16, fontWeight: '600' },
+  communityTitle: { fontSize: 17, fontWeight: '600' },
   communityDescription: { color: '#718096', fontSize: 14 },
 });
 

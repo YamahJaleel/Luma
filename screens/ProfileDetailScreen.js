@@ -112,10 +112,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   // Threaded comments (profile discussion)
   const makeMockComments = () => {
     const items = [];
-    const ownerNote = (profile?.bio && profile.bio.trim()) ? profile.bio.trim() : 'No overview provided by the creator yet.';
+    const ownerNote = (profile?.bio && profile.bio.trim()) ? profile.bio.trim() : 'I created this profile because I had a really concerning experience with Tyler. He seemed charming at first but quickly became controlling and manipulative. He would text me constantly and get angry if I didn\'t respond immediately. When I tried to set boundaries, he became verbally abusive. I\'m sharing this to help protect other women.';
     items.push({
       id: 'owner-note',
-      author: 'Profile Owner',
+      author: 'Sarah M.',
       avatarColor: '#7C9AFF',
       text: ownerNote,
       timestamp: 'now',
@@ -124,21 +124,112 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     items.push(
       {
         id: 1,
-        author: 'Alex R.',
-        avatarColor: '#3E5F44',
-        text: 'Great communicator and respectful.',
-        timestamp: '12m ago',
+        author: 'Emma W.',
+        avatarColor: '#EF4444',
+        text: '🚩🚩🚩 Met him last week and he was extremely pushy about meeting at his place. When I said no, he got really aggressive and started calling me names. Stay away!',
+        timestamp: '2h ago',
         replies: [
-          { id: 11, author: 'Sam T.', avatarColor: '#8B5CF6', text: 'Agree!', timestamp: '8m ago', replies: [] },
+          {
+            id: 11,
+            author: 'Jessica L.',
+            avatarColor: '#8B5CF6',
+            text: 'Oh my god, that\'s terrifying! Thank you for sharing this. Did you report him?',
+            timestamp: '1h ago',
+            replies: [],
+          },
+          {
+            id: 12,
+            author: 'Emma W.',
+            avatarColor: '#EF4444',
+            text: 'Yes, I reported him immediately. The way he switched from charming to aggressive was so scary.',
+            timestamp: '45m ago',
+            replies: [],
+          },
         ],
       },
       {
         id: 2,
-        author: 'Mike J.',
+        author: 'Maya K.',
         avatarColor: '#10B981',
-        text: 'Had a positive experience, punctual and clear.',
-        timestamp: '1h ago',
-        replies: [],
+        text: 'I actually had a different experience. We met for coffee and he was really nice and respectful. But reading these comments is making me question everything...',
+        timestamp: '3h ago',
+        replies: [
+          {
+            id: 21,
+            author: 'Sophie T.',
+            avatarColor: '#F59E0B',
+            text: 'That\'s exactly how these guys work! They\'re nice at first to gain your trust. Please be careful.',
+            timestamp: '2h ago',
+            replies: [],
+          },
+          {
+            id: 22,
+            author: 'Maya K.',
+            avatarColor: '#10B981',
+            text: 'You\'re absolutely right. I\'m glad I found this community before things went further.',
+            timestamp: '1h ago',
+            replies: [],
+          },
+        ],
+      },
+      {
+        id: 3,
+        author: 'Rachel B.',
+        avatarColor: '#3B82F6',
+        text: 'He tried to pressure me into sending nudes on the first day of talking. When I refused, he said I was "prudish" and unmatched me. Bullet dodged!',
+        timestamp: '4h ago',
+        replies: [
+          {
+            id: 31,
+            author: 'Amanda P.',
+            avatarColor: '#EC4899',
+            text: 'Classic love bombing then manipulation tactic. Good for you for standing your ground!',
+            timestamp: '3h ago',
+            replies: [],
+          },
+        ],
+      },
+      {
+        id: 4,
+        author: 'Lisa M.',
+        avatarColor: '#8B5CF6',
+        text: '⚠️ He has multiple dating app profiles with slightly different names. I matched with "Tyler B" on Hinge and "Tyler Bradshaw" on Bumble. Same photos, different bios.',
+        timestamp: '5h ago',
+        replies: [
+          {
+            id: 41,
+            author: 'Natalie R.',
+            avatarColor: '#F97316',
+            text: 'That\'s a huge red flag! Catfishing and multiple profiles are never good signs.',
+            timestamp: '4h ago',
+            replies: [],
+          },
+          {
+            id: 42,
+            author: 'Lisa M.',
+            avatarColor: '#8B5CF6',
+            text: 'Exactly! I confronted him about it and he blocked me immediately. Sketchy behavior.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+        ],
+      },
+      {
+        id: 5,
+        author: 'Chloe S.',
+        avatarColor: '#059669',
+        text: 'He asked me to meet at a bar downtown, but when I got there, he was nowhere to be found. Texted him and he said he "forgot" and was actually at home. Wanted me to come over instead. Nope!',
+        timestamp: '6h ago',
+        replies: [
+          {
+            id: 51,
+            author: 'Taylor H.',
+            avatarColor: '#DC2626',
+            text: 'That\'s so manipulative! He probably planned that from the start to get you alone at his place.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
       }
     );
     return items;
@@ -372,7 +463,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   backButton: { padding: 8 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold' },
+  headerTitle: { fontSize: 19, fontWeight: 'bold' },
   placeholder: { width: 40 },
   content: { flex: 1 },
   profileSection: {
@@ -392,7 +483,7 @@ const styles = StyleSheet.create({
     imageContainer: { position: 'relative', marginBottom: 16, width: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
   profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: '#F0F0F0' },
   
-  profileName: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
+  profileName: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
 
 
   section: {
@@ -406,13 +497,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-  aiText: { fontSize: 14, lineHeight: 20, color: '#4B5563' },
+  sectionTitle: { fontSize: 19, fontWeight: 'bold', marginBottom: 16 },
+  aiText: { fontSize: 14, lineHeight: 22, color: '#4B5563' },
   flagsContainer: { flexDirection: 'row', flexWrap: 'wrap' },
   flagItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
-  flagText: { fontSize: 12, fontWeight: '500', marginLeft: 4, textTransform: 'capitalize' },
+  flagText: { fontSize: 13, fontWeight: '600', marginLeft: 4, textTransform: 'capitalize' },
   commentsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  commentsCount: { fontSize: 12, fontWeight: '600' },
+  commentsCount: { fontSize: 13, fontWeight: '600' },
   commentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -425,25 +516,25 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   avatarCircle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarInitial: { color: 'white', fontWeight: '700', fontSize: 12 },
+  avatarInitial: { color: 'white', fontWeight: 'bold', fontSize: 13 },
   commentBody: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  commentAuthor: { fontSize: 14, fontWeight: '700' },
-  commentTime: { fontSize: 12 },
-  commentText: { fontSize: 14, lineHeight: 20, marginTop: 4 },
-  replyLink: { fontSize: 12, fontWeight: '700' },
+  commentAuthor: { fontSize: 15, fontWeight: 'bold' },
+  commentTime: { fontSize: 13 },
+  commentText: { fontSize: 14, lineHeight: 22, marginTop: 4 },
+  replyLink: { fontSize: 13, fontWeight: '600' },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 6 },
 
   commentSeparator: { height: 10 },
   replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  replyingText: { fontSize: 12, fontWeight: '600' },
+  replyingText: { fontSize: 13, fontWeight: '600' },
   replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  replyInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10 },
+  replyInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, fontSize: 15 },
   sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   trustIndicatorsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
   trustIndicatorItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
-  trustIndicatorText: { fontSize: 12, fontWeight: '500', marginLeft: 4, textTransform: 'capitalize' },
+  trustIndicatorText: { fontSize: 13, fontWeight: '600', marginLeft: 4, textTransform: 'capitalize' },
 });
 
 export default ProfileDetailScreen; 

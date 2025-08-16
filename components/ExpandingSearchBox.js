@@ -211,15 +211,15 @@ const styles = StyleSheet.create({
   },
   searchButtonText: {
     marginTop: 4,
-    fontSize: 10,
+    fontSize: 11,
     color: '#A0AEC0',
-    fontWeight: '400',
+    fontWeight: '600',
   },
   dmButtonText: {
     marginTop: 4,
-    fontSize: 10,
+    fontSize: 11,
     color: '#A0AEC0',
-    fontWeight: '400',
+    fontWeight: '600',
   },
   searchIcon: {
     marginRight: 12,

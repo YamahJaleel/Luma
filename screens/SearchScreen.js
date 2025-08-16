@@ -527,8 +527,8 @@ const styles = StyleSheet.create({
   },
   profileImage: { width: '100%', height: '100%', backgroundColor: '#F0F0F0' },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
-  emptySubtitle: { fontSize: 16, color: '#718096', textAlign: 'center', lineHeight: 24 },
+  emptyTitle: { fontSize: 22, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
+  emptySubtitle: { fontSize: 15, color: '#718096', textAlign: 'center', lineHeight: 22 },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   locationText: {
     marginLeft: 4,
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: 'bold',
   },
   modalBody: {
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 15,
     color: '#374151',
     marginBottom: 15,
   },
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
   },
   suggestionsList: { paddingBottom: 8 },

@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   newChatText: { 
     color: '#FFFFFF', 
-    fontSize: 14, 
+    fontSize: 15, 
     fontWeight: '600',
     flex: 1 
   },
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   startChatButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   list: { paddingHorizontal: 16, paddingBottom: 16 },
@@ -278,14 +278,14 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarInitial: { color: 'white', fontWeight: '700' },
+  avatarInitial: { color: 'white', fontWeight: 'bold', fontSize: 15 },
   rowText: { flex: 1 },
-  name: { fontSize: 16, fontWeight: '700' },
-  preview: { fontSize: 13, color: '#6B7280' },
+  name: { fontSize: 17, fontWeight: 'bold' },
+  preview: { fontSize: 14, color: '#6B7280' },
   meta: { alignItems: 'flex-end' },
-  time: { fontSize: 12, color: '#9CA3AF', marginBottom: 4 },
+  time: { fontSize: 13, color: '#9CA3AF', marginBottom: 4 },
   badge: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  badgeText: { color: 'white', fontSize: 12, fontWeight: '700' },
+  badgeText: { color: 'white', fontSize: 13, fontWeight: 'bold' },
   fab: {
     position: 'absolute',
     bottom: 100,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   searchLabel: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     marginBottom: 8,
   },
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 15,
   },
   searchResultsList: {
     paddingHorizontal: 20,
@@ -360,14 +360,14 @@ const styles = StyleSheet.create({
   },
   userAvatarInitial: {
     color: 'white',
-    fontWeight: '700',
-    fontSize: 16,
+    fontWeight: 'bold',
+    fontSize: 17,
   },
   userInfo: {
     flex: 1,
   },
   userName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     marginBottom: 2,
   },
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
   },
 });

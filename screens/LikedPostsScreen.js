@@ -71,15 +71,15 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 56 },
   backBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerTitle: { fontSize: 19, fontWeight: 'bold' },
   list: { padding: 16 },
   card: { borderRadius: 14, marginBottom: 10, elevation: 1 },
   cardContent: { padding: 14 },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   iconContainer: { width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  title: { fontSize: 16, fontWeight: '700' },
+  title: { fontSize: 17, fontWeight: 'bold' },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  meta: { fontSize: 12 },
+  meta: { fontSize: 13 },
 });
 
 export default LikedPostsScreen; 

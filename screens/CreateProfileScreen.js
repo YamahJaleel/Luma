@@ -164,14 +164,14 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 56 },
   iconButton: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerTitle: { fontSize: 19, fontWeight: 'bold' },
   createButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  createText: { color: '#FFFFFF', fontWeight: '700' },
+  createText: { color: '#FFFFFF', fontWeight: 'bold' },
   content: { padding: 16 },
   card: { borderRadius: 16, padding: 16, elevation: 2 },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
-  textarea: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, minHeight: 100 },
+  label: { fontSize: 15, fontWeight: '600', marginTop: 16, marginBottom: 8 },
+  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
+  textarea: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, minHeight: 100, fontSize: 15 },
   addPhotoButton: {
     borderWidth: 2,
     borderColor: '#E5E7EB',
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   addPhotoText: {
     marginTop: 8,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
   },
   imageContainer: {
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   changePhotoText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

@@ -79,14 +79,14 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 56 },
   iconButton: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerTitle: { fontSize: 19, fontWeight: 'bold' },
   createButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  createText: { color: '#FFFFFF', fontWeight: '700' },
+  createText: { color: '#FFFFFF', fontWeight: 'bold' },
   content: { padding: 16 },
   card: { borderRadius: 16, padding: 16, elevation: 2 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 10 },
-  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
-  note: { marginTop: 4, fontSize: 12 },
+  label: { fontSize: 15, fontWeight: '600', marginBottom: 6, marginTop: 10 },
+  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
+  note: { marginTop: 4, fontSize: 13 },
 });
 
 export default CreateCommunityScreen; 
