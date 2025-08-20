@@ -1,20 +1,17 @@
 import React from 'react';
+import { View, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, Platform } from 'react-native';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
-import { TabProvider } from './components/TabContext';
-import { SettingsProvider, useSettings } from './components/SettingsContext';
 import * as Notifications from 'expo-notifications';
+import { SettingsProvider, useSettings } from './components/SettingsContext';
+import TabProvider from './components/TabContext';
+import TabNavigator from './components/MainStackNavigator';
 
-// Import screens
 import OnboardingScreen from './screens/OnboardingScreen';
 import CreateAccountScreen from './screens/CreateAccountScreen';
-import IconsDemoScreen from './screens/IconsDemoScreen';
 import ProfileDetailScreen from './screens/ProfileDetailScreen';
-import MainStackNavigator from './components/MainStackNavigator';
 
 const Stack = createStackNavigator();
 
@@ -151,10 +148,6 @@ const AppContent = () => {
                   component={CreateAccountScreen}
                   initialParams={{ setIsOnboarded }}
                 />
-                <Stack.Screen 
-                  name="IconsDemo" 
-                  component={IconsDemoScreen}
-                />
               </Stack.Navigator>
             ) : (
               <Stack.Navigator 
@@ -174,7 +167,7 @@ const AppContent = () => {
                   }),
                 }}
               >
-                <Stack.Screen name="Main" component={MainStackNavigator} />
+                <Stack.Screen name="Main" component={TabNavigator} />
                 <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
               </Stack.Navigator>
             )}

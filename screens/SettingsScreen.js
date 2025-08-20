@@ -292,8 +292,6 @@ const SettingsScreen = ({ navigation }) => {
             );
           } else if (item.id === 'community_notification_settings') {
             navigation.navigate('CommunityNotificationSettings');
-          } else if (item.id === 'icons_demo') {
-            navigation.navigate('IconsDemo');
           } else {
             Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }
