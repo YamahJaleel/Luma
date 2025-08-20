@@ -9,7 +9,7 @@ import {
   Switch,
   Modal,
 } from 'react-native';
-import { Card, List, Button, Divider, Avatar, useTheme } from 'react-native-paper';
+import { Card, List, Button, Divider, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
 import * as Location from 'expo-location';
@@ -184,6 +184,7 @@ const SettingsScreen = ({ navigation }) => {
         { id: 'contact_support', title: 'Contact Support', subtitle: 'Get in touch with our team', icon: 'chat-outline', type: 'navigate' },
         { id: 'report_bug', title: 'Report a Bug', subtitle: 'Help us improve the app', icon: 'bug-outline', type: 'navigate' },
         { id: 'feedback', title: 'Send Feedback', subtitle: 'Share your thoughts with us', icon: 'message-outline', type: 'navigate' },
+        { id: 'icons_demo', title: 'Icons Demo', subtitle: 'Browse all available icons', icon: 'leaf-outline', type: 'navigate' },
       ],
     },
     {
@@ -291,6 +292,8 @@ const SettingsScreen = ({ navigation }) => {
             );
           } else if (item.id === 'community_notification_settings') {
             navigation.navigate('CommunityNotificationSettings');
+          } else if (item.id === 'icons_demo') {
+            navigation.navigate('IconsDemo');
           } else {
             Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }

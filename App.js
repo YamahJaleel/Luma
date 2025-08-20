@@ -12,6 +12,7 @@ import * as Notifications from 'expo-notifications';
 // Import screens
 import OnboardingScreen from './screens/OnboardingScreen';
 import CreateAccountScreen from './screens/CreateAccountScreen';
+import IconsDemoScreen from './screens/IconsDemoScreen';
 import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import MainStackNavigator from './components/MainStackNavigator';
 
@@ -21,6 +22,22 @@ const Stack = createStackNavigator();
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: false, shouldSetBadge: false }),
 });
+
+// Web-specific CSS injection for proper scrolling
+if (Platform.OS === 'web') {
+  const style = document.createElement('style');
+  style.textContent = `
+    html, body, #root {
+      height: 100%;
+      overflow: auto;
+    }
+    .expo-scroll-view {
+      height: 100vh !important;
+      overflow: auto !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 const lightTheme = {
   dark: false,
@@ -37,6 +54,16 @@ const lightTheme = {
     error: '#FC8181',
     blue: '#7C9AFF',
     lightBlue: '#A8B8FF',
+    // Onboarding-inspired accent colors
+    searchBlue: '#06B6D4',
+    communityGreen: '#10B981',
+    encryptionOrange: '#F59E0B',
+    getStartedPurple: '#6366F1',
+    // Soft gradients for subtle use
+    softBlue: '#ECFEFF',
+    softGreen: '#ECFDF5',
+    softOrange: '#FFFBEB',
+    softPurple: '#EEF2FF',
   },
 };
 
@@ -55,6 +82,16 @@ const darkTheme = {
     error: '#F87171',
     blue: '#60A5FA',
     lightBlue: '#93C5FD',
+    // Onboarding-inspired accent colors (adjusted for dark mode)
+    searchBlue: '#22D3EE',
+    communityGreen: '#34D399',
+    encryptionOrange: '#FBBF24',
+    getStartedPurple: '#A78BFA',
+    // Soft gradients for subtle use (darker for dark mode)
+    softBlue: '#0C4A6E',
+    softGreen: '#064E3B',
+    softOrange: '#451A03',
+    softPurple: '#1E1B4B',
   },
 };
 
@@ -114,6 +151,10 @@ const AppContent = () => {
                   component={CreateAccountScreen}
                   initialParams={{ setIsOnboarded }}
                 />
+                <Stack.Screen 
+                  name="IconsDemo" 
+                  component={IconsDemoScreen}
+                />
               </Stack.Navigator>
             ) : (
               <Stack.Navigator 
@@ -155,5 +196,10 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    // Web-specific styles for proper scrolling
+    ...(Platform.OS === 'web' && {
+      height: '100vh',
+      overflow: 'auto',
+    }),
   },
 });

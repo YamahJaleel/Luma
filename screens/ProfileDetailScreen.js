@@ -263,6 +263,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for profile-level comment
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // top-level ids expanded
+  const [upvotedComments, setUpvotedComments] = useState(new Set()); // Track upvoted comments
+  const [downvotedComments, setDownvotedComments] = useState(new Set()); // Track downvoted comments
+  const [voteCounts, setVoteCounts] = useState({}); // Track vote counts for each comment
+  const [selectedComment, setSelectedComment] = useState(null); // for long-press selection
+  const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
   // Count total nested replies for a node
   const countReplies = (node) => {
     if (!node?.replies || node.replies.length === 0) return 0;
@@ -322,21 +327,124 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     setReplyTarget(null);
   };
 
+  const handleUpvote = (commentId) => {
+    setUpvotedComments((prev) => {
+      const next = new Set(prev);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+        // Decrease vote count
+        setVoteCounts((counts) => ({
+          ...counts,
+          [commentId]: (counts[commentId] || 0) - 1
+        }));
+      } else {
+        next.add(commentId);
+        // Increase vote count
+        setVoteCounts((counts) => ({
+          ...counts,
+          [commentId]: (counts[commentId] || 0) + 1
+        }));
+        // Remove from downvotes if it was downvoted
+        setDownvotedComments((downPrev) => {
+          const downNext = new Set(downPrev);
+          if (downNext.has(commentId)) {
+            downNext.delete(commentId);
+            // Adjust vote count for removing downvote
+            setVoteCounts((counts) => ({
+              ...counts,
+              [commentId]: (counts[commentId] || 0) + 1
+            }));
+          }
+          return downNext;
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleDownvote = (commentId) => {
+    setDownvotedComments((prev) => {
+      const next = new Set(prev);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+        // Increase vote count (removing negative vote)
+        setVoteCounts((counts) => ({
+          ...counts,
+          [commentId]: (counts[commentId] || 0) + 1
+        }));
+      } else {
+        next.add(commentId);
+        // Decrease vote count
+        setVoteCounts((counts) => ({
+          ...counts,
+          [commentId]: (counts[commentId] || 0) - 1
+        }));
+        // Remove from upvotes if it was upvoted
+        setUpvotedComments((upPrev) => {
+          const upNext = new Set(upPrev);
+          if (upNext.has(commentId)) {
+            upNext.delete(commentId);
+            // Adjust vote count for removing upvote
+            setVoteCounts((counts) => ({
+              ...counts,
+              [commentId]: (counts[commentId] || 0) - 1
+            }));
+          }
+          return upNext;
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleLongPress = (comment) => {
+    setSelectedComment(comment);
+  };
+
+  const handleDirectMessage = (comment) => {
+    setSelectedComment(null);
+    setDropdownVisible(null);
+    // Navigate to Messages screen and start a new conversation
+    navigation.navigate('Messages', { 
+      startNewChat: true, 
+      recipient: comment.author,
+      recipientId: comment.id 
+    });
+  };
+
+  const handleCancelSelection = () => {
+    setSelectedComment(null);
+  };
+
+  const toggleDropdown = (commentId) => {
+    setDropdownVisible(dropdownVisible === commentId ? null : commentId);
+  };
+
+  const closeDropdown = () => {
+    setDropdownVisible(null);
+  };
+
+  // Close dropdown when scrolling or when reply target changes
+  React.useEffect(() => {
+    closeDropdown();
+  }, [replyTarget]);
+
   const renderComment = ({ item }) => {
     const c = item.node;
     const depth = item.depth;
     const isOwnerNote = c.id === 'owner-note';
+    const isUpvoted = upvotedComments.has(c.id);
+    const isDownvoted = downvotedComments.has(c.id);
+    const showDropdown = dropdownVisible === c.id;
+
     return (
       <View
         style={[
           styles.commentRow,
           { backgroundColor: theme.colors.surface, marginLeft: depth * 16 },
-          isOwnerNote && { borderWidth: 1, borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}15` },
+          isOwnerNote && styles.ownerNoteTab,
         ]}
       >
-        <View style={[styles.avatarCircle, { backgroundColor: c.avatarColor }]}>
-          <Text style={styles.avatarInitial}>{c.author.charAt(0)}</Text>
-        </View>
         <View style={styles.commentBody}>
           <View style={styles.commentHeader}>
             <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
@@ -345,27 +453,89 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             <Text style={[styles.commentTime, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{c.timestamp}</Text>
           </View>
           <Text style={[styles.commentText, { color: theme.colors.text }]}>{c.text}</Text>
+          
           <View style={styles.linkRow}>
-            <TouchableOpacity style={styles.replyLink} onPress={() => setReplyTarget({ id: c.id, author: c.author })}>
-              <Text style={[styles.replyText, { color: theme.colors.primary }]}>Reply</Text>
-            </TouchableOpacity>
-            {depth === 0 && countReplies(c) > 0 && (
-              <TouchableOpacity
-                style={styles.replyLink}
-                onPress={() =>
-                  setExpandedThreads((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
-                    return next;
-                  })
-                }
+            <View style={styles.leftActions}>
+              <TouchableOpacity style={styles.replyLink} onPress={() => setReplyTarget({ id: c.id, author: c.author })}>
+                <Text style={[styles.replyText, { color: theme.colors.primary }]}>Reply</Text>
+              </TouchableOpacity>
+              {depth === 0 && countReplies(c) > 0 && (
+                <TouchableOpacity
+                  style={styles.replyLink}
+                  onPress={() =>
+                    setExpandedThreads((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
+                      return next;
+                    })
+                  }
+                >
+                  <Text style={[styles.replyText, { color: theme.colors.primary }]}>
+                    {expandedThreads.has(c.id) ? 'Hide replies' : `Show replies (${countReplies(c)})`}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={styles.votingButtons}>
+              <TouchableOpacity 
+                style={styles.voteButton} 
+                onPress={() => {
+                  if (isUpvoted) {
+                    handleUpvote(c.id); // Remove upvote
+                  } else if (isDownvoted) {
+                    handleDownvote(c.id); // Remove downvote
+                  } else {
+                    handleUpvote(c.id); // Add upvote
+                  }
+                }}
+                onLongPress={() => {
+                  if (!isUpvoted && !isDownvoted) {
+                    handleDownvote(c.id); // Add downvote on long press
+                  }
+                }}
               >
-                <Text style={[styles.replyText, { color: theme.colors.primary }]}>
-                  {expandedThreads.has(c.id) ? 'Hide replies' : `Show replies (${countReplies(c)})`}
+                <Ionicons 
+                  name="leaf-outline" 
+                  size={16} 
+                  color={isUpvoted ? '#3E5F44' : isDownvoted ? '#EF4444' : theme.colors.placeholder} 
+                />
+                <Text style={[styles.voteCount, { color: isUpvoted ? '#3E5F44' : isDownvoted ? '#EF4444' : theme.colors.placeholder }]}>
+                  {voteCounts[c.id] || 0}
                 </Text>
               </TouchableOpacity>
-            )}
+            </View>
           </View>
+        </View>
+        
+        {/* 3-dots menu button with dropdown */}
+        <View style={styles.menuContainer}>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => toggleDropdown(c.id)}
+          >
+            <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
+          </TouchableOpacity>
+          
+          {/* Dropdown menu */}
+          {showDropdown && (
+            <>
+              {/* Touchable overlay to close dropdown when tapping outside */}
+              <TouchableOpacity 
+                style={styles.dropdownOverlay}
+                onPress={closeDropdown}
+                activeOpacity={1}
+              />
+              <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
+                <TouchableOpacity 
+                  style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                  onPress={() => handleDirectMessage(c)}
+                >
+                  <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
+                  <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Message</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
       </View>
     );
@@ -382,7 +552,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        // Web-specific scrolling fix
+        {...(Platform.OS === 'web' && {
+          style: [styles.content, { height: '100vh', overflow: 'auto' }],
+        })}
+      >
         {/* Profile Image and Basic Info */}
         <View style={[styles.profileSection, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.imageContainer}>
@@ -412,13 +589,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         {/* Discussion */}
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}> 
           <View style={styles.commentsHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Discussion</Text>
           </View>
           <FlatList
             data={flatComments}
             renderItem={renderComment}
             keyExtractor={(item) => `${item.node.id}`}
-            ItemSeparatorComponent={() => <View style={styles.commentSeparator} />}
             scrollEnabled={false}
           />
         </View>
@@ -436,7 +611,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={styles.replyRow}>
           <TextInput
             style={[styles.replyInput, { color: theme.colors.text }]}
-            placeholder={replyTarget ? 'Write a reply...' : 'Write a comment...'}
+            placeholder={replyTarget ? 'Write a reply...' : 'Share your experience'}
             placeholderTextColor={theme.colors.placeholder}
             value={replyText}
             onChangeText={setReplyText}
@@ -480,7 +655,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-    imageContainer: { position: 'relative', marginBottom: 16, width: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
+    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
   profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: '#F0F0F0' },
   
   profileName: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
@@ -508,22 +683,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: 12,
-    borderRadius: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
+    marginBottom: 8,
   },
-  avatarCircle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarInitial: { color: 'white', fontWeight: 'bold', fontSize: 13 },
   commentBody: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   commentAuthor: { fontSize: 15, fontWeight: 'bold' },
   commentTime: { fontSize: 13 },
   commentText: { fontSize: 14, lineHeight: 22, marginTop: 4 },
   replyLink: { fontSize: 13, fontWeight: '600' },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 6 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 6 },
+  leftActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  votingButtons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 
   commentSeparator: { height: 10 },
   replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
@@ -535,6 +705,102 @@ const styles = StyleSheet.create({
   trustIndicatorsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
   trustIndicatorItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
   trustIndicatorText: { fontSize: 13, fontWeight: '600', marginLeft: 4, textTransform: 'capitalize' },
+  upvoteButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  downvoteButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  voteButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  voteCount: { fontSize: 12, fontWeight: '600' },
+  ownerNoteTab: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F8FAFC',
+    marginBottom: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3E5F44',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  actionRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8, 
+    marginTop: 8 
+  },
+  dmButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4, 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 16 
+  },
+  dmButtonText: { 
+    color: '#FFFFFF', 
+    fontSize: 13, 
+    fontWeight: '600' 
+  },
+  cancelButton: { 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 16, 
+    borderWidth: 1 
+  },
+  cancelButtonText: { 
+    fontSize: 13, 
+    fontWeight: '600' 
+  },
+  menuButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  menuContainer: {
+    position: 'relative',
+    marginLeft: 8,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 40,
+    right: 0,
+    width: 140,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    backgroundColor: '#FFFFFF',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  dropdownText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: -1000,
+    left: -1000,
+    right: -1000,
+    bottom: -1000,
+    zIndex: 999,
+  },
 });
 
 export default ProfileDetailScreen; 

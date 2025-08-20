@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { Card, List, Button, Avatar, useTheme } from 'react-native-paper';
+import { Card, List, Button, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useTabContext } from '../components/TabContext';
 
@@ -56,22 +56,24 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.profileInfo}>
-            <Avatar.Text size={80} label="LU" style={{ backgroundColor: theme.colors.primary, marginRight: 15 }} color="white" labelStyle={styles.avatarLabel} labelProps={{ numberOfLines: 1 }} />
             <View style={styles.profileText}>
+              <View style={styles.nameAndVerifyRow}>
               <Text style={[styles.profileName, { color: theme.colors.text }]}>Luma User</Text>
-              <View style={styles.verificationContainer}>
-                {isVerified ? (
-                  <View style={styles.verifiedBadge}>
-                    <Ionicons name="checkmark-circle" size={16} color="#68D391" />
-                    <Text style={[styles.verificationText, theme.dark && { color: theme.colors.text }]}>Verified Profile</Text>
-                  </View>
-                ) : (
+                {!isVerified && (
                   <TouchableOpacity style={styles.verifyButton} onPress={handleVerification}>
                     <Ionicons name="warning" size={16} color="#F6AD55" />
                     <Text style={[styles.verifyText, theme.dark && { color: theme.colors.text }]}>Verify Account</Text>
                   </TouchableOpacity>
                 )}
               </View>
+              {isVerified && (
+                <View style={styles.verificationContainer}>
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={16} color="#68D391" />
+                    <Text style={[styles.verificationText, theme.dark && { color: theme.colors.text }]}>Verified Profile</Text>
+                  </View>
+                </View>
+              )}
             </View>
           </View>
           <TouchableOpacity style={[styles.settingsButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.navigate('Settings')}>
@@ -194,14 +196,13 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 60 },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   profileInfo: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, flex: 1 },
-  avatarLabel: { fontSize: 24, fontWeight: 'bold' },
   profileText: { flex: 1 },
-  profileName: { fontSize: 20, fontWeight: 'bold', marginBottom: 5 },
+  profileName: { fontSize: 20, fontWeight: 'bold' },
   verificationContainer: { flexDirection: 'row', alignItems: 'center' },
   verifiedBadge: { flexDirection: 'row', alignItems: 'center' },
   verificationText: { color: '#68D391', fontSize: 15, marginLeft: 8, fontWeight: '600' },
-  verifyButton: { flexDirection: 'row', alignItems: 'center' },
-  verifyText: { fontSize: 15, color: '#F6AD55', fontWeight: '600', marginLeft: 4 },
+  verifyButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: '#FEF5E7' },
+  verifyText: { fontSize: 13, color: '#F6AD55', fontWeight: '600', marginLeft: 4 },
   userStatsCard: { marginHorizontal: 20, marginBottom: 15, borderRadius: 12, elevation: 2 },
   userStats: { flexDirection: 'row', justifyContent: 'space-around' },
   userStat: { alignItems: 'center' },
@@ -234,6 +235,7 @@ const styles = StyleSheet.create({
   },
   logoutRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, gap: 8 },
   logoutText: { fontSize: 16, fontWeight: '600', marginLeft: 4 },
+  nameAndVerifyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5, gap: 12 },
 });
 
 export default ProfileScreen; 

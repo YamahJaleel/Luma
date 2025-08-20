@@ -11,7 +11,7 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import { Card, Chip, Avatar, Button, useTheme } from 'react-native-paper';
+import { Card, Chip, Button, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
@@ -395,11 +395,8 @@ const HomeScreen = ({ navigation, route }) => {
         </View>
  
           <View style={styles.authorRow}>
-            <View style={styles.authorAvatar}>
-              <Text style={styles.authorInitial}>{(item.author || 'Anonymous').charAt(0)}</Text>
-            </View>
             <Text style={[styles.authorName, theme.dark && { color: theme.colors.text }]}>{item.author || 'Anonymous'}</Text>
-        </View>
+          </View>
  
           <Text style={[styles.postTitle, { color: theme.colors.text }]} numberOfLines={2}>
             {item.title}
@@ -932,8 +929,6 @@ const styles = StyleSheet.create({
   searchModalInput: { flex: 1, fontSize: 15, color: '#2D3748', paddingVertical: 0 },
   searchResultsText: { fontSize: 13, color: '#6B7280', textAlign: 'center', fontStyle: 'italic' },
   authorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  authorAvatar: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: '#3E5F44' },
-  authorInitial: { color: 'white', fontSize: 11, fontWeight: 'bold' },
   authorName: { fontSize: 13, fontWeight: '600', color: '#1F2937' },
 });
 

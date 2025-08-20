@@ -129,9 +129,12 @@ const CreateAccountScreen = ({ navigation, route }) => {
       numberOfLines = 1,
     } = options;
 
+    // Add example text for pseudonym field
+    const displayLabel = field === 'pseudonym' ? `${label} (e.g., ScarlettX92)` : label;
+
     return (
       <View style={styles.inputContainer}>
-        <Text style={[styles.inputLabel, { color: theme.colors.text }]}>{label}</Text>
+        <Text style={[styles.inputLabel, { color: theme.colors.text }]}>{displayLabel}</Text>
         <View style={[styles.inputWrapper, { borderColor: errors[field] ? theme.colors.error : '#E2E8F0' }]}>
           <TextInput
             style={[styles.textInput, { color: theme.colors.text }]}
@@ -196,13 +199,26 @@ const CreateAccountScreen = ({ navigation, route }) => {
             <Ionicons name="arrow-back" size={24} color="#3E5F44" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create Account</Text>
-          <View style={styles.placeholder} />
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => {
+              // Skip account creation for demo version
+              AsyncStorage.setItem('isOnboarded', 'true');
+              route.params.setIsOnboarded(true);
+            }}
+          >
+            <Text style={styles.skipButtonText}>Skip</Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          // Web-specific scrolling fix
+          {...(Platform.OS === 'web' && {
+            style: [styles.scrollView, { height: '100vh', overflow: 'auto' }],
+          })}
         >
           {/* Welcome Section */}
           <View style={styles.welcomeSection}>
@@ -220,7 +236,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
           {/* Form */}
           <View style={styles.formContainer}>
             {renderInput('pseudonym', 'Pseudonym', 'Choose a unique username')}
-            {renderInput('email', 'Email Address', 'Enter your email address', { keyboardType: 'email-address', autoCapitalize: 'none' })}
+            {renderInput('email', 'Email', 'Enter your email address')}
             {renderInput('dateOfBirth', 'Date of Birth', 'MM/DD/YYYY', { keyboardType: 'default' })}
             {renderInput('password', 'Password', 'Create a strong password', { secureTextEntry: !showPassword })}
             {renderInput('confirmPassword', 'Confirm Password', 'Confirm your password', { secureTextEntry: !showConfirmPassword })}
@@ -410,6 +426,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#3E5F44',
     fontWeight: '600',
+  },
+  skipButton: {
+    padding: 8,
+  },
+  skipButtonText: {
+    fontSize: 16,
+    color: '#3E5F44',
+    fontWeight: '600',
+  },
+  exampleText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 8,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
 });
 

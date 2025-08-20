@@ -19,6 +19,7 @@ import MessageThreadScreen from '../screens/MessageThreadScreen';
 import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 import ProfileDetailScreen from '../screens/ProfileDetailScreen';
 import CommunityNotificationSettingsScreen from '../screens/CommunityNotificationSettingsScreen';
+import IconsDemoScreen from '../screens/IconsDemoScreen';
 
 const Stack = createStackNavigator();
 
@@ -68,6 +69,7 @@ const MainStackNavigator = () => {
         <Stack.Screen name="MessageThread" component={MessageThreadScreen} />
         <Stack.Screen name="CreateCommunity" component={CreateCommunityScreen} />
         <Stack.Screen name="CommunityNotificationSettings" component={CommunityNotificationSettingsScreen} />
+        <Stack.Screen name="IconsDemo" component={IconsDemoScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>

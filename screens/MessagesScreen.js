@@ -5,22 +5,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
 const mockConversations = [
-  { id: 'c1', name: 'Tyler Bradshaw', lastMessage: 'See you at 6?', time: '2m', unread: 2, avatarColor: '#3E5F44' },
-  { id: 'c2', name: 'Sarah Chen', lastMessage: 'Thanks for the advice!', time: '15m', unread: 0, avatarColor: '#8B5CF6' },
-  { id: 'c3', name: 'Mike Johnson', lastMessage: 'Sent you the link', time: '1h', unread: 1, avatarColor: '#10B981' },
-  { id: 'c4', name: 'Emma Wilson', lastMessage: 'Let\'s catch up soon', time: '3h', unread: 0, avatarColor: '#F59E0B' },
+  { id: 'c1', name: 'Tyler Bradshaw', lastMessage: 'See you at 6?', time: '2m', unread: 2 },
+  { id: 'c2', name: 'Sarah Chen', lastMessage: 'Thanks for the advice!', time: '15m', unread: 0 },
+  { id: 'c3', name: 'Mike Johnson', lastMessage: 'Sent you the link', time: '1h', unread: 1 },
+  { id: 'c4', name: 'Emma Wilson', lastMessage: 'Let\'s catch up soon', time: '3h', unread: 0 },
 ];
 
 // Mock user database for search
 const mockUsers = [
-  { id: 'u1', name: 'Tyler Bradshaw', username: '@tylerb', avatarColor: '#3E5F44' },
-  { id: 'u2', name: 'Sarah Chen', username: '@sarahchen', avatarColor: '#8B5CF6' },
-  { id: 'u3', name: 'Mike Johnson', username: '@mikej', avatarColor: '#10B981' },
-  { id: 'u4', name: 'Emma Wilson', username: '@emmaw', avatarColor: '#F59E0B' },
-  { id: 'u5', name: 'David Kim', username: '@davidk', avatarColor: '#EF4444' },
-  { id: 'u6', name: 'Lisa Park', username: '@lisap', avatarColor: '#8B5CF6' },
-  { id: 'u7', name: 'Alex Rodriguez', username: '@alexr', avatarColor: '#3B82F6' },
-  { id: 'u8', name: 'Rachel Green', username: '@rachelg', avatarColor: '#10B981' },
+  { id: 'u1', name: 'Tyler Bradshaw', username: '@tylerb' },
+  { id: 'u2', name: 'Sarah Chen', username: '@sarahchen' },
+  { id: 'u3', name: 'Mike Johnson', username: '@mikej' },
+  { id: 'u4', name: 'Emma Wilson', username: '@emmaw' },
+  { id: 'u5', name: 'David Kim', username: '@davidk' },
+  { id: 'u6', name: 'Lisa Park', username: '@lisap' },
+  { id: 'u7', name: 'Alex Rodriguez', username: '@alexr' },
+  { id: 'u8', name: 'Rachel Green', username: '@rachelg' },
 ];
 
 const MessagesScreen = ({ navigation, route }) => {
@@ -40,7 +40,6 @@ const MessagesScreen = ({ navigation, route }) => {
         setNewChatRecipient({
           name: params.recipient,
           id: params.recipientId,
-          avatarColor: '#3E5F44', // Default color
         });
         
         // Clear the params to avoid re-triggering
@@ -80,7 +79,6 @@ const MessagesScreen = ({ navigation, route }) => {
       lastMessage: 'Start a conversation...',
       time: 'now',
       unread: 0,
-      avatarColor: user.avatarColor,
     };
     
     setConversations(prev => [newConversation, ...prev]);
@@ -98,16 +96,16 @@ const MessagesScreen = ({ navigation, route }) => {
         lastMessage: 'Start a conversation...',
         time: 'now',
         unread: 0,
-        avatarColor: newChatRecipient.avatarColor,
       };
       
       setConversations(prev => [newConversation, ...prev]);
-      setNewChatRecipient(null);
       
       // Navigate to the new conversation
       navigation.navigate('MessageThread', { conversation: newConversation });
+      
+      // Clear the recipient
+      setNewChatRecipient(null);
     } else {
-      // Show the search modal
       setShowSearchModal(true);
     }
   };
@@ -117,9 +115,6 @@ const MessagesScreen = ({ navigation, route }) => {
       style={[styles.userRow, { backgroundColor: theme.colors.surface }]} 
       onPress={() => handleUserSelect(item)}
     >
-      <View style={[styles.userAvatar, { backgroundColor: item.avatarColor }]}>
-        <Text style={styles.userAvatarInitial}>{item.name.charAt(0)}</Text>
-      </View>
       <View style={styles.userInfo}>
         <Text style={[styles.userName, { color: theme.colors.text }]}>{item.name}</Text>
         <Text style={[styles.userUsername, { color: theme.colors.placeholder }]}>{item.username}</Text>
@@ -130,9 +125,6 @@ const MessagesScreen = ({ navigation, route }) => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={[styles.row, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.navigate('MessageThread', { conversation: item })}>
-      <View style={[styles.avatar, { backgroundColor: item.avatarColor }]}>
-        <Text style={styles.avatarInitial}>{item.name.charAt(0)}</Text>
-      </View>
       <View style={styles.rowText}>
         <Text style={[styles.name, { color: theme.colors.text }]} numberOfLines={1}>{item.name}</Text>
         <Text style={styles.preview} numberOfLines={1}>{item.lastMessage}</Text>
@@ -268,17 +260,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 8,
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
   },
-  avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarInitial: { color: 'white', fontWeight: 'bold', fontSize: 15 },
   rowText: { flex: 1 },
   name: { fontSize: 17, fontWeight: 'bold' },
   preview: { fontSize: 14, color: '#6B7280' },
@@ -349,19 +339,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
-  },
-  userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  userAvatarInitial: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 17,
   },
   userInfo: {
     flex: 1,
