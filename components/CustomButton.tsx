@@ -89,8 +89,8 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x, setIsOnboarded
         if (flatListIndex.value < dataLength - 1) {
           flatListRef.current?.scrollToIndex({index: flatListIndex.value + 1});
         } else {
-          // Complete onboarding
-          setIsOnboarded(true);
+          // Navigate to CreateAccount screen instead of completing onboarding
+          (navigation as any).navigate('CreateAccount');
         }
       }}>
       <Animated.View

@@ -3,31 +3,26 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CreateAccountScreen = ({ navigation, route }) => {
-  const theme = useTheme();
+const SignInScreen = ({ navigation, route }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '',
-    pseudonym: '',
-    dateOfBirth: '',
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { setIsOnboarded } = route.params;
 
   const validateForm = () => {
     const newErrors = {};
@@ -42,38 +37,6 @@ const CreateAccountScreen = ({ navigation, route }) => {
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Password must contain uppercase, lowercase, and number';
-    }
-
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    // Pseudonym validation
-    if (!formData.pseudonym.trim()) {
-      newErrors.pseudonym = 'Pseudonym is required';
-    } else if (formData.pseudonym.trim().length < 3) {
-      newErrors.pseudonym = 'Pseudonym must be at least 3 characters';
-    } else if (formData.pseudonym.trim().length > 20) {
-      newErrors.pseudonym = 'Pseudonym must be 20 characters or less';
-    }
-
-    // Date of birth validation
-    if (!formData.dateOfBirth) {
-      newErrors.dateOfBirth = 'Date of birth is required';
-    } else {
-      const today = new Date();
-      const birthDate = new Date(formData.dateOfBirth);
-      const age = today.getFullYear() - birthDate.getFullYear();
-      if (age < 18) {
-        newErrors.dateOfBirth = 'You must be at least 18 years old';
-      }
     }
 
     setErrors(newErrors);
@@ -88,7 +51,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleCreateAccount = async () => {
+  const handleSignIn = async () => {
     if (!validateForm()) {
       return;
     }
@@ -99,21 +62,27 @@ const CreateAccountScreen = ({ navigation, route }) => {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Save user data to AsyncStorage (in a real app, this would go to your backend)
-      const userData = {
-        ...formData,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        isVerified: false,
-      };
-
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
-
-      // Navigate to verification screen instead of completing onboarding
-      navigation.navigate('Verification');
+      // Check if user exists in AsyncStorage (in a real app, this would be a backend call)
+      const existingUserData = await AsyncStorage.getItem('userData');
+      
+      if (existingUserData) {
+        const userData = JSON.parse(existingUserData);
+        
+        // Simple validation (in a real app, you'd hash passwords and verify properly)
+        if (userData.email === formData.email && userData.password === formData.password) {
+          // Sign in successful
+          await AsyncStorage.setItem('isSignedIn', 'true');
+          Alert.alert('Welcome Back!', 'Successfully signed in to your account.');
+          setIsOnboarded(true);
+        } else {
+          Alert.alert('Sign In Failed', 'Invalid email or password. Please try again.');
+        }
+      } else {
+        Alert.alert('Account Not Found', 'No account found with this email. Please create an account first.');
+      }
     } catch (error) {
-      console.error('Error creating account:', error);
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      console.error('Error signing in:', error);
+      Alert.alert('Error', 'Failed to sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -123,29 +92,22 @@ const CreateAccountScreen = ({ navigation, route }) => {
     const {
       secureTextEntry = false,
       keyboardType = 'default',
-      autoCapitalize = 'words',
-      multiline = false,
-      numberOfLines = 1,
+      autoCapitalize = 'none',
     } = options;
-
-    // Add example text for pseudonym field
-    const displayLabel = field === 'pseudonym' ? `${label} (e.g., ScarlettX92)` : label;
 
     return (
       <View style={styles.inputContainer}>
-        <Text style={[styles.inputLabel, { color: theme.colors.text }]}>{displayLabel}</Text>
-        <View style={[styles.inputWrapper, { borderColor: errors[field] ? theme.colors.error : '#E2E8F0' }]}>
+        <Text style={styles.inputLabel}>{label}</Text>
+        <View style={[styles.inputWrapper, { borderColor: errors[field] ? '#FC8181' : '#E2E8F0' }]}>
           <TextInput
-            style={[styles.textInput, { color: theme.colors.text }]}
+            style={styles.textInput}
             placeholder={placeholder}
-            placeholderTextColor={theme.colors.placeholder}
+            placeholderTextColor="#A0AEC0"
             value={formData[field]}
             onChangeText={(value) => handleInputChange(field, value)}
             secureTextEntry={secureTextEntry}
             keyboardType={keyboardType}
             autoCapitalize={autoCapitalize}
-            multiline={multiline}
-            numberOfLines={numberOfLines}
             autoCorrect={false}
           />
           {field === 'password' && (
@@ -156,25 +118,13 @@ const CreateAccountScreen = ({ navigation, route }) => {
               <Ionicons
                 name={showPassword ? 'eye-off' : 'eye'}
                 size={20}
-                color={theme.colors.placeholder}
-              />
-            </TouchableOpacity>
-          )}
-          {field === 'confirmPassword' && (
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              <Ionicons
-                name={showConfirmPassword ? 'eye-off' : 'eye'}
-                size={20}
-                color={theme.colors.placeholder}
+                color="#A0AEC0"
               />
             </TouchableOpacity>
           )}
         </View>
         {errors[field] && (
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>{errors[field]}</Text>
+          <Text style={styles.errorText}>{errors[field]}</Text>
         )}
       </View>
     );
@@ -197,73 +147,47 @@ const CreateAccountScreen = ({ navigation, route }) => {
           >
             <Ionicons name="arrow-back" size={24} color="#3E5F44" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Account</Text>
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => {
-              // Skip account creation for demo version
-              navigation.navigate('Verification');
-            }}
-          >
-            <Text style={styles.skipButtonText}>Skip</Text>
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Sign In</Text>
+          <View style={styles.placeholder} />
         </View>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          // Web-specific scrolling fix
-          {...(Platform.OS === 'web' && {
-            style: [styles.scrollView, { height: '100vh', overflow: 'auto' }],
-          })}
         >
           {/* Welcome Section */}
           <View style={styles.welcomeSection}>
             <View style={styles.iconContainer}>
               <View style={styles.iconCircle}>
-                <Ionicons name="person-add" size={32} color="white" />
+                <Ionicons name="log-in" size={32} color="white" />
               </View>
             </View>
-            <Text style={styles.welcomeTitle}>Join Luma</Text>
+            <Text style={styles.welcomeTitle}>Welcome Back</Text>
             <Text style={styles.welcomeSubtitle}>
-              Create your account with a pseudonym to maintain privacy in our safety-first community
+              Sign in to your existing account to continue using Luma
             </Text>
           </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
-            {renderInput('pseudonym', 'Pseudonym', 'Choose a unique username')}
             {renderInput('email', 'Email', 'Enter your email address')}
-            {renderInput('dateOfBirth', 'Date of Birth', 'MM/DD/YYYY', { keyboardType: 'default' })}
-            {renderInput('password', 'Password', 'Create a strong password', { secureTextEntry: !showPassword })}
-            {renderInput('confirmPassword', 'Confirm Password', 'Confirm your password', { secureTextEntry: !showConfirmPassword })}
+            {renderInput('password', 'Password', 'Enter your password', { 
+              secureTextEntry: !showPassword 
+            })}
           </View>
 
-          {/* Terms and Privacy */}
-          <View style={styles.termsContainer}>
-            <Text style={styles.termsText}>
-              By creating an account, you agree to our{' '}
-              <Text 
-                style={styles.linkText}
-                onPress={() => navigation.navigate('TermsOfService')}
-              >
-                Terms of Service
-              </Text>{' '}
-              and{' '}
-              <Text 
-                style={styles.linkText}
-                onPress={() => navigation.navigate('PrivacyPolicy')}
-              >
-                Privacy Policy
-              </Text>
-            </Text>
+          {/* Forgot Password */}
+          <View style={styles.forgotPasswordContainer}>
+            <TouchableOpacity>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Create Account Button */}
+          {/* Sign In Button */}
           <TouchableOpacity
-            style={[styles.createButton, isLoading && styles.createButtonDisabled]}
-            onPress={handleCreateAccount}
+            style={[styles.signInButton, isLoading && styles.signInButtonDisabled]}
+            onPress={handleSignIn}
             disabled={isLoading}
           >
             <LinearGradient
@@ -273,21 +197,21 @@ const CreateAccountScreen = ({ navigation, route }) => {
               end={{ x: 1, y: 0 }}
             >
               {isLoading ? (
-                <Text style={styles.createButtonText}>Creating Account...</Text>
+                <Text style={styles.signInButtonText}>Signing In...</Text>
               ) : (
                 <>
-                  <Text style={styles.createButtonText}>Next</Text>
+                  <Text style={styles.signInButtonText}>Sign In</Text>
                   <Ionicons name="arrow-forward" size={20} color="white" style={styles.arrowIcon} />
                 </>
               )}
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Sign In Link */}
-          <View style={styles.signInContainer}>
-            <Text style={styles.signInText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-              <Text style={styles.signInLink}>Sign In</Text>
+          {/* Create Account Link */}
+          <View style={styles.createAccountContainer}>
+            <Text style={styles.createAccountText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={styles.createAccountLink}>Create Account</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -352,7 +276,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  inputContainer: { marginBottom: 20 },
+  inputContainer: {
+    marginBottom: 20,
+  },
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
@@ -380,25 +306,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 6,
     marginLeft: 4,
+    color: '#FC8181',
   },
-  termsContainer: {
-    paddingHorizontal: 20,
+  forgotPasswordContainer: {
+    alignItems: 'center',
     marginBottom: 24,
   },
-  termsText: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  linkText: {
+  forgotPasswordText: {
+    fontSize: 16,
     color: '#3E5F44',
     fontWeight: '600',
   },
-  linkTouchable: {
-    alignSelf: 'flex-end',
-  },
-  createButton: {
+  signInButton: {
     borderRadius: 28,
     marginHorizontal: 20,
     marginBottom: 24,
@@ -408,7 +327,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 12,
   },
-  createButtonDisabled: {
+  signInButtonDisabled: {
     opacity: 0.7,
   },
   buttonGradient: {
@@ -419,41 +338,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 28,
   },
-  createButtonText: {
+  signInButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: '700',
   },
   arrowIcon: { marginLeft: 12 },
-  signInContainer: {
+  createAccountContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  signInText: {
+  createAccountText: {
     fontSize: 16,
     color: '#6B7280',
   },
-  signInLink: {
+  createAccountLink: {
     fontSize: 16,
     color: '#3E5F44',
     fontWeight: '600',
-  },
-  skipButton: {
-    padding: 8,
-  },
-  skipButtonText: {
-    fontSize: 16,
-    color: '#3E5F44',
-    fontWeight: '600',
-  },
-  exampleText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 8,
-    marginBottom: 20,
-    paddingHorizontal: 4,
   },
 });
 
-export default CreateAccountScreen; 
+export default SignInScreen; 

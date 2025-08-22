@@ -6,12 +6,17 @@ import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
-import TabProvider from './components/TabContext';
+import { TabProvider } from './components/TabContext';
 import TabNavigator from './components/MainStackNavigator';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import CreateAccountScreen from './screens/CreateAccountScreen';
+import VerificationScreen from './screens/VerificationScreen';
+import SignInScreen from './screens/SignInScreen';
+import TestGenderDetectionScreen from './screens/TestGenderDetectionScreen';
 import ProfileDetailScreen from './screens/ProfileDetailScreen';
+import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 
 const Stack = createStackNavigator();
 
@@ -147,6 +152,28 @@ const AppContent = () => {
                   name="CreateAccount" 
                   component={CreateAccountScreen}
                   initialParams={{ setIsOnboarded }}
+                />
+                <Stack.Screen 
+                  name="Verification" 
+                  component={VerificationScreen}
+                  initialParams={{ setIsOnboarded }}
+                />
+                <Stack.Screen 
+                  name="SignIn" 
+                  component={SignInScreen}
+                  initialParams={{ setIsOnboarded }}
+                />
+                <Stack.Screen 
+                  name="TestGenderDetection" 
+                  component={TestGenderDetectionScreen}
+                />
+                <Stack.Screen 
+                  name="TermsOfService" 
+                  component={TermsOfServiceScreen}
+                />
+                <Stack.Screen 
+                  name="PrivacyPolicy" 
+                  component={PrivacyPolicyScreen}
                 />
               </Stack.Navigator>
             ) : (
