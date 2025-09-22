@@ -5,6 +5,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
+import LottieView from 'lottie-react-native';
 
 // Utility: normalize a name into a set of tokens for rough matching
 const tokenizeName = (name) => {
@@ -67,6 +68,7 @@ const roughlyNamesMatch = (extractedText, signupName) => {
 
 const LicenseVerificationScreen = ({ route, navigation }) => {
   const signupName = route?.params?.signupName || '';
+  const setIsOnboarded = route?.params?.setIsOnboarded;
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const cameraPermissionAskedRef = useRef(false);
@@ -74,6 +76,7 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
   const [photoUri, setPhotoUri] = useState(null);
   const [uploadedUri, setUploadedUri] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null); // 'success' | 'failed' | null
+  const [forceEnableFinish, setForceEnableFinish] = useState(false);
   
 
   const ensureCameraPermission = useCallback(async () => {
@@ -186,20 +189,27 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#3E5F44" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>License Verification</Text>
-          <View style={styles.headerRightPlaceholder} />
+          <Text style={styles.headerTitle}>Verification</Text>
+          <TouchableOpacity style={styles.headerRightButton} onPress={() => setForceEnableFinish(true)}>
+            <Text style={styles.headerRightText}>Enable</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Content */}
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.content, { alignItems: 'center' }]} showsVerticalScrollIndicator>
           {!photoUri && (
             <>
-              <View style={styles.iconCircle}>
-                <Ionicons name="scan" size={40} color="white" />
+              <View style={styles.lottieContainer}>
+                <LottieView
+                  source={require('../assets/animations/Scan.json')}
+                  autoPlay
+                  loop
+                  style={styles.lottie}
+                />
               </View>
-              <Text style={styles.title}>Verify your identity</Text>
+              <Text style={styles.title}>Verify your gender</Text>
               <Text style={styles.subtitle}>
-                Take a clear photo of your driver’s license. Make sure all text is readable.
+                Take a clear photo of your ID. Make sure all text is readable.
               </Text>
               <Text style={styles.tip}>Tip: Align the card edges with the frame and avoid glare.</Text>
 
@@ -287,14 +297,19 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
                 <Text style={styles.resultLabel}>Extracted Text</Text>
                 <Text style={styles.extractedText}>{result.extracted_text || '—'}</Text>
               </View>
-              {verificationStatus === 'success' && (
-                <TouchableOpacity style={[styles.primaryButton, { marginTop: 16 }]} onPress={() => navigation.navigate('SignIn')}>
-                  <LinearGradient colors={["#3E5F44", "#4A7C59"]} style={styles.primaryButtonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                    <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
-                    <Text style={styles.primaryButtonText}>Continue</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
+              <View style={{ height: 8 }} />
+              <TouchableOpacity
+                style={[styles.primaryButton, (verificationStatus !== 'success' && !forceEnableFinish) && styles.primaryButtonDisabled]}
+                onPress={() => {
+                  navigation.navigate('Congrats', { setIsOnboarded });
+                }}
+                disabled={verificationStatus !== 'success' && !forceEnableFinish}
+              >
+                <LinearGradient colors={["#3E5F44", "#4A7C59"]} style={styles.primaryButtonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={styles.primaryButtonText}>Finish</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           )}
         </ScrollView>
@@ -331,10 +346,19 @@ const styles = StyleSheet.create({
   headerRightPlaceholder: {
     width: 32,
   },
+  headerRightButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#3E5F44',
+  },
+  headerRightText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
   content: {
-    flex: 1,
     paddingHorizontal: 20,
-    alignItems: 'center',
+    paddingBottom: 120,
   },
   iconCircle: {
     width: 72,
@@ -346,6 +370,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#4A7C59',
     marginTop: 8,
+  },
+  lottieContainer: {
+    width: 240,
+    height: 240,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  lottie: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 24,
@@ -491,6 +526,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
 });
 

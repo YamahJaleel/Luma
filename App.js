@@ -16,6 +16,7 @@ import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import LicenseVerificationScreen from './screens/VerificationScreen';
+import CongratsScreen from './screens/CongratsScreen';
 const Stack = createStackNavigator();
 // Configure notification behavior (foreground)
 Notifications.setNotificationHandler({
@@ -153,6 +154,10 @@ const AppContent = () => {
                 <Stack.Screen 
                   name="LicenseVerification" 
                   component={LicenseVerificationScreen}
+                />
+                <Stack.Screen 
+                  name="Congrats" 
+                  component={CongratsScreen}
                 />
                 <Stack.Screen 
                   name="SignIn" 

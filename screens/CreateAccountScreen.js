@@ -121,7 +121,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
 
       // After account creation, navigate to license verification
       const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-      navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
+      navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym, setIsOnboarded });
     } catch (error) {
       console.error('Error creating account:', error);
       Alert.alert('Error', 'Failed to create account. Please try again.');
@@ -214,7 +214,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
             onPress={() => {
               // Skip account creation and go to license verification
               const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-              navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
+              navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym, setIsOnboarded });
             }}
           >
             <Text style={styles.skipButtonText}>Skip</Text>
