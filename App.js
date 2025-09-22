@@ -11,15 +11,12 @@ import TabNavigator from './components/MainStackNavigator';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import CreateAccountScreen from './screens/CreateAccountScreen';
-import VerificationScreen from './screens/VerificationScreen';
 import SignInScreen from './screens/SignInScreen';
-import TestGenderDetectionScreen from './screens/TestGenderDetectionScreen';
-import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
-
+import ProfileDetailScreen from './screens/ProfileDetailScreen';
+import LicenseVerificationScreen from './screens/VerificationScreen';
 const Stack = createStackNavigator();
-
 // Configure notification behavior (foreground)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: false, shouldSetBadge: false }),
@@ -154,9 +151,8 @@ const AppContent = () => {
                   initialParams={{ setIsOnboarded }}
                 />
                 <Stack.Screen 
-                  name="Verification" 
-                  component={VerificationScreen}
-                  initialParams={{ setIsOnboarded }}
+                  name="LicenseVerification" 
+                  component={LicenseVerificationScreen}
                 />
                 <Stack.Screen 
                   name="SignIn" 
@@ -164,11 +160,7 @@ const AppContent = () => {
                   initialParams={{ setIsOnboarded }}
                 />
                 <Stack.Screen 
-                  name="TestGenderDetection" 
-                  component={TestGenderDetectionScreen}
-                />
-                <Stack.Screen 
-                  name="TermsOfService" 
+                  name="TermsOfService"
                   component={TermsOfServiceScreen}
                 />
                 <Stack.Screen 

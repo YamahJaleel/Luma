@@ -16,8 +16,10 @@ import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreateAccountScreen = ({ navigation, route }) => {
-  const theme = useTheme();
+  const { setIsOnboarded } = route.params;  const theme = useTheme();
   const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -37,6 +39,14 @@ const CreateAccountScreen = ({ navigation, route }) => {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
+    }
+
+    // First/Last name validation
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
     }
 
     // Password validation
@@ -109,8 +119,9 @@ const CreateAccountScreen = ({ navigation, route }) => {
 
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
 
-      // Navigate to verification screen instead of completing onboarding
-      navigation.navigate('Verification');
+      // After account creation, navigate to license verification
+      const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
+      navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
     } catch (error) {
       console.error('Error creating account:', error);
       Alert.alert('Error', 'Failed to create account. Please try again.');
@@ -201,8 +212,9 @@ const CreateAccountScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={styles.skipButton}
             onPress={() => {
-              // Skip account creation for demo version
-              navigation.navigate('Verification');
+              // Skip account creation and go to license verification
+              const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
+              navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
             }}
           >
             <Text style={styles.skipButtonText}>Skip</Text>
@@ -233,6 +245,8 @@ const CreateAccountScreen = ({ navigation, route }) => {
 
           {/* Form */}
           <View style={styles.formContainer}>
+            {renderInput('firstName', 'First Name', 'Enter your first name')}
+            {renderInput('lastName', 'Last Name', 'Enter your last name')}
             {renderInput('pseudonym', 'Pseudonym', 'Choose a unique username')}
             {renderInput('email', 'Email', 'Enter your email address')}
             {renderInput('dateOfBirth', 'Date of Birth', 'MM/DD/YYYY', { keyboardType: 'default' })}

@@ -36,7 +36,6 @@ const AnimatedTabBar = () => {
   const tabs = [
     { name: 'Home', label: 'Home', icon: 'home' },
     { name: 'Messages', label: 'Message', icon: 'chatbubble' },
-    { name: 'Videos', label: 'Videos', icon: 'play' },
     { name: 'Search', label: 'Search', icon: 'search' },
     { name: 'Notifications', label: 'Alerts', icon: 'notifications' },
     { name: 'Profile', label: 'Profile', icon: 'person' },
@@ -85,7 +84,7 @@ const AnimatedTabBar = () => {
   useEffect(() => {
     const idx = Math.max(0, tabs.findIndex((t) => t.name === currentTab));
     if (buttonWidth) {
-      xPos.value = withSpring(computeX(idx), { duration: 150, dampingRatio: 0.8, stiffness: 300 });
+      xPos.value = withSpring(computeX(idx), { duration: 450 });
     }
   }, [currentTab, buttonWidth, indicatorWidth]);
 
@@ -101,8 +100,6 @@ const AnimatedTabBar = () => {
         return focused ? 'home' : 'home-outline';
       case 'Messages':
         return focused ? 'chatbubble' : 'chatbubble-outline';
-      case 'Videos':
-        return focused ? 'play' : 'play-outline';
       case 'Search':
         return focused ? 'search' : 'search-outline';
       case 'Notifications':
@@ -120,7 +117,7 @@ const AnimatedTabBar = () => {
   const TabItem = ({ isFocused, iconName, tint, label, onPress, onLayout, showBadge }) => {
     const scale = useSharedValue(isFocused ? 1 : 0);
     useEffect(() => {
-      scale.value = withSpring(isFocused ? 1 : 0, { duration: 120, dampingRatio: 0.9, stiffness: 400 });
+      scale.value = withSpring(isFocused ? 1 : 0, { duration: 300 });
     }, [isFocused]);
 
     const iconWrapStyle = useAnimatedStyle(() => {
@@ -162,7 +159,7 @@ const AnimatedTabBar = () => {
 
           const onPress = () => {
             if (buttonWidth) {
-              xPos.value = withSpring(computeX(index), { duration: 120, dampingRatio: 0.7, stiffness: 400 });
+              xPos.value = withSpring(computeX(index), { duration: 450 });
             }
             if (tab.name === 'Home') {
               navigation.popToTop();

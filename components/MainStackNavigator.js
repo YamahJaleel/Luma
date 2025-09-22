@@ -19,6 +19,8 @@ import MessageThreadScreen from '../screens/MessageThreadScreen';
 import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 import ProfileDetailScreen from '../screens/ProfileDetailScreen';
 import CommunityNotificationSettingsScreen from '../screens/CommunityNotificationSettingsScreen';
+import VideoScrollScreen from '../screens/VideoScrollScreen';
+import LicenseVerificationScreen from '../screens/VerificationScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,22 +30,24 @@ const MainStackNavigator = () => {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
+          // Optimized transitions for snappier feel
           transitionSpec: {
             open: {
               animation: 'timing',
               config: {
-                duration: 200,
-                easing: Easing.out(Easing.cubic),
+                duration: 150, // Reduced from 200ms
+                easing: Easing.out(Easing.quad), // Faster easing
               },
             },
             close: {
               animation: 'timing',
               config: {
-                duration: 200,
-                easing: Easing.in(Easing.cubic),
+                duration: 150, // Reduced from 200ms
+                easing: Easing.in(Easing.quad), // Faster easing
               },
             },
           },
+          // Simplified card interpolator for better performance
           cardStyleInterpolator: ({ current }) => {
             return {
               cardStyle: {
@@ -51,10 +55,13 @@ const MainStackNavigator = () => {
               },
             };
           },
+          // Disable gesture for faster transitions
+          gestureEnabled: false,
         }}
       >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
+        <Stack.Screen name="Videos" component={VideoScrollScreen} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
@@ -68,6 +75,7 @@ const MainStackNavigator = () => {
         <Stack.Screen name="MessageThread" component={MessageThreadScreen} />
         <Stack.Screen name="CreateCommunity" component={CreateCommunityScreen} />
         <Stack.Screen name="CommunityNotificationSettings" component={CommunityNotificationSettingsScreen} />
+        <Stack.Screen name="LicenseVerification" component={LicenseVerificationScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>
@@ -80,4 +88,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MainStackNavigator; 
+export default MainStackNavigator;
