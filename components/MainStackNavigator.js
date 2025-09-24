@@ -20,6 +20,7 @@ import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 import ProfileDetailScreen from '../screens/ProfileDetailScreen';
 import CommunityNotificationSettingsScreen from '../screens/CommunityNotificationSettingsScreen';
 import VideoScrollScreen from '../screens/VideoScrollScreen';
+import Home1Screen from '../screens/Home1Screen';
 import LicenseVerificationScreen from '../screens/VerificationScreen';
 
 const Stack = createStackNavigator();
@@ -60,6 +61,7 @@ const MainStackNavigator = () => {
         }}
       >
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Home1" component={Home1Screen} />
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="Videos" component={VideoScrollScreen} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} />

@@ -35,6 +35,7 @@ const AnimatedTabBar = () => {
 
   const tabs = [
     { name: 'Home', label: 'Home', icon: 'home' },
+    { name: 'Home1', label: 'Home1', icon: 'home' },
     { name: 'Messages', label: 'Message', icon: 'chatbubble' },
     { name: 'Videos', label: 'Videos', icon: 'play' },
     { name: 'Search', label: 'Search', icon: 'search' },

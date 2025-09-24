@@ -190,8 +190,13 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
             <Ionicons name="arrow-back" size={24} color="#3E5F44" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Verification</Text>
-          <TouchableOpacity style={styles.headerRightButton} onPress={() => setForceEnableFinish(true)}>
-            <Text style={styles.headerRightText}>Enable</Text>
+          <TouchableOpacity
+            style={styles.headerRightButton}
+            onPress={() => {
+              navigation.navigate('Congrats', { setIsOnboarded });
+            }}
+          >
+            <Text style={styles.headerRightText}>Skip</Text>
           </TouchableOpacity>
         </View>
 

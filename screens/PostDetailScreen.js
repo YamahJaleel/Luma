@@ -102,6 +102,10 @@ const PostDetailScreen = ({ route, navigation }) => {
   const typeMeta = getTypeMeta(post?.type);
 
   const [comments, setComments] = useState(Array.isArray(passedComments) ? passedComments : makeMockComments());
+  const displayAuthor = React.useMemo(() => {
+    const raw = post?.author || 'Anonymous';
+    return raw.replace(/^u\//i, '');
+  }, [post?.author]);
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for post, {id, author} for comment
   const [upvotedComments, setUpvotedComments] = useState(new Set()); // Track upvoted comments
@@ -278,9 +282,14 @@ const PostDetailScreen = ({ route, navigation }) => {
       >
         <View style={styles.commentBody}>
           <View style={styles.commentHeader}>
-            <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
-              {c.author}
-            </Text>
+            <View style={styles.commentHeaderLeft}>
+              <View style={styles.commentAvatar}>
+                <Text style={styles.commentAvatarText}>{(c.author || 'U').replace(/^u\//i, '').charAt(0).toUpperCase()}</Text>
+              </View>
+              <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
+                {(c.author || 'User').replace(/^u\//i, '')}
+              </Text>
+            </View>
             <Text style={[styles.commentTime, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{c.timestamp}</Text>
           </View>
           <Text style={[styles.commentText, { color: theme.colors.text }]}>{c.text}</Text>
@@ -385,18 +394,14 @@ const PostDetailScreen = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.postRow, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.typeRow}>
-            <View style={[styles.typeIcon, { backgroundColor: `${typeMeta.color}15` }]}>
-              <Ionicons name={typeMeta.icon} size={16} color={typeMeta.color} />
-            </View>
-            <Text style={[styles.typeLabel, { color: typeMeta.color }]}>{typeMeta.label}</Text>
-            <Text style={styles.dot}>·</Text>
-            <Text style={[styles.community, { color: theme.dark ? theme.colors.text : '#6B7280' }]}>{post?.community}</Text>
-            <View style={{ flex: 1 }} />
             <Text style={[styles.timestamp, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{post?.timestamp}</Text>
           </View>
 
           <View style={styles.authorRow}>
-            <Text style={[styles.authorName, { color: theme.colors.text }]}>{post?.author || 'Anonymous'}</Text>
+            <View style={styles.authorAvatar}>
+              <Text style={styles.authorAvatarText}>{(displayAuthor || 'A').charAt(0).toUpperCase()}</Text>
+            </View>
+            <Text style={[styles.authorName, { color: theme.colors.text }]}>{displayAuthor}</Text>
           </View>
 
           <Text style={[styles.title, { color: theme.colors.text }]}>{post?.title}</Text>
@@ -471,6 +476,16 @@ const styles = StyleSheet.create({
   title: { fontSize: 21, fontWeight: 'bold', marginBottom: 10 },
   contentText: { fontSize: 14, lineHeight: 22 },
   authorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  authorAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  authorAvatarText: { fontSize: 12, fontWeight: '700', color: '#3E5F44' },
   authorName: { fontSize: 13, fontWeight: '600' },
   divider: { height: 1, backgroundColor: '#E5E7EB', opacity: 0.5, marginVertical: 12 },
   commentsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
@@ -484,8 +499,18 @@ const styles = StyleSheet.create({
   },
   commentBody: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  commentHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   commentAuthor: { fontSize: 15, fontWeight: 'bold' },
   commentTime: { fontSize: 13 },
+  commentAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commentAvatarText: { fontSize: 11, fontWeight: '700', color: '#3E5F44' },
   commentText: { fontSize: 14, lineHeight: 22, marginTop: 4 },
   replyLink: { fontSize: 13, fontWeight: '600' },
   linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 6 },

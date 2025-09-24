@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { Card, List, Button, useTheme } from 'react-native-paper';
+import { Card, List, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useTabContext } from '../components/TabContext';
 
@@ -15,26 +15,7 @@ const ProfileScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
   const scrollYRef = React.useRef(0);
-  const [isVerified, setIsVerified] = useState(false);
-
-  const handleVerification = () => {
-    Alert.alert(
-      'Verify Your Account',
-      'To ensure community safety, we require phone or email verification. This helps prevent spam and fake accounts.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Verify Now',
-          onPress: () => {
-            setTimeout(() => {
-              setIsVerified(true);
-              Alert.alert('Success!', 'Your account has been verified.');
-            }, 1200);
-          },
-        },
-      ]
-    );
-  };
+  
 
   return (
     <ScrollView
@@ -58,22 +39,8 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.profileInfo}>
             <View style={styles.profileText}>
               <View style={styles.nameAndVerifyRow}>
-              <Text style={[styles.profileName, { color: theme.colors.text }]}>Luma User</Text>
-                {!isVerified && (
-                  <TouchableOpacity style={styles.verifyButton} onPress={handleVerification}>
-                    <Ionicons name="warning" size={16} color="#F6AD55" />
-                    <Text style={[styles.verifyText, theme.dark && { color: theme.colors.text }]}>Verify Account</Text>
-                  </TouchableOpacity>
-                )}
+                <Text style={[styles.profileName, { color: theme.colors.text }]}>Luma User</Text>
               </View>
-              {isVerified && (
-                <View style={styles.verificationContainer}>
-                  <View style={styles.verifiedBadge}>
-                    <Ionicons name="checkmark-circle" size={16} color="#68D391" />
-                    <Text style={[styles.verificationText, theme.dark && { color: theme.colors.text }]}>Verified Profile</Text>
-                  </View>
-                </View>
-              )}
             </View>
           </View>
           <TouchableOpacity style={[styles.settingsButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.navigate('Settings')}>
@@ -82,23 +49,7 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Verification Card */}
-      {!isVerified && (
-        <Card style={[styles.verificationCard, { backgroundColor: '#FEF5E7', borderColor: '#F6AD55' }]}>
-          <Card.Content style={{ padding: 16 }}>
-            <View style={styles.verificationContent}>
-              <Ionicons name="shield-checkmark" size={24} color="#F6AD55" />
-              <View style={styles.verificationTextBlock}>
-                <Text style={[styles.verificationTitle, theme.dark && { color: theme.colors.text }]}>Verify Your Account</Text>
-                <Text style={[styles.verificationSubtitle, theme.dark && { color: theme.colors.text }]}>Verification helps keep our community safe</Text>
-              </View>
-            </View>
-            <Button mode="contained" onPress={handleVerification} style={styles.verifyAccountButton} buttonColor={theme.colors.primary}>
-              Verify Now
-            </Button>
-          </Card.Content>
-        </Card>
-      )}
+      {/* Verification removed: already performed during sign-up */}
 
             {/* User Statistics */}
       <Card style={[styles.userStatsCard, { backgroundColor: theme.colors.surface }]}>
@@ -198,11 +149,7 @@ const styles = StyleSheet.create({
   profileInfo: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, flex: 1 },
   profileText: { flex: 1 },
   profileName: { fontSize: 20, fontWeight: 'bold' },
-  verificationContainer: { flexDirection: 'row', alignItems: 'center' },
-  verifiedBadge: { flexDirection: 'row', alignItems: 'center' },
-  verificationText: { color: '#68D391', fontSize: 15, marginLeft: 8, fontWeight: '600' },
-  verifyButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: '#FEF5E7' },
-  verifyText: { fontSize: 13, color: '#F6AD55', fontWeight: '600', marginLeft: 4 },
+  
   userStatsCard: { marginHorizontal: 20, marginBottom: 15, borderRadius: 12, elevation: 2 },
   userStats: { flexDirection: 'row', justifyContent: 'space-around' },
   userStat: { alignItems: 'center' },
@@ -210,12 +157,7 @@ const styles = StyleSheet.create({
   userStatLabel: { fontSize: 15, color: '#718096', marginTop: 4, textAlign: 'center' },
   activityCard: { marginHorizontal: 20, marginBottom: 15, borderRadius: 12, elevation: 2 },
   activitySubtitle: { fontSize: 15, fontWeight: '600', marginBottom: 8, opacity: 0.8 },
-  verificationCard: { marginHorizontal: 20, marginBottom: 15, borderWidth: 1, borderRadius: 12 },
-  verificationContent: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
-  verificationTextBlock: { flex: 1, marginLeft: 12, paddingRight: 8 },
-  verificationTitle: { fontSize: 17, fontWeight: 'bold', color: '#C05621' },
-  verificationSubtitle: { fontSize: 14, color: '#DD6B20', marginTop: 2, lineHeight: 22 },
-  verifyAccountButton: { borderRadius: 8 },
+  
   menuCard: { marginHorizontal: 20, marginBottom: 15, borderRadius: 12, elevation: 2 },
   menuContent: { padding: 0 },
   menuItem: { paddingVertical: 8 },

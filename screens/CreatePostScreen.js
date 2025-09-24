@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useTheme, Card, Chip } from 'react-native-paper';
+import { useTheme, Card } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-
-const postTypes = [
-  { id: 'question', label: 'Question' },
-  { id: 'experience', label: 'Experience' },
-  { id: 'warning', label: 'Warning' },
-  { id: 'positive', label: 'Positive' },
-];
 
 const CreatePostScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { communityId = 'dating-advice' } = route.params || {};
 
-  const [type, setType] = useState('question');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
@@ -27,7 +19,6 @@ const CreatePostScreen = ({ route, navigation }) => {
     const newPost = {
       id: Date.now(),
       community: communityId,
-      type,
       title: title.trim(),
       content: content.trim(),
       tags: [],
@@ -56,19 +47,6 @@ const CreatePostScreen = ({ route, navigation }) => {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Post Type</Text>
-            <View style={styles.typesRow}>
-              {postTypes.map((t) => (
-                <TouchableOpacity key={t.id} onPress={() => setType(t.id)}>
-                  <Chip style={[styles.typeChip, type === t.id && { backgroundColor: theme.colors.primary }]} textStyle={{ color: type === t.id ? '#FFFFFF' : theme.colors.text }}>
-                    {t.label}
-                  </Chip>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
           <View style={styles.section}>
             <Text style={[styles.label, { color: theme.colors.text }]}>Title</Text>
             <TextInput
@@ -112,8 +90,6 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, fontWeight: '600', marginBottom: 8 },
   input: { borderRadius: 10, backgroundColor: 'transparent', paddingHorizontal: 12, paddingVertical: 12, borderWidth: 1, borderColor: '#E5E7EB', fontSize: 15 },
   textarea: { borderRadius: 10, backgroundColor: 'transparent', paddingHorizontal: 12, paddingVertical: 12, borderWidth: 1, borderColor: '#E5E7EB', minHeight: 140, fontSize: 15 },
-  typesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  typeChip: { marginRight: 8, marginBottom: 8 },
 });
 
 export default CreatePostScreen; 
