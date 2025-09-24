@@ -12,9 +12,11 @@ import {
   FlatList,
   Animated,
   Alert,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const getTypeMeta = (type) => {
   const types = {
@@ -96,6 +98,22 @@ const addReplyById = (nodes, targetId, newReply) => {
   });
 };
 
+// Remove a comment (at any depth) by id
+const deleteCommentById = (nodes, targetId) => {
+  const out = [];
+  for (const n of nodes) {
+    if (n.id === targetId) {
+      continue; // skip/delete
+    }
+    let nextNode = n;
+    if (n.replies && n.replies.length > 0) {
+      nextNode = { ...n, replies: deleteCommentById(n.replies, targetId) };
+    }
+    out.push(nextNode);
+  }
+  return out;
+};
+
 const PostDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { post, comments: passedComments } = route.params || {};
@@ -113,6 +131,27 @@ const PostDetailScreen = ({ route, navigation }) => {
   const [voteCounts, setVoteCounts] = useState({}); // Track vote counts for each comment
   const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // Track expanded threads
+  const [liked, setLiked] = useState(!!post?.liked);
+  const [likeCount, setLikeCount] = useState(post?.likes || 0);
+  
+  // Message modal state
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messageRecipient, setMessageRecipient] = useState(null);
+
+  const handleDeleteComment = (commentId) => {
+    Alert.alert('Delete comment?', 'This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          setComments((prev) => deleteCommentById(prev, commentId));
+          setDropdownVisible(null);
+        },
+      },
+    ]);
+  };
 
   // Count total nested replies for a node
   const countReplies = (node) => {
@@ -245,12 +284,44 @@ const PostDetailScreen = ({ route, navigation }) => {
 
   const handleDirectMessage = (comment) => {
     setDropdownVisible(null);
-    // Navigate to Messages screen and start a new conversation
-    navigation.navigate('Messages', { 
-      startNewChat: true, 
-      recipient: comment.author,
-      recipientId: comment.id 
-    });
+    setMessageRecipient(comment);
+    setShowMessageModal(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !messageRecipient) return;
+    
+    try {
+      const newMessage = {
+        id: Date.now().toString(),
+        recipient: messageRecipient.author,
+        recipientId: messageRecipient.id,
+        text: messageText.trim(),
+        timestamp: new Date().toISOString(),
+        sender: 'You',
+        senderId: 'current_user',
+      };
+      
+      // Get existing messages
+      const existingMessages = await AsyncStorage.getItem('messages');
+      const messages = existingMessages ? JSON.parse(existingMessages) : [];
+      
+      // Add new message
+      messages.push(newMessage);
+      
+      // Save back to AsyncStorage
+      await AsyncStorage.setItem('messages', JSON.stringify(messages));
+      
+      // Close modal and reset
+      setShowMessageModal(false);
+      setMessageText('');
+      setMessageRecipient(null);
+      
+      Alert.alert('Message Sent', 'Your message has been sent successfully!');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
+    }
   };
 
   const toggleDropdown = (commentId) => {
@@ -272,6 +343,7 @@ const PostDetailScreen = ({ route, navigation }) => {
     const isUpvoted = upvotedComments.has(c.id);
     const isDownvoted = downvotedComments.has(c.id);
     const showDropdown = dropdownVisible === c.id;
+    const isOwn = (c.author || '').replace(/^u\//i, '').toLowerCase() === 'you';
 
     return (
       <View
@@ -334,10 +406,10 @@ const PostDetailScreen = ({ route, navigation }) => {
                   }
                 }}
               >
-                <Ionicons 
-                  name="leaf-outline" 
+              <Ionicons 
+                  name={isUpvoted ? 'heart' : 'heart-outline'} 
                   size={16} 
-                  color={isUpvoted ? '#3E5F44' : isDownvoted ? '#EF4444' : theme.colors.placeholder} 
+                  color={isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.placeholder} 
                 />
                 <Text style={[styles.voteCount, { color: isUpvoted ? '#3E5F44' : isDownvoted ? '#EF4444' : theme.colors.placeholder }]}>
                   {voteCounts[c.id] || 0}
@@ -355,24 +427,31 @@ const PostDetailScreen = ({ route, navigation }) => {
           >
             <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
           </TouchableOpacity>
-          
-          {/* Dropdown menu */}
           {showDropdown && (
             <>
-              {/* Touchable overlay to close dropdown when tapping outside */}
               <TouchableOpacity 
                 style={styles.dropdownOverlay}
                 onPress={closeDropdown}
                 activeOpacity={1}
               />
               <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
-                <TouchableOpacity 
-                  style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
-                  onPress={() => handleDirectMessage(c)}
-                >
-                  <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
-                  <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Message</Text>
-                </TouchableOpacity>
+                {isOwn ? (
+                  <TouchableOpacity 
+                    style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                    onPress={() => handleDeleteComment(c.id)}
+                  >
+                    <Ionicons name="trash" size={16} color="#EF4444" />
+                    <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Delete</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity 
+                    style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                    onPress={() => handleDirectMessage(c)}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
+                    <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Message</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           )}
@@ -405,7 +484,13 @@ const PostDetailScreen = ({ route, navigation }) => {
           </View>
 
           <Text style={[styles.title, { color: theme.colors.text }]}>{post?.title}</Text>
-          <Text style={[styles.contentText, { color: theme.colors.text }]}>{post?.content}</Text>
+          <Text style={[styles.contentText, { color: theme.colors.text }]}>{post?.content ?? post?.text}</Text>
+          <View style={styles.detailActions}>
+            <TouchableOpacity style={styles.postActionBtn} onPress={() => { const next = !liked; setLiked(next); setLikeCount((c) => Math.max(0, c + (next ? 1 : -1))); }}>
+              <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : (theme.dark ? '#9CA3AF' : '#6B7280')} />
+              <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{likeCount}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.divider} />
@@ -447,6 +532,54 @@ const PostDetailScreen = ({ route, navigation }) => {
         </View>
       </View>
       <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
+      
+      {/* Message Modal */}
+      <Modal
+        visible={showMessageModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowMessageModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.messageModal, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.messageModalHeader}>
+              <Text style={[styles.messageModalTitle, { color: theme.colors.text }]}>
+                Send Message to {messageRecipient?.author?.replace(/^u\//i, '') || 'User'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowMessageModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <TextInput
+              style={[styles.messageInput, { color: theme.colors.text, borderColor: theme.colors.outline }]}
+              placeholder="Type your message..."
+              placeholderTextColor={theme.colors.placeholder}
+              value={messageText}
+              onChangeText={setMessageText}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            
+            <View style={styles.messageModalActions}>
+              <TouchableOpacity
+                style={[styles.messageCancelBtn, { borderColor: theme.colors.outline }]}
+                onPress={() => setShowMessageModal(false)}
+              >
+                <Text style={[styles.messageCancelText, { color: theme.colors.text }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.messageSendBtn, { backgroundColor: theme.colors.primary }]}
+                onPress={handleSendMessage}
+                disabled={!messageText.trim()}
+              >
+                <Text style={styles.messageSendText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -474,6 +607,9 @@ const styles = StyleSheet.create({
   community: { fontSize: 13, fontWeight: '600' },
   timestamp: { fontSize: 13, fontWeight: '600' },
   title: { fontSize: 21, fontWeight: 'bold', marginBottom: 10 },
+  detailActions: { flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 8 },
+  postActionBtn: { flexDirection: 'row', alignItems: 'center', marginRight: 14, paddingVertical: 2 },
+  actionText: { fontSize: 13, color: '#6B7280', marginLeft: 6, fontWeight: '600' },
   contentText: { fontSize: 14, lineHeight: 22 },
   authorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   authorAvatar: {
@@ -585,6 +721,72 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
+  },
+  
+  // Message Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  messageModal: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  messageModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  messageModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+    marginRight: 10,
+  },
+  messageInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    minHeight: 100,
+    marginBottom: 20,
+  },
+  messageModalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  messageCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  messageCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  messageSendBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  messageSendText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

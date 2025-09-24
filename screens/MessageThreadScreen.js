@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const initialMessages = [
   { id: 'm1', from: 'them', text: 'Hey! How are you?', time: '2:15 PM' },
@@ -30,21 +31,81 @@ const MessageBubble = ({ message, theme }) => {
 const MessageThreadScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { conversation } = route.params || {};
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const listRef = useRef(null);
 
-  useEffect(() => {
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0);
-  }, []);
+  // Load messages from AsyncStorage for this conversation
+  const loadMessages = async () => {
+    try {
+      const messagesData = await AsyncStorage.getItem('messages');
+      if (messagesData) {
+        const allMessages = JSON.parse(messagesData);
+        
+        // Filter messages for this conversation
+        const conversationMessages = allMessages.filter(message => 
+          message.recipientId === conversation.id || 
+          message.recipient === conversation.name ||
+          message.senderId === conversation.id
+        );
+        
+        // Convert to the format expected by the UI
+        const formattedMessages = conversationMessages.map(message => ({
+          id: message.id,
+          from: message.sender === 'You' ? 'me' : 'them',
+          text: message.text,
+          time: new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+        
+        setMessages(formattedMessages);
+      } else {
+        // If no messages, show empty array instead of mock data
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      setMessages([]);
+    }
+  };
 
-  const send = () => {
+  useEffect(() => {
+    loadMessages();
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+  }, [conversation]);
+
+  const send = async () => {
     const text = draft.trim();
     if (!text) return;
+    
     const now = new Date();
     const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    setMessages((prev) => [...prev, { id: `${Date.now()}`, from: 'me', text, time }]);
+    const newMessage = { id: `${Date.now()}`, from: 'me', text, time };
+    
+    // Add to local state immediately for UI responsiveness
+    setMessages((prev) => [...prev, newMessage]);
     setDraft('');
+    
+    // Save to AsyncStorage
+    try {
+      const existingMessages = await AsyncStorage.getItem('messages');
+      const messages = existingMessages ? JSON.parse(existingMessages) : [];
+      
+      const messageToSave = {
+        id: newMessage.id,
+        recipient: conversation.name,
+        recipientId: conversation.id,
+        text: text,
+        timestamp: now.toISOString(),
+        sender: 'You',
+        senderId: 'current_user',
+      };
+      
+      messages.push(messageToSave);
+      await AsyncStorage.setItem('messages', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+    
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0);
   };
 

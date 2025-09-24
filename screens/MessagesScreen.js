@@ -3,13 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Modal, TextI
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-
-const mockConversations = [
-  { id: 'c1', name: 'Tyler Bradshaw', lastMessage: 'See you at 6?', time: '2m', unread: 2 },
-  { id: 'c2', name: 'Sarah Chen', lastMessage: 'Thanks for the advice!', time: '15m', unread: 0 },
-  { id: 'c3', name: 'Mike Johnson', lastMessage: 'Sent you the link', time: '1h', unread: 1 },
-  { id: 'c4', name: 'Emma Wilson', lastMessage: 'Let\'s catch up soon', time: '3h', unread: 0 },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mock user database for search
 const mockUsers = [
@@ -25,12 +19,50 @@ const mockUsers = [
 
 const MessagesScreen = ({ navigation, route }) => {
   const theme = useTheme();
-  const [conversations, setConversations] = useState(mockConversations);
+  const [conversations, setConversations] = useState([]); // Start with empty array instead of mock data
   const [newChatRecipient, setNewChatRecipient] = useState(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  
+  // Load messages from AsyncStorage and create conversations
+  const loadMessages = async () => {
+    try {
+      const messagesData = await AsyncStorage.getItem('messages');
+      if (messagesData) {
+        const messages = JSON.parse(messagesData);
+        
+        // Group messages by recipient
+        const conversationMap = {};
+        messages.forEach(message => {
+          const recipientKey = message.recipientId || message.recipient;
+          if (!conversationMap[recipientKey]) {
+            conversationMap[recipientKey] = {
+              id: recipientKey,
+              name: message.recipient?.replace(/^u\//i, '') || 'Unknown User',
+              lastMessage: message.text,
+              time: 'now',
+              unread: 0,
+            };
+          }
+        });
+        
+        // Convert to array and set as conversations (replace instead of merge)
+        const messageConversations = Object.values(conversationMap);
+        setConversations(messageConversations);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Load messages when screen focuses
+  useFocusEffect(
+    React.useCallback(() => {
+      loadMessages();
+    }, [])
+  );
 
   // Handle new chat creation from comment long-press
   useFocusEffect(
@@ -160,6 +192,15 @@ const MessagesScreen = ({ navigation, route }) => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyState}>
+            <Ionicons name="chatbubbles-outline" size={64} color={theme.colors.placeholder} />
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Messages Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.colors.placeholder }]}>
+              Start a conversation by tapping the + button
+            </Text>
+          </View>
+        )}
       />
 
       {/* Floating Action Button */}
@@ -358,6 +399,23 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     textAlign: 'center',
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });
 

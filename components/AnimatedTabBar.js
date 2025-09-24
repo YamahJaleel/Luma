@@ -35,7 +35,6 @@ const AnimatedTabBar = () => {
 
   const tabs = [
     { name: 'Home', label: 'Home', icon: 'home' },
-    { name: 'Home1', label: 'Home1', icon: 'home' },
     { name: 'Messages', label: 'Message', icon: 'chatbubble' },
     { name: 'Videos', label: 'Videos', icon: 'play' },
     { name: 'Search', label: 'Search', icon: 'search' },
@@ -164,11 +163,6 @@ const AnimatedTabBar = () => {
           const onPress = () => {
             if (buttonWidth) {
               xPos.value = withSpring(computeX(index), { duration: 120, dampingRatio: 0.7, stiffness: 400 });
-            }
-            if (tab.name === 'Home') {
-              navigation.popToTop();
-              setCurrentTab('Home');
-              return;
             }
             if (!isFocused) {
               navigation.navigate(tab.name);
