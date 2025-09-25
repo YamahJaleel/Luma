@@ -12,16 +12,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import {useSettings} from '../components/SettingsContext';
+import {useOnboarding} from '../components/OnboardingContext';
 
 import RenderItem from '../components/RenderItem';
 import Pagination from '../components/Pagination';
 import CustomButton from '../components/CustomButton';
 import onboardingData from '../data/onboardingData';
 
-const OnboardingScreen = ({route}) => {
+const OnboardingScreen = () => {
   const {width: SCREEN_WIDTH} = useWindowDimensions();
   const navigation = useNavigation();
-  const {setIsOnboarded} = route.params;
+  const {setIsOnboarded} = useOnboarding();
 
   const flatListRef = useAnimatedRef();
   const flatListIndex = useSharedValue(0);
@@ -47,7 +48,7 @@ const OnboardingScreen = ({route}) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FAF6F0" />
       
       <FlatList
         ref={flatListRef}
@@ -83,7 +84,7 @@ const OnboardingScreen = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FAF6F0',
   },
   footer: {
     position: 'absolute',

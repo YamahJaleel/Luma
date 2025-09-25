@@ -5,6 +5,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
+import { useOnboarding } from '../components/OnboardingContext';
 import LottieView from 'lottie-react-native';
 
 // Utility: normalize a name into a set of tokens for rough matching
@@ -68,7 +69,7 @@ const roughlyNamesMatch = (extractedText, signupName) => {
 
 const LicenseVerificationScreen = ({ route, navigation }) => {
   const signupName = route?.params?.signupName || '';
-  const setIsOnboarded = route?.params?.setIsOnboarded;
+  const { setIsOnboarded } = useOnboarding();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const cameraPermissionAskedRef = useRef(false);
@@ -193,7 +194,7 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
           <TouchableOpacity
             style={styles.headerRightButton}
             onPress={() => {
-              navigation.navigate('Congrats', { setIsOnboarded });
+              navigation.navigate('Congrats');
             }}
           >
             <Text style={styles.headerRightText}>Skip</Text>
@@ -306,7 +307,7 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
               <TouchableOpacity
                 style={[styles.primaryButton, (verificationStatus !== 'success' && !forceEnableFinish) && styles.primaryButtonDisabled]}
                 onPress={() => {
-                  navigation.navigate('Congrats', { setIsOnboarded });
+                  navigation.navigate('Congrats');
                 }}
                 disabled={verificationStatus !== 'success' && !forceEnableFinish}
               >

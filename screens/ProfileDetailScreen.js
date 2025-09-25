@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
@@ -268,6 +269,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [voteCounts, setVoteCounts] = useState({}); // Track vote counts for each comment
   const [selectedComment, setSelectedComment] = useState(null); // for long-press selection
   const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
+  
+  // Message modal state
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messageRecipient, setMessageRecipient] = useState(null);
   // Count total nested replies for a node
   const countReplies = (node) => {
     if (!node?.replies || node.replies.length === 0) return 0;
@@ -404,12 +410,39 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const handleDirectMessage = (comment) => {
     setSelectedComment(null);
     setDropdownVisible(null);
-    // Navigate to Messages screen and start a new conversation
-    navigation.navigate('Messages', { 
-      startNewChat: true, 
-      recipient: comment.author,
-      recipientId: comment.id 
+    setMessageRecipient({
+      author: comment.author,
+      id: comment.id
     });
+    setShowMessageModal(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !messageRecipient) return;
+    
+    try {
+      const existingMessages = await AsyncStorage.getItem('messages');
+      const messages = existingMessages ? JSON.parse(existingMessages) : [];
+      
+      const newMessage = {
+        id: Date.now().toString(),
+        recipient: messageRecipient.author,
+        recipientId: messageRecipient.id,
+        text: messageText.trim(),
+        timestamp: new Date().toISOString(),
+        sender: 'You',
+        senderId: 'current_user',
+      };
+      
+      messages.push(newMessage);
+      await AsyncStorage.setItem('messages', JSON.stringify(messages));
+      
+      setShowMessageModal(false);
+      setMessageText('');
+      setMessageRecipient(null);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   const handleCancelSelection = () => {
@@ -447,9 +480,16 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       >
         <View style={styles.commentBody}>
           <View style={styles.commentHeader}>
-            <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
-              {c.author}
-            </Text>
+            <View style={styles.authorRow}>
+              <View style={styles.commentAvatar}>
+                <Text style={styles.avatarText}>
+                  {(c.author || 'U').replace(/^u\//i, '').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
+                {c.author}
+              </Text>
+            </View>
             <Text style={[styles.commentTime, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{c.timestamp}</Text>
           </View>
           <Text style={[styles.commentText, { color: theme.colors.text }]}>{c.text}</Text>
@@ -495,11 +535,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 }}
               >
                 <Ionicons 
-                  name="leaf-outline" 
+                  name={isUpvoted ? 'heart' : 'heart-outline'} 
                   size={16} 
-                  color={isUpvoted ? '#3E5F44' : isDownvoted ? '#EF4444' : theme.colors.placeholder} 
+                  color={isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.placeholder} 
                 />
-                <Text style={[styles.voteCount, { color: isUpvoted ? '#3E5F44' : isDownvoted ? '#EF4444' : theme.colors.placeholder }]}>
+                <Text style={[styles.voteCount, { color: isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.placeholder }]}>
                   {voteCounts[c.id] || 0}
                 </Text>
               </TouchableOpacity>
@@ -623,6 +663,58 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         </View>
       </View>
       <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
+
+      {/* Message Modal */}
+      <Modal
+        visible={showMessageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMessageModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.messageModal, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Send Message to {messageRecipient?.author?.replace(/^u\//i, '') || 'User'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowMessageModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <TextInput
+              style={[styles.messageInput, { 
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text,
+                borderColor: theme.colors.outline 
+              }]}
+              placeholder="Type your message..."
+              placeholderTextColor={theme.colors.placeholder}
+              value={messageText}
+              onChangeText={setMessageText}
+              multiline
+              autoFocus
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.colors.outline }]}
+                onPress={() => setShowMessageModal(false)}
+              >
+                <Text style={[styles.cancelButtonText, { color: theme.colors.text }]}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.sendButton, { backgroundColor: theme.colors.primary }]}
+                onPress={handleSendMessage}
+                disabled={!messageText.trim()}
+              >
+                <Text style={styles.sendButtonText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -689,6 +781,25 @@ const styles = StyleSheet.create({
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   commentAuthor: { fontSize: 15, fontWeight: 'bold' },
   commentTime: { fontSize: 13 },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  commentAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  avatarText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#3E5F44',
+  },
   commentText: { fontSize: 14, lineHeight: 22, marginTop: 4 },
   replyLink: { fontSize: 13, fontWeight: '600' },
   linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 6 },
@@ -800,6 +911,62 @@ const styles = StyleSheet.create({
     right: -1000,
     bottom: -1000,
     zIndex: 999,
+  },
+  // Message modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageModal: {
+    width: '90%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  messageInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  sendButton: {
+    // backgroundColor set dynamically
+  },
+  sendButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

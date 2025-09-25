@@ -72,14 +72,8 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x, setIsOnboarded
   });
 
   const animatedColor = useAnimatedStyle(() => {
-    const backgroundColor = interpolateColor(
-      x.value,
-      [0, SCREEN_WIDTH, 2 * SCREEN_WIDTH, 3 * SCREEN_WIDTH, 4 * SCREEN_WIDTH, 5 * SCREEN_WIDTH],
-      ['#3E5F44', '#8B5CF6', '#005b4f', '#059669', '#1E40AF', '#EA580C'],
-    );
-
     return {
-      backgroundColor: backgroundColor,
+      backgroundColor: '#3E5F44', // Fixed color - same as first screen
     };
   });
 

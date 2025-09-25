@@ -130,9 +130,19 @@ const PostDetailScreen = ({ route, navigation }) => {
   const [downvotedComments, setDownvotedComments] = useState(new Set()); // Track downvoted comments
   const [voteCounts, setVoteCounts] = useState({}); // Track vote counts for each comment
   const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
+  const [showPostDropdown, setShowPostDropdown] = useState(false); // Track post dropdown visibility
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // Track expanded threads
   const [liked, setLiked] = useState(!!post?.liked);
   const [likeCount, setLikeCount] = useState(post?.likes || 0);
+
+  // Check if this is a user-created post (not in MOCK_POSTS)
+  const MOCK_POSTS = [
+    { id: 'p1' }, { id: 'p2' }, { id: 'p3' }, { id: 'p4' }, { id: 'p5' },
+    { id: 'p6' }, { id: 'p7' }, { id: 'p8' }, { id: 'p9' }, { id: 'p10' },
+    { id: 'p11' }, { id: 'p12' }, { id: 'p13' }, { id: 'p14' }, { id: 'p15' }
+  ];
+  const mockPostIds = new Set(MOCK_POSTS.map(p => p.id));
+  const isUserPost = post?.id && !mockPostIds.has(post.id);
 
   // Load like status from AsyncStorage on mount
   React.useEffect(() => {
@@ -153,6 +163,43 @@ const PostDetailScreen = ({ route, navigation }) => {
     
     loadLikeStatus();
   }, [post.id]);
+
+  // Load comment votes from AsyncStorage on mount
+  React.useEffect(() => {
+    const loadCommentVotes = async () => {
+      try {
+        const commentVotesData = await AsyncStorage.getItem('commentVotes');
+        if (commentVotesData) {
+          const commentVotes = JSON.parse(commentVotesData);
+          const upvoted = new Set(commentVotes.upvoted || []);
+          const downvoted = new Set(commentVotes.downvoted || []);
+          const voteCounts = commentVotes.voteCounts || {};
+          
+          setUpvotedComments(upvoted);
+          setDownvotedComments(downvoted);
+          setVoteCounts(voteCounts);
+        }
+      } catch (error) {
+        console.error('Error loading comment votes:', error);
+      }
+    };
+    
+    loadCommentVotes();
+  }, []);
+
+  // Save comment votes to AsyncStorage
+  const saveCommentVotes = async (upvoted, downvoted, voteCounts) => {
+    try {
+      const commentVotes = {
+        upvoted: Array.from(upvoted),
+        downvoted: Array.from(downvoted),
+        voteCounts: voteCounts
+      };
+      await AsyncStorage.setItem('commentVotes', JSON.stringify(commentVotes));
+    } catch (error) {
+      console.error('Error saving comment votes:', error);
+    }
+  };
 
   // Handle like toggle and save to AsyncStorage
   const handleLikeToggle = async () => {
@@ -266,72 +313,70 @@ const PostDetailScreen = ({ route, navigation }) => {
     setReplyTarget(null);
   };
 
-  const handleUpvote = (commentId) => {
+  const handleUpvote = async (commentId) => {
     setUpvotedComments((prev) => {
       const next = new Set(prev);
+      let newDownvoted = downvotedComments;
+      let newVoteCounts = { ...voteCounts };
+      
       if (next.has(commentId)) {
+        // Remove upvote
         next.delete(commentId);
-        // Decrease vote count
-        setVoteCounts((counts) => ({
-          ...counts,
-          [commentId]: (counts[commentId] || 0) - 1
-        }));
+        newVoteCounts[commentId] = (newVoteCounts[commentId] || 0) - 1;
       } else {
+        // Add upvote
         next.add(commentId);
-        // Increase vote count
-        setVoteCounts((counts) => ({
-          ...counts,
-          [commentId]: (counts[commentId] || 0) + 1
-        }));
+        newVoteCounts[commentId] = (newVoteCounts[commentId] || 0) + 1;
+        
         // Remove from downvotes if it was downvoted
-        setDownvotedComments((downPrev) => {
-          const downNext = new Set(downPrev);
-          if (downNext.has(commentId)) {
-            downNext.delete(commentId);
-            // Adjust vote count for removing downvote
-            setVoteCounts((counts) => ({
-              ...counts,
-              [commentId]: (counts[commentId] || 0) + 1
-            }));
-          }
-          return downNext;
-        });
+        if (downvotedComments.has(commentId)) {
+          newDownvoted = new Set(downvotedComments);
+          newDownvoted.delete(commentId);
+          newVoteCounts[commentId] = (newVoteCounts[commentId] || 0) + 1;
+        }
       }
+      
+      // Update states
+      setDownvotedComments(newDownvoted);
+      setVoteCounts(newVoteCounts);
+      
+      // Save to AsyncStorage
+      saveCommentVotes(next, newDownvoted, newVoteCounts);
+      
       return next;
     });
   };
 
-  const handleDownvote = (commentId) => {
+  const handleDownvote = async (commentId) => {
     setDownvotedComments((prev) => {
       const next = new Set(prev);
+      let newUpvoted = upvotedComments;
+      let newVoteCounts = { ...voteCounts };
+      
       if (next.has(commentId)) {
+        // Remove downvote
         next.delete(commentId);
-        // Increase vote count (removing negative vote)
-        setVoteCounts((counts) => ({
-          ...counts,
-          [commentId]: (counts[commentId] || 0) + 1
-        }));
+        newVoteCounts[commentId] = (newVoteCounts[commentId] || 0) + 1;
       } else {
+        // Add downvote
         next.add(commentId);
-        // Decrease vote count
-        setVoteCounts((counts) => ({
-          ...counts,
-          [commentId]: (counts[commentId] || 0) - 1
-        }));
+        newVoteCounts[commentId] = (newVoteCounts[commentId] || 0) - 1;
+        
         // Remove from upvotes if it was upvoted
-        setUpvotedComments((upPrev) => {
-          const upNext = new Set(upPrev);
-          if (upNext.has(commentId)) {
-            upNext.delete(commentId);
-            // Adjust vote count for removing upvote
-            setVoteCounts((counts) => ({
-              ...counts,
-              [commentId]: (counts[commentId] || 0) - 1
-            }));
-          }
-          return upNext;
-        });
+        if (upvotedComments.has(commentId)) {
+          newUpvoted = new Set(upvotedComments);
+          newUpvoted.delete(commentId);
+          newVoteCounts[commentId] = (newVoteCounts[commentId] || 0) - 1;
+        }
       }
+      
+      // Update states
+      setUpvotedComments(newUpvoted);
+      setVoteCounts(newVoteCounts);
+      
+      // Save to AsyncStorage
+      saveCommentVotes(newUpvoted, next, newVoteCounts);
+      
       return next;
     });
   };
@@ -376,6 +421,57 @@ const PostDetailScreen = ({ route, navigation }) => {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'Failed to send message. Please try again.');
     }
+  };
+
+  const handleDeletePost = async () => {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Remove from liked posts if it was liked
+              const likedPostsData = await AsyncStorage.getItem('likedPosts');
+              if (likedPostsData) {
+                const likedPosts = JSON.parse(likedPostsData);
+                const filteredPosts = likedPosts.filter(likedPost => likedPost.id !== post.id);
+                await AsyncStorage.setItem('likedPosts', JSON.stringify(filteredPosts));
+              }
+              
+              // Remove from created posts
+              const createdPostsData = await AsyncStorage.getItem('createdPosts');
+              if (createdPostsData) {
+                const createdPosts = JSON.parse(createdPostsData);
+                const filteredCreatedPosts = createdPosts.filter(createdPost => createdPost.id !== post.id);
+                await AsyncStorage.setItem('createdPosts', JSON.stringify(filteredCreatedPosts));
+              }
+              
+              // Navigate back to the appropriate screen based on where user came from
+              const navigationState = navigation.getState();
+              const previousRoute = navigationState.routes[navigationState.index - 1];
+              
+              if (previousRoute?.name === 'CreatedPosts') {
+                navigation.navigate('CreatedPosts', { deletedPostId: post.id });
+              } else {
+                navigation.navigate('Home', { deletedPostId: post.id });
+              }
+              
+              Alert.alert('Post Deleted', 'Your post has been deleted successfully.');
+            } catch (error) {
+              console.error('Error deleting post:', error);
+              Alert.alert('Error', 'Failed to delete post. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const toggleDropdown = (commentId) => {
@@ -535,7 +631,30 @@ const PostDetailScreen = ({ route, navigation }) => {
               <Text style={styles.authorAvatarText}>{(displayAuthor || 'A').charAt(0).toUpperCase()}</Text>
             </View>
             <Text style={[styles.authorName, { color: theme.colors.text }]}>{displayAuthor}</Text>
+            {isUserPost && (
+              <TouchableOpacity 
+                style={styles.postThreeDotsButton}
+                onPress={() => setShowPostDropdown(!showPostDropdown)}
+              >
+                <Ionicons name="ellipsis-vertical" size={20} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
+              </TouchableOpacity>
+            )}
           </View>
+          
+          {showPostDropdown && isUserPost && (
+            <View style={[styles.postDropdownMenu, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB' }]}>
+              <TouchableOpacity 
+                style={styles.postDropdownItem}
+                onPress={() => {
+                  setShowPostDropdown(false);
+                  handleDeletePost();
+                }}
+              >
+                <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                <Text style={[styles.postDropdownText, { color: '#EF4444' }]}>Delete Post</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <Text style={[styles.title, { color: theme.colors.text }]}>{post?.title}</Text>
           <Text style={[styles.contentText, { color: theme.colors.text }]}>{post?.content ?? post?.text}</Text>
@@ -665,7 +784,7 @@ const styles = StyleSheet.create({
   postActionBtn: { flexDirection: 'row', alignItems: 'center', marginRight: 14, paddingVertical: 2 },
   actionText: { fontSize: 13, color: '#6B7280', marginLeft: 6, fontWeight: '600' },
   contentText: { fontSize: 14, lineHeight: 22 },
-  authorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  authorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, justifyContent: 'space-between' },
   authorAvatar: {
     width: 28,
     height: 28,
@@ -676,7 +795,34 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   authorAvatarText: { fontSize: 12, fontWeight: '700', color: '#3E5F44' },
-  authorName: { fontSize: 13, fontWeight: '600' },
+  authorName: { fontSize: 13, fontWeight: '600', flex: 1 },
+  postThreeDotsButton: {
+    padding: 4,
+    borderRadius: 4,
+  },
+  postDropdownMenu: {
+    position: 'absolute',
+    top: 35,
+    right: 0,
+    borderRadius: 8,
+    borderWidth: 1,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    zIndex: 1000,
+  },
+  postDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 8,
+  },
+  postDropdownText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   divider: { height: 1, backgroundColor: '#E5E7EB', opacity: 0.5, marginVertical: 12 },
   commentsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   commentsTitle: { fontSize: 17, fontWeight: 'bold' },

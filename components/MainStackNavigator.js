@@ -6,12 +6,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import UserScreen from '../screens/UserScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AnimatedTabBar from './AnimatedTabBar';
 import CreatePostScreen from '../screens/CreatePostScreen';
 import BrowseCommunitiesScreen from '../screens/BrowseCommunitiesScreen';
 import LikedPostsScreen from '../screens/LikedPostsScreen';
+import CreatedPostsScreen from '../screens/CreatedPostsScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import CreateProfileScreen from '../screens/CreateProfileScreen';
 import MessagesScreen from '../screens/MessagesScreen';
@@ -63,11 +64,12 @@ const MainStackNavigator = () => {
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="Videos" component={VideoScrollScreen} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Profile" component={UserScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="CreatePost" component={CreatePostScreen} />
         <Stack.Screen name="BrowseCommunities" component={BrowseCommunitiesScreen} />
         <Stack.Screen name="LikedPosts" component={LikedPostsScreen} />
+        <Stack.Screen name="CreatedPosts" component={CreatedPostsScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
         <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />

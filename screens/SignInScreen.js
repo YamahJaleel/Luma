@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useOnboarding } from '../components/OnboardingContext';
 
 const SignInScreen = ({ navigation, route }) => {
   const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ const SignInScreen = ({ navigation, route }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { setIsOnboarded } = route.params;
+  const { setIsOnboarded } = useOnboarding();
 
   const validateForm = () => {
     const newErrors = {};

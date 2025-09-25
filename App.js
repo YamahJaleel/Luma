@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
 import { TabProvider } from './components/TabContext';
+import { OnboardingProvider, useOnboarding } from './components/OnboardingContext';
 import TabNavigator from './components/MainStackNavigator';
 
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -98,7 +99,7 @@ const darkTheme = {
 const AppContent = () => {
   const { darkModeEnabled, notificationsEnabled } = useSettings();
   const theme = darkModeEnabled ? darkTheme : lightTheme;
-  const [isOnboarded, setIsOnboarded] = React.useState(false);
+  const { isOnboarded } = useOnboarding();
 
   React.useEffect(() => {
     const ensurePermissions = async () => {
@@ -119,6 +120,7 @@ const AppContent = () => {
         console.log('Expo push token', token?.data);
       } catch (e) {
         console.log('Failed to get push token', e);
+        // This is expected in development without a proper projectId
       }
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
@@ -144,12 +146,10 @@ const AppContent = () => {
                 <Stack.Screen 
                   name="Onboarding" 
                   component={OnboardingScreen}
-                  initialParams={{ setIsOnboarded }}
                 />
                 <Stack.Screen 
                   name="CreateAccount" 
                   component={CreateAccountScreen}
-                  initialParams={{ setIsOnboarded }}
                 />
                 <Stack.Screen 
                   name="LicenseVerification" 
@@ -162,7 +162,6 @@ const AppContent = () => {
                 <Stack.Screen 
                   name="SignIn" 
                   component={SignInScreen}
-                  initialParams={{ setIsOnboarded }}
                 />
                 <Stack.Screen 
                   name="TermsOfService"
@@ -204,9 +203,13 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <SettingsProvider>
-      <AppContent />
-    </SettingsProvider>
+    <OnboardingProvider>
+      <SettingsProvider>
+        <TabProvider>
+          <AppContent />
+        </TabProvider>
+      </SettingsProvider>
+    </OnboardingProvider>
   );
 }
 

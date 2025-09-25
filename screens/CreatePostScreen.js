@@ -17,20 +17,26 @@ const CreatePostScreen = ({ route, navigation }) => {
     }
 
     const newPost = {
-      id: Date.now(),
-      community: communityId,
+      id: `p${Date.now()}`, // Generate unique ID
+      score: 0,
+      type: 'general',
       title: title.trim(),
-      content: content.trim(),
-      tags: [],
-      timestamp: 'just now',
-      upvotes: 0,
+      author: 'u/You', // Match the format with u/ prefix
+      category: communityId,
+      text: content.trim(),
       comments: 0,
       likes: 0,
-      trending: 0,
-      author: 'You',
+      created: 'just now',
+      url: '',
+      votes: {},
+      views: 0,
     };
 
     navigation.navigate('Home', { newPost });
+    
+    // Clear the form
+    setTitle('');
+    setContent('');
   };
 
   return (

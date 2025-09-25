@@ -13,10 +13,12 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
+import { useOnboarding } from '../components/OnboardingContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CreateAccountScreen = ({ navigation, route }) => {
-  const { setIsOnboarded } = route.params;  const theme = useTheme();
+const CreateAccountScreen = ({ navigation }) => {
+  const { setIsOnboarded } = useOnboarding();
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -121,7 +123,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
 
       // After account creation, navigate to license verification
       const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-      navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym, setIsOnboarded });
+      navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
     } catch (error) {
       console.error('Error creating account:', error);
       Alert.alert('Error', 'Failed to create account. Please try again.');
@@ -214,7 +216,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
             onPress={() => {
               // Skip account creation and go to license verification
               const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-              navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym, setIsOnboarded });
+              navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
             }}
           >
             <Text style={styles.skipButtonText}>Skip</Text>

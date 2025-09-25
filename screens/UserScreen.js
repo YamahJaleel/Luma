@@ -11,7 +11,7 @@ import { Card, List, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useTabContext } from '../components/TabContext';
 
-const ProfileScreen = ({ navigation }) => {
+const UserScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
   const scrollYRef = React.useRef(0);
@@ -26,7 +26,7 @@ const ProfileScreen = ({ navigation }) => {
         const dy = y - prevY;
         if (dy > 5 && y > 20) {
           setTabHidden(true);
-        } else if (dy < -5 || y <= 20) {
+        } else if (dy < -15 || y <= 20) {
           setTabHidden(false);
         }
         scrollYRef.current = y;
@@ -37,6 +37,9 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.profileInfo}>
+            <View style={styles.profileAvatar}>
+              <Text style={styles.avatarText}>LU</Text>
+            </View>
             <View style={styles.profileText}>
               <View style={styles.nameAndVerifyRow}>
                 <Text style={[styles.profileName, { color: theme.colors.text }]}>Luma User</Text>
@@ -94,6 +97,16 @@ const ProfileScreen = ({ navigation }) => {
       <Card style={[styles.menuCard, { backgroundColor: theme.colors.surface }]}>
         <Card.Content style={styles.menuContent}>
           <List.Item
+            title="Created Posts"
+            description="See posts you've created"
+            left={(props) => <List.Icon {...props} icon="post" color={theme.colors.primary} />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
+            titleStyle={{ color: theme.colors.text }}
+            descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('CreatedPosts')}
+          />
+          <List.Item
             title="Liked Posts"
             description="See posts you've liked"
             left={(props) => <List.Icon {...props} icon="heart" color={theme.colors.primary} />} 
@@ -145,10 +158,26 @@ Privacy is our foundation we use secure systems to ensure user information is ne
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 20, paddingTop: 60 },
-  headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  profileInfo: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, flex: 1 },
+  headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  profileInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   profileText: { flex: 1 },
   profileName: { fontSize: 20, fontWeight: 'bold' },
+  
+  // Profile Avatar
+  profileAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#9FE6B8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3E5F44',
+  },
   
   userStatsCard: { marginHorizontal: 20, marginBottom: 15, borderRadius: 12, elevation: 2 },
   userStats: { flexDirection: 'row', justifyContent: 'space-around' },
@@ -180,4 +209,4 @@ const styles = StyleSheet.create({
   nameAndVerifyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5, gap: 12 },
 });
 
-export default ProfileScreen; 
+export default UserScreen;

@@ -3,18 +3,19 @@ import { StyleSheet, View, FlatList, Text, StatusBar, TouchableOpacity, ScrollVi
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTabContext } from '../components/TabContext';
 
 // Local mock categories/posts to emulate the pasted clone Home
 const CATEGORIES = [
   { id: 'all', label: 'All' },
   { id: 'dating-advice', label: 'Dating' },
   { id: 'red-flags', label: 'Red Flags' },
-  { id: 'success-stories', label: 'Success' },
+  { id: 'success-stories', label: 'Green Flags' },
   { id: 'safety-tips', label: 'Safety' },
-  { id: 'vent-space', label: 'Vent' },
+  { id: 'vent-space', label: 'Open Up' },
 ];
 
 const MOCK_POSTS = [
@@ -160,6 +161,9 @@ const CategoryLoader = () => <View style={styles.categoryLoader} />;
 const HomeScreen = () => {
   const { dark, colors } = useTheme();
   const navigation = useNavigation();
+  const route = useRoute();
+  const { setTabHidden } = useTabContext();
+  const scrollYRef = React.useRef(0);
 
   const [postData, setPostData] = React.useState(null);
   const [category, setCategory] = React.useState('all');
@@ -168,6 +172,54 @@ const HomeScreen = () => {
   const [selectedSort, setSelectedSort] = React.useState('recent');
   const [showSearchModal, setShowSearchModal] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
+
+  // Handle new post from CreatePostScreen
+  React.useEffect(() => {
+    if (route.params?.newPost) {
+      const newPost = route.params.newPost;
+      // Add the new post to the beginning of the current posts
+      setPostData(prev => {
+        if (!prev) return [newPost];
+        return [newPost, ...prev];
+      });
+      
+      // Save the new post to AsyncStorage for CreatedPostsScreen
+      (async () => {
+        try {
+          const createdPostsData = await AsyncStorage.getItem('createdPosts');
+          const createdPosts = createdPostsData ? JSON.parse(createdPostsData) : [];
+          
+          // Check if post already exists (to avoid duplicates)
+          const exists = createdPosts.some(post => post.id === newPost.id);
+          if (!exists) {
+            // Add new post to the beginning of createdPosts array
+            const updatedPosts = [newPost, ...createdPosts];
+            await AsyncStorage.setItem('createdPosts', JSON.stringify(updatedPosts));
+          }
+        } catch (error) {
+          console.error('Error saving new post to AsyncStorage:', error);
+        }
+      })();
+      
+      // Clear the route params to prevent re-adding on re-renders
+      navigation.setParams({ newPost: undefined });
+    }
+  }, [route.params?.newPost, navigation]);
+
+  // Handle deleted post from PostDetailScreen
+  React.useEffect(() => {
+    if (route.params?.deletedPostId) {
+      const deletedPostId = route.params.deletedPostId;
+      // Remove the deleted post from the current posts
+      setPostData(prev => {
+        if (!prev) return prev;
+        return prev.filter(post => post.id !== deletedPostId);
+      });
+      // Clear the route params to prevent re-removing on re-renders
+      navigation.setParams({ deletedPostId: undefined });
+    }
+  }, [route.params?.deletedPostId, navigation]);
+
   const toggleLike = React.useCallback((id) => {
     setPostData((prev) => {
       if (!prev) return prev;
@@ -242,22 +294,82 @@ const HomeScreen = () => {
         const raw = await AsyncStorage.getItem('likedPosts');
         const likedPosts = raw ? JSON.parse(raw) : [];
         const likedMap = {};
+        const likesMap = {};
         likedPosts.forEach(post => {
           likedMap[post.id] = true;
+          likesMap[post.id] = post.likes; // Store the actual like count
         });
 
         // Filter posts by category and restore liked state
         const filteredPosts = category === 'all' ? MOCK_POSTS : MOCK_POSTS.filter((p) => p.category === category);
         const dataWithLikes = filteredPosts.map(post => ({
           ...post,
-          liked: !!likedMap[post.id]
+          liked: !!likedMap[post.id],
+          likes: likesMap[post.id] !== undefined ? likesMap[post.id] : post.likes // Use stored like count if available
         }));
         
-        setPostData(dataWithLikes);
+        // Load created posts to check for deletions
+        const createdPostsRaw = await AsyncStorage.getItem('createdPosts');
+        const createdPosts = createdPostsRaw ? JSON.parse(createdPostsRaw) : [];
+        const createdPostIds = new Set(createdPosts.map(p => p.id));
+        
+        // Preserve any new posts that were added locally (not in MOCK_POSTS)
+        setPostData(prev => {
+          if (!prev) return dataWithLikes;
+          
+          // Find posts that are not in MOCK_POSTS (these are new posts)
+          const mockPostIds = new Set(MOCK_POSTS.map(p => p.id));
+          const newPosts = prev.filter(post => !mockPostIds.has(post.id));
+          
+          // Filter out posts that have been deleted from createdPosts
+          const validNewPosts = newPosts.filter(post => createdPostIds.has(post.id));
+          
+          // Filter new posts by category if needed
+          const filteredNewPosts = category === 'all' ? validNewPosts : validNewPosts.filter(p => p.category === category);
+          
+          // Apply liked state to new posts as well
+          const newPostsWithLikes = filteredNewPosts.map(post => ({
+            ...post,
+            liked: !!likedMap[post.id],
+            likes: likesMap[post.id] !== undefined ? likesMap[post.id] : post.likes
+          }));
+          
+          // Combine new posts with filtered mock posts
+          return [...newPostsWithLikes, ...dataWithLikes];
+        });
       } catch (e) {
         console.error('Error loading posts:', e);
         const data = category === 'all' ? MOCK_POSTS : MOCK_POSTS.filter((p) => p.category === category);
-        setPostData(data);
+        
+        // Load created posts to check for deletions (even in error case)
+        const createdPostsRaw = await AsyncStorage.getItem('createdPosts');
+        const createdPosts = createdPostsRaw ? JSON.parse(createdPostsRaw) : [];
+        const createdPostIds = new Set(createdPosts.map(p => p.id));
+        
+        // Preserve any new posts that were added locally (not in MOCK_POSTS)
+        setPostData(prev => {
+          if (!prev) return data;
+          
+          // Find posts that are not in MOCK_POSTS (these are new posts)
+          const mockPostIds = new Set(MOCK_POSTS.map(p => p.id));
+          const newPosts = prev.filter(post => !mockPostIds.has(post.id));
+          
+          // Filter out posts that have been deleted from createdPosts
+          const validNewPosts = newPosts.filter(post => createdPostIds.has(post.id));
+          
+          // Filter new posts by category if needed
+          const filteredNewPosts = category === 'all' ? validNewPosts : validNewPosts.filter(p => p.category === category);
+          
+          // Apply liked state to new posts as well (even in error case)
+          const newPostsWithLikes = filteredNewPosts.map(post => ({
+            ...post,
+            liked: !!likedMap[post.id],
+            likes: likesMap[post.id] !== undefined ? likesMap[post.id] : post.likes
+          }));
+          
+          // Combine new posts with filtered mock posts
+          return [...newPostsWithLikes, ...data];
+        });
       } finally {
         setIsLoading(false);
       }
@@ -295,11 +407,6 @@ const HomeScreen = () => {
             <Image source={require('../assets/AppIcon.png')} style={styles.headerLogo} />
             <Text style={[styles.headerTitle, { color: colors.text }]}>Luma</Text>
             </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity>
-              <Image source={require('../assets/AppIcon.png')} style={[styles.avatar, { borderColor: colors.outline }]} />
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
       {postData ? (
@@ -309,6 +416,18 @@ const HomeScreen = () => {
           refreshing={isLoading}
           onRefresh={() => getPostData()}
           keyExtractor={(item, index) => item.id || `post-${index}`}
+          onScroll={(e) => {
+            const y = e.nativeEvent.contentOffset.y;
+            const prevY = scrollYRef.current || 0;
+            const dy = y - prevY;
+            if (dy > 5 && y > 20) {
+              setTabHidden(true);
+            } else if (dy < -15 || y <= 20) {
+              setTabHidden(false);
+            }
+            scrollYRef.current = y;
+          }}
+          scrollEventThrottle={16}
           ListHeaderComponent={
             <View>
               <CategoryPicker selectedCategory={category} onClick={setCategory} addAll />
@@ -452,25 +571,6 @@ const styles = StyleSheet.create({
   },
   headerLogo: { width: 40, height: 40, borderRadius: 12, marginRight: 10 },
   headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#2D3748' },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-  },
   categoryPicker: {
     padding: 5,
     marginVertical: 7,

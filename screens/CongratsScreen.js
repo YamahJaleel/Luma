@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
+import { useOnboarding } from '../components/OnboardingContext';
 
-const CongratsScreen = ({ navigation, route }) => {
-  const setIsOnboarded = route?.params?.setIsOnboarded;
+const CongratsScreen = ({ navigation }) => {
+  const { setIsOnboarded } = useOnboarding();
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#FAF6F0", "#F5F1EB"]} style={styles.gradient}>

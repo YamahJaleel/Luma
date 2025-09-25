@@ -276,7 +276,7 @@ const SettingsScreen = ({ navigation }) => {
         const dy = y - prevY;
         if (dy > 5 && y > 20) {
           setTabHidden(true);
-        } else if (dy < -5 || y <= 20) {
+        } else if (dy < -15 || y <= 20) {
           setTabHidden(false);
         }
         scrollYRef.current = y;

@@ -265,6 +265,188 @@ const SearchScreen = ({ navigation, route }) => {
       flags: ['unreliable'],
       reports: 1,
     },
+    {
+      id: 17,
+      name: 'Olivia Martinez',
+      username: '@oliviam',
+      avatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: true,
+      lastSeen: 'now',
+      mutualFriends: 5,
+      riskLevel: 'green',
+      flags: ['friendly', 'responsive'],
+      reports: 0,
+    },
+    {
+      id: 18,
+      name: 'Noah Thompson',
+      username: '@noaht',
+      avatar: 'https://images.unsplash.com/photo-1544005314-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+      size: 'large',
+      isOnline: false,
+      lastSeen: '10 min ago',
+      mutualFriends: 1,
+      riskLevel: 'yellow',
+      flags: ['inconsistent'],
+      reports: 1,
+    },
+    {
+      id: 19,
+      name: 'Ava Nguyen',
+      username: '@avan',
+      avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: true,
+      lastSeen: '3 min ago',
+      mutualFriends: 6,
+      riskLevel: 'green',
+      flags: ['trusted', 'verified'],
+      reports: 0,
+    },
+    {
+      id: 20,
+      name: 'William Clark',
+      username: '@willc',
+      avatar: 'https://images.unsplash.com/photo-1519340241574-2cec6aef0c01?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: false,
+      lastSeen: '2 hours ago',
+      mutualFriends: 2,
+      riskLevel: 'red',
+      flags: ['harassment'],
+      reports: 3,
+    },
+    {
+      id: 21,
+      name: 'Isabella Rossi',
+      username: '@isabellar',
+      avatar: 'https://images.unsplash.com/photo-1548142813-c348350df52b?w=150&h=150&fit=crop&crop=face',
+      size: 'large',
+      isOnline: true,
+      lastSeen: 'now',
+      mutualFriends: 7,
+      riskLevel: 'green',
+      flags: ['community_leader'],
+      reports: 0,
+    },
+    {
+      id: 22,
+      name: 'Liam Patel',
+      username: '@liamp',
+      avatar: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: false,
+      lastSeen: 'yesterday',
+      mutualFriends: 3,
+      riskLevel: 'yellow',
+      flags: ['slow_response'],
+      reports: 1,
+    },
+    {
+      id: 23,
+      name: 'Mia Lopez',
+      username: '@mial',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+      size: 'large',
+      isOnline: true,
+      lastSeen: 'now',
+      mutualFriends: 9,
+      riskLevel: 'green',
+      flags: ['helpful', 'verified'],
+      reports: 0,
+    },
+    {
+      id: 24,
+      name: 'Ethan Walker',
+      username: '@ethanw',
+      avatar: 'https://images.unsplash.com/photo-1546456073-6712f79251bb?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: false,
+      lastSeen: '5 hours ago',
+      mutualFriends: 2,
+      riskLevel: 'green',
+      flags: ['genuine'],
+      reports: 0,
+    },
+    {
+      id: 25,
+      name: 'Charlotte King',
+      username: '@charlottek',
+      avatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&crop=face',
+      size: 'large',
+      isOnline: false,
+      lastSeen: '20 min ago',
+      mutualFriends: 4,
+      riskLevel: 'yellow',
+      flags: ['inconsistent'],
+      reports: 2,
+    },
+    {
+      id: 26,
+      name: 'Benjamin Scott',
+      username: '@bens',
+      avatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: true,
+      lastSeen: 'now',
+      mutualFriends: 1,
+      riskLevel: 'green',
+      flags: ['responsive'],
+      reports: 0,
+    },
+    {
+      id: 27,
+      name: 'Harper Young',
+      username: '@harpery',
+      avatar: 'https://images.unsplash.com/photo-1544005314-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: false,
+      lastSeen: '3 hours ago',
+      mutualFriends: 6,
+      riskLevel: 'green',
+      flags: ['trusted'],
+      reports: 0,
+    },
+    {
+      id: 28,
+      name: 'Elijah Rivera',
+      username: '@elijahr',
+      avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&h=150&fit=crop&crop=face',
+      size: 'large',
+      isOnline: true,
+      lastSeen: 'now',
+      mutualFriends: 2,
+      riskLevel: 'green',
+      flags: ['verified'],
+      reports: 0,
+    },
+    {
+      id: 29,
+      name: 'Amelia Baker',
+      username: '@ameliab',
+      avatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&crop=face',
+      size: 'small',
+      isOnline: false,
+      lastSeen: 'yesterday',
+      mutualFriends: 3,
+      riskLevel: 'yellow',
+      flags: ['slow_response'],
+      reports: 1,
+    },
+    {
+      id: 30,
+      name: 'Lucas Bennett',
+      username: '@lucasb',
+      avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=150&h=150&fit=crop&crop=face',
+      size: 'large',
+      isOnline: true,
+      lastSeen: 'now',
+      mutualFriends: 8,
+      riskLevel: 'green',
+      flags: ['community_leader', 'trusted'],
+      reports: 0,
+    },
   ];
 
   const [profiles, setProfiles] = useState(mockProfiles);
@@ -320,9 +502,11 @@ const SearchScreen = ({ navigation, route }) => {
     navigation.navigate('ProfileDetail', { profile });
   };
 
-  const renderProfileSquare = ({ item }) => (
+  // Render a profile square, allowing the grid to override the visual size to
+  // enforce the established layout pattern (2 large, then 3 small)
+  const renderProfileSquare = ({ item, overrideSize }) => (
     <TouchableOpacity 
-      style={[styles.profileSquare, getSizeStyle(item.size)]} 
+      style={[styles.profileSquare, getSizeStyle(overrideSize || item.size)]} 
       onPress={() => handleProfilePress(item)}
       activeOpacity={0.9}
     >
@@ -331,7 +515,7 @@ const SearchScreen = ({ navigation, route }) => {
   );
 
   const fullList = searchQuery.trim() === '' ? profiles : filteredProfiles;
-  const displayProfiles = dataUsageEnabled ? fullList.slice(0, 18) : fullList;
+  const displayProfiles = dataUsageEnabled ? fullList.slice(0, 24) : fullList;
 
   // Create rows for the alternating pattern
   const createRows = () => {
@@ -396,11 +580,11 @@ const SearchScreen = ({ navigation, route }) => {
       {/* Profile Grid */}
       <FlatList
         data={rows}
-        renderItem={({ item }) => (
+        renderItem={({ item: row }) => (
           <View style={styles.row}>
-            {item.items.map((profile) => (
+            {row.items.map((profile) => (
               <View key={profile.id} style={styles.squareContainer}>
-                {renderProfileSquare({ item: profile })}
+                {renderProfileSquare({ item: profile, overrideSize: row.type })}
               </View>
             ))}
           </View>
@@ -417,7 +601,7 @@ const SearchScreen = ({ navigation, route }) => {
           const dy = y - prevY;
           if (dy > 5 && y > 20) {
             setTabHidden(true);
-          } else if (dy < -5 || y <= 20) {
+          } else if (dy < -15 || y <= 20) {
             setTabHidden(false);
           }
           scrollYRef.current = y;

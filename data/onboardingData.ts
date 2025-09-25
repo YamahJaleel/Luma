@@ -24,8 +24,8 @@ const data: OnboardingData[] = [
     title: 'Anonymous Sharing',
     subtitle: 'Share experiences safely',
     description: 'Post about your dating experiences anonymously. Your privacy is our top priority. Help others while staying completely protected.',
-    textColor: '#8B5CF6',
-    backgroundColor: '#F5F3FF',
+    textColor: '#3E5F44',
+    backgroundColor: '#FAF6F0',
   },
   {
     id: 3,
@@ -33,8 +33,8 @@ const data: OnboardingData[] = [
     title: 'Search & Verify',
     subtitle: 'Check before you connect',
     description: 'Search names to see if others have shared experiences or red flags about someone. Make informed decisions about who you meet.',
-    textColor: '#005b4f',
-    backgroundColor: '#ffa3ce',
+    textColor: '#3E5F44',
+    backgroundColor: '#FAF6F0',
   },
   {
     id: 4,
@@ -42,8 +42,8 @@ const data: OnboardingData[] = [
     title: 'Community Support',
     subtitle: "You're not alone",
     description: 'Get advice, share stories, and support each other in a safe, moderated environment. Connect with people who understand.',
-    textColor: '#059669',
-    backgroundColor: '#D1FAE5',
+    textColor: '#3E5F44',
+    backgroundColor: '#FAF6F0',
   },
   {
     id: 5,
@@ -51,8 +51,8 @@ const data: OnboardingData[] = [
     title: 'Protected by Encryption',
     subtitle: 'Your data is secure',
     description: 'All your information is encrypted and protected. Your privacy and security are our highest priorities.',
-    textColor: '#1E40AF',
-    backgroundColor: '#DBEAFE',
+    textColor: '#3E5F44',
+    backgroundColor: '#FAF6F0',
   },
   {
     id: 6,
@@ -60,8 +60,8 @@ const data: OnboardingData[] = [
     title: 'Get Started',
     subtitle: 'Join our community',
     description: 'Ready to start your journey? Create your account and join users who trust our platform for safe connections.',
-    textColor: '#EA580C',
-    backgroundColor: '#FEF3C7',
+    textColor: '#3E5F44',
+    backgroundColor: '#FAF6F0',
   },
 ];
 
