@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Local mock categories/posts to emulate the pasted clone Home
 const CATEGORIES = [
@@ -278,6 +279,13 @@ const HomeScreen = () => {
     getPostData();
   }, [getPostData]);
 
+  // Reload data when screen comes into focus (e.g., returning from PostDetailScreen)
+  useFocusEffect(
+    React.useCallback(() => {
+      getPostData();
+    }, [getPostData])
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
@@ -286,7 +294,7 @@ const HomeScreen = () => {
           <View style={styles.headerRow}>
             <Image source={require('../assets/AppIcon.png')} style={styles.headerLogo} />
             <Text style={[styles.headerTitle, { color: colors.text }]}>Luma</Text>
-          </View>
+            </View>
           <View style={styles.headerActions}>
             <TouchableOpacity>
               <Image source={require('../assets/AppIcon.png')} style={[styles.avatar, { borderColor: colors.outline }]} />
@@ -300,36 +308,36 @@ const HomeScreen = () => {
           extraData={isLoading}
           refreshing={isLoading}
           onRefresh={() => getPostData()}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item.id || `post-${index}`}
           ListHeaderComponent={
             <View>
               <CategoryPicker selectedCategory={category} onClick={setCategory} addAll />
               <View style={styles.actionsUnderCats}>
                 <View style={[styles.searchPill, { backgroundColor: colors.surface }]}>
                   <Ionicons name="search" size={16} color={colors.primary} />
-                  <TextInput
+            <TextInput
                     style={[styles.searchPillInput, { color: colors.text }]}
-                    placeholder="Search posts"
+              placeholder="Search posts"
                     placeholderTextColor={colors.placeholder}
-                    value={searchQuery}
-                    onChangeText={handleSearch}
-                  />
-                  {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => handleSearch('')}>
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => handleSearch('')}>
                       <Ionicons name="close-circle" size={18} color={colors.placeholder} />
-                    </TouchableOpacity>
-                  )}
-                </View>
+              </TouchableOpacity>
+            )}
+          </View>
                 <TouchableOpacity style={[styles.iconSquare, { backgroundColor: colors.surface }]} onPress={() => setShowSortModal(true)}>
-                  <Ionicons name="filter" size={18} color="#3E5F44" />
-                </TouchableOpacity>
+            <Ionicons name="filter" size={18} color="#3E5F44" />
+          </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.iconSquare, { backgroundColor: colors.surface }]}
                   onPress={() => navigation.navigate('CreatePost', { communityId: category === 'all' ? 'dating-advice' : category })}
                 >
-                  <Ionicons name="add" size={18} color="#3E5F44" />
-                </TouchableOpacity>
-              </View>
+            <Ionicons name="add" size={18} color="#3E5F44" />
+          </TouchableOpacity>
+        </View>
             </View>
           }
           ListHeaderComponentStyle={[styles.categoryPicker, { backgroundColor: 'transparent' }]}
@@ -603,4 +611,4 @@ const styles = StyleSheet.create({
   searchResultsText: { fontSize: 13, color: '#6B7280', textAlign: 'center', fontStyle: 'italic' },
 });
 
-export default HomeScreen;
+export default HomeScreen; 

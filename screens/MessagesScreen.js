@@ -91,8 +91,8 @@ const MessagesScreen = ({ navigation, route }) => {
     // Simulate search delay
     setTimeout(() => {
       const filtered = mockUsers.filter(user => 
-        user.name.toLowerCase().includes(query.toLowerCase()) ||
-        user.username.toLowerCase().includes(query.toLowerCase())
+        user.name.toLowerCase().startsWith(query.toLowerCase()) ||
+        user.username.toLowerCase().startsWith(query.toLowerCase())
       );
       setSearchResults(filtered);
       setIsSearching(false);
@@ -190,7 +190,7 @@ const MessagesScreen = ({ navigation, route }) => {
       <FlatList
         data={conversations}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `conversation-${index}`}
         contentContainerStyle={styles.list}
         ListEmptyComponent={() => (
           <View style={styles.emptyState}>
@@ -245,7 +245,7 @@ const MessagesScreen = ({ navigation, route }) => {
             <FlatList
               data={searchResults}
               renderItem={renderUserItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item, index) => item.id || `conversation-${index}`}
               contentContainerStyle={styles.searchResultsList}
               ListEmptyComponent={() => (
                 <View style={styles.emptySearch}>
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'transparent',
   },
   searchModal: {
     flex: 1,

@@ -34,6 +34,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const listRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Load messages from AsyncStorage for this conversation
   const loadMessages = async () => {
@@ -84,6 +85,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
     // Add to local state immediately for UI responsiveness
     setMessages((prev) => [...prev, newMessage]);
     setDraft('');
+    inputRef.current?.clear();
     
     // Save to AsyncStorage
     try {
@@ -123,13 +125,14 @@ const MessageThreadScreen = ({ route, navigation }) => {
         ref={listRef}
         data={messages}
         renderItem={({ item }) => <MessageBubble message={item} theme={theme} />}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `message-${index}`}
         contentContainerStyle={styles.thread}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       />
 
       <View style={[styles.inputBar, { backgroundColor: theme.colors.surface, borderTopColor: '#E5E7EB' }]}> 
         <TextInput
+          ref={inputRef}
           style={[styles.input, { color: theme.colors.text }]}
           placeholder="Message..."
           placeholderTextColor={theme.colors.placeholder}

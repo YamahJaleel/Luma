@@ -133,6 +133,60 @@ const PostDetailScreen = ({ route, navigation }) => {
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // Track expanded threads
   const [liked, setLiked] = useState(!!post?.liked);
   const [likeCount, setLikeCount] = useState(post?.likes || 0);
+
+  // Load like status from AsyncStorage on mount
+  React.useEffect(() => {
+    const loadLikeStatus = async () => {
+      try {
+        const likedPostsData = await AsyncStorage.getItem('likedPosts');
+        const likedPosts = likedPostsData ? JSON.parse(likedPostsData) : [];
+        const isLiked = likedPosts.some(likedPost => likedPost.id === post.id);
+        setLiked(isLiked);
+        
+        // Update like count based on current status
+        const baseLikes = post?.likes || 0;
+        setLikeCount(baseLikes + (isLiked ? 1 : 0));
+      } catch (error) {
+        console.error('Error loading like status:', error);
+      }
+    };
+    
+    loadLikeStatus();
+  }, [post.id]);
+
+  // Handle like toggle and save to AsyncStorage
+  const handleLikeToggle = async () => {
+    const newLiked = !liked;
+    const newLikeCount = Math.max(0, likeCount + (newLiked ? 1 : -1));
+    
+    // Update local state immediately
+    setLiked(newLiked);
+    setLikeCount(newLikeCount);
+    
+    // Save to AsyncStorage (matching HomeScreen format)
+    try {
+      const likedPostsData = await AsyncStorage.getItem('likedPosts');
+      const likedPosts = likedPostsData ? JSON.parse(likedPostsData) : [];
+      
+      if (newLiked) {
+        // Add to liked posts if not already there
+        const exists = likedPosts.some(likedPost => likedPost.id === post.id);
+        if (!exists) {
+          const updatedPost = { ...post, liked: true, likes: newLikeCount };
+          likedPosts.unshift(updatedPost); // Add to beginning
+        }
+      } else {
+        // Remove from liked posts
+        const filteredPosts = likedPosts.filter(likedPost => likedPost.id !== post.id);
+        likedPosts.length = 0; // Clear array
+        likedPosts.push(...filteredPosts); // Add back filtered posts
+      }
+      
+      await AsyncStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+    } catch (error) {
+      console.error('Error saving like status:', error);
+    }
+  };
   
   // Message modal state
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -486,7 +540,7 @@ const PostDetailScreen = ({ route, navigation }) => {
           <Text style={[styles.title, { color: theme.colors.text }]}>{post?.title}</Text>
           <Text style={[styles.contentText, { color: theme.colors.text }]}>{post?.content ?? post?.text}</Text>
           <View style={styles.detailActions}>
-            <TouchableOpacity style={styles.postActionBtn} onPress={() => { const next = !liked; setLiked(next); setLikeCount((c) => Math.max(0, c + (next ? 1 : -1))); }}>
+            <TouchableOpacity style={styles.postActionBtn} onPress={handleLikeToggle}>
               <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : (theme.dark ? '#9CA3AF' : '#6B7280')} />
               <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{likeCount}</Text>
             </TouchableOpacity>
@@ -502,7 +556,7 @@ const PostDetailScreen = ({ route, navigation }) => {
           <FlatList
             data={flatComments}
             renderItem={renderComment}
-            keyExtractor={(item) => `${item.node.id}`}
+            keyExtractor={(item, index) => `${item.node?.id || index}`}
             scrollEnabled={false}
           />
         </View>

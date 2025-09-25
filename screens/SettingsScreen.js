@@ -32,10 +32,6 @@ const SettingsScreen = ({ navigation }) => {
     setDarkModeEnabled,
     biometricEnabled,
     setBiometricEnabled,
-    autoBackupEnabled,
-    setAutoBackupEnabled,
-    dataUsageEnabled,
-    setDataUsageEnabled,
   } = useSettings();
 
   const handleLogout = () => {
@@ -102,13 +98,6 @@ const SettingsScreen = ({ navigation }) => {
           value: communityAlertsEnabled,
           onValueChange: setCommunityAlertsEnabled,
         },
-        {
-          id: 'community_notification_settings',
-          title: 'Community Notifications',
-          subtitle: 'Manage notifications for specific communities',
-          icon: 'settings-outline',
-          type: 'navigate',
-        },
       ],
     },
     {
@@ -134,7 +123,6 @@ const SettingsScreen = ({ navigation }) => {
         },
         { id: 'privacy_settings', title: 'Privacy Settings', subtitle: 'Manage your data and privacy', icon: 'shield-check-outline', type: 'navigate' },
         { id: 'safety_resources', title: 'Safety Resources', subtitle: 'Access safety tips and resources', icon: 'medical-bag', type: 'navigate' },
-        { id: 'blocked_users', title: 'Blocked Users', subtitle: 'Manage blocked accounts', icon: 'account-remove-outline', type: 'navigate' },
       ],
     },
     {
@@ -157,24 +145,6 @@ const SettingsScreen = ({ navigation }) => {
           value: darkModeEnabled,
           onValueChange: setDarkModeEnabled,
         },
-        {
-          id: 'auto_backup',
-          title: 'Auto Backup',
-          subtitle: 'Automatically backup your data',
-          icon: 'cloud-upload-outline',
-          type: 'toggle',
-          value: autoBackupEnabled,
-          onValueChange: setAutoBackupEnabled,
-        },
-        {
-          id: 'data_usage',
-          title: 'Data Saver',
-          subtitle: 'Reduce data usage',
-          icon: 'signal-cellular-outline',
-          type: 'toggle',
-          value: dataUsageEnabled,
-          onValueChange: setDataUsageEnabled,
-        },
         { id: 'clear_cache', title: 'Clear Cache', subtitle: 'Free up storage space', icon: 'trash-can-outline', type: 'action' },
       ],
     },
@@ -184,7 +154,6 @@ const SettingsScreen = ({ navigation }) => {
         { id: 'contact_support', title: 'Contact Support', subtitle: 'Get in touch with our team', icon: 'chat-outline', type: 'navigate' },
         { id: 'report_bug', title: 'Report a Bug', subtitle: 'Help us improve the app', icon: 'bug-outline', type: 'navigate' },
         { id: 'feedback', title: 'Send Feedback', subtitle: 'Share your thoughts with us', icon: 'message-outline', type: 'navigate' },
-        { id: 'icons_demo', title: 'Icons Demo', subtitle: 'Browse all available icons', icon: 'leaf-outline', type: 'navigate' },
       ],
     },
     {
@@ -290,8 +259,6 @@ const SettingsScreen = ({ navigation }) => {
  Privacy is our foundation we use secure systems to ensure user information is never exposed.`,
               [{ text: 'OK', style: 'default' }]
             );
-          } else if (item.id === 'community_notification_settings') {
-            navigation.navigate('CommunityNotificationSettings');
           } else {
             Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }

@@ -86,7 +86,7 @@ const LikedPostsScreen = ({ navigation }) => {
       <FlatList
         data={data}
         renderItem={renderItem}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item, index) => String(item.id) || `liked-post-${index}`}
         contentContainerStyle={{ paddingBottom: 12 }}
         ListEmptyComponent={<Text style={[styles.empty, { color: theme.colors.text }]}>No liked posts yet.</Text>}
         refreshing={isLoading}

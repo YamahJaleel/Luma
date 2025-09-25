@@ -117,7 +117,7 @@ const BrowseCommunitiesScreen = ({ route, navigation }) => {
       <FlatList
         data={filtered}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `community-${index}`}
         contentContainerStyle={styles.list}
         initialNumToRender={20}
         windowSize={10}

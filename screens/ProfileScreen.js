@@ -62,11 +62,11 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             <View style={styles.userStat}>
               <Text style={[styles.userStatNumber, { color: theme.dark ? theme.colors.text : theme.colors.primary }]}>45</Text>
-              <Text style={[styles.userStatLabel, theme.dark && { color: theme.colors.text }]}>Helped</Text>
+              <Text style={[styles.userStatLabel, theme.dark && { color: theme.colors.text }]}>Liked</Text>
             </View>
             <View style={styles.userStat}>
               <Text style={[styles.userStatNumber, { color: theme.dark ? theme.colors.text : theme.colors.primary }]}>8</Text>
-              <Text style={[styles.userStatLabel, theme.dark && { color: theme.colors.text }]}>Watched</Text>
+              <Text style={[styles.userStatLabel, theme.dark && { color: theme.colors.text }]}>Comments</Text>
             </View>
           </View>
         </Card.Content>
