@@ -457,6 +457,21 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     setDropdownVisible(null);
   };
 
+  // Delete a comment (and its subtree) by id from the nested comments structure
+  const removeCommentById = (nodes, targetId) => {
+    return nodes
+      .filter((n) => n.id !== targetId)
+      .map((n) => ({
+        ...n,
+        replies: n.replies && n.replies.length ? removeCommentById(n.replies, targetId) : n.replies,
+      }));
+  };
+
+  const handleDeleteComment = (commentId) => {
+    setComments((prev) => removeCommentById(prev, commentId));
+    if (dropdownVisible === commentId) closeDropdown();
+  };
+
   // Close dropdown when scrolling or when reply target changes
   React.useEffect(() => {
     closeDropdown();
@@ -566,13 +581,23 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 activeOpacity={1}
               />
               <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
-                <TouchableOpacity 
-                  style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
-                  onPress={() => handleDirectMessage(c)}
-                >
-                  <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
-                  <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Message</Text>
-                </TouchableOpacity>
+                {c.author === 'You' ? (
+                  <TouchableOpacity 
+                    style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                    onPress={() => handleDeleteComment(c.id)}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                    <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Delete</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity 
+                    style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                    onPress={() => handleDirectMessage(c)}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
+                    <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Message</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           )}
@@ -656,9 +681,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             value={replyText}
             onChangeText={setReplyText}
             multiline
+            maxLength={500}
           />
           <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSend}>
-            <Ionicons name="send" size={16} color="#FFFFFF" />
+            <Ionicons name="send" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -682,36 +708,36 @@ const ProfileDetailScreen = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
             
-            <TextInput
-              style={[styles.messageInput, { 
-                backgroundColor: theme.colors.background,
-                color: theme.colors.text,
-                borderColor: theme.colors.outline 
-              }]}
-              placeholder="Type your message..."
-              placeholderTextColor={theme.colors.placeholder}
-              value={messageText}
-              onChangeText={setMessageText}
-              multiline
-              autoFocus
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.colors.outline }]}
-                onPress={() => setShowMessageModal(false)}
-              >
-                <Text style={[styles.cancelButtonText, { color: theme.colors.text }]}>Cancel</Text>
-              </TouchableOpacity>
-              
+            <View style={styles.messageInputContainer}>
+              <TextInput
+                style={[styles.messageInput, { color: theme.colors.text }]}
+                placeholder="Type your message..."
+                placeholderTextColor={theme.colors.placeholder}
+                value={messageText}
+                onChangeText={setMessageText}
+                multiline
+                maxLength={500}
+                autoFocus
+              />
               <TouchableOpacity 
                 style={[styles.modalButton, styles.sendButton, { backgroundColor: theme.colors.primary }]}
                 onPress={handleSendMessage}
                 disabled={!messageText.trim()}
               >
-                <Text style={styles.sendButtonText}>Send</Text>
+                <Ionicons 
+                  name="send" 
+                  size={20} 
+                  color={messageText.trim() ? '#FFFFFF' : theme.colors.placeholder} 
+                />
               </TouchableOpacity>
             </View>
+            
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.cancelButton, { borderColor: theme.colors.outline }]}
+              onPress={() => setShowMessageModal(false)}
+            >
+              <Text style={[styles.cancelButtonText, { color: theme.colors.text }]}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -810,9 +836,33 @@ const styles = StyleSheet.create({
   replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   replyingText: { fontSize: 13, fontWeight: '600' },
-  replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  replyInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, fontSize: 15 },
-  sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  replyRow: { 
+    flexDirection: 'row', 
+    alignItems: 'flex-end', 
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 4,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  replyInput: { 
+    flex: 1, 
+    borderWidth: 1, 
+    borderColor: 'rgba(0,0,0,0.2)', 
+    borderRadius: 20, 
+    paddingHorizontal: 16, 
+    paddingVertical: 12, 
+    marginRight: 12, 
+    fontSize: 16, 
+    maxHeight: 100,
+  },
+  sendBtn: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
   trustIndicatorsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
   trustIndicatorItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F7FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, marginBottom: 8 },
   trustIndicatorText: { fontSize: 13, fontWeight: '600', marginLeft: 4, textTransform: 'capitalize' },
@@ -822,13 +872,11 @@ const styles = StyleSheet.create({
   voteCount: { fontSize: 12, fontWeight: '600' },
   ownerNoteTab: {
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 2,
+    borderColor: '#3E5F44',
     backgroundColor: '#F8FAFC',
     marginBottom: 12,
     padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3E5F44',
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -936,20 +984,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
   },
+  messageInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 20,
+  },
   messageInput: {
+    flex: 1,
     borderWidth: 1,
-    borderRadius: 12,
+    borderColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    marginRight: 12,
     fontSize: 16,
-    minHeight: 100,
-    textAlignVertical: 'top',
-    marginBottom: 16,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+    maxHeight: 100,
   },
   modalButton: {
     flex: 1,
@@ -961,7 +1010,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   sendButton: {
-    // backgroundColor set dynamically
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendButtonText: {
     color: '#FFFFFF',

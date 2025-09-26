@@ -36,7 +36,6 @@ const AnimatedTabBar = () => {
   const tabs = [
     { name: 'Home', label: 'Home', icon: 'home' },
     { name: 'Messages', label: 'Message', icon: 'chatbubble' },
-    { name: 'Videos', label: 'Videos', icon: 'play' },
     { name: 'Search', label: 'Search', icon: 'search' },
     { name: 'Notifications', label: 'Alerts', icon: 'notifications' },
     { name: 'Profile', label: 'Profile', icon: 'person' },
@@ -101,8 +100,6 @@ const AnimatedTabBar = () => {
         return focused ? 'home' : 'home-outline';
       case 'Messages':
         return focused ? 'chatbubble' : 'chatbubble-outline';
-      case 'Videos':
-        return focused ? 'play' : 'play-outline';
       case 'Search':
         return focused ? 'search' : 'search-outline';
       case 'Notifications':

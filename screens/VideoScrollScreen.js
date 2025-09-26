@@ -20,12 +20,17 @@ export default function VideoScrollScreen() {
   }, []);
   const viewabilityConfigCallbackPairs = useRef([{ viewabilityConfig, onViewableItemsChanged }]);
 
+  // Calculate video height to be above the bottom tab bar
+  const screenHeight = Dimensions.get('window').height;
+  const tabBarHeight = 80; // Approximate tab bar height
+  const videoHeight = screenHeight - tabBarHeight;
+
   return (
     <View style={styles.container}>
       <FlatList
         data={videos}
         renderItem={({ item, index }) => (
-          <Item item={item} shouldPlay={index === currentViewableItemIndex} />
+          <Item item={item} shouldPlay={index === currentViewableItemIndex} videoHeight={videoHeight} />
         )}
         keyExtractor={(item) => item}
         pagingEnabled
@@ -37,7 +42,7 @@ export default function VideoScrollScreen() {
   );
 }
 
-const Item = ({ item, shouldPlay }) => {
+const Item = ({ item, shouldPlay, videoHeight }) => {
   const player = useVideoPlayer(item, (p) => {
     p.loop = true;
     p.muted = false;
@@ -52,7 +57,7 @@ const Item = ({ item, shouldPlay }) => {
   }, [shouldPlay, player]);
 
   return (
-    <View style={styles.videoContainer}>
+    <View style={[styles.videoContainer, { height: videoHeight }]}>
       <VideoView
         style={styles.video}
         player={player}
@@ -69,7 +74,6 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
   },
   video: {
     width: '100%',

@@ -698,9 +698,10 @@ const PostDetailScreen = ({ route, navigation }) => {
             value={replyText}
             onChangeText={setReplyText}
             multiline
+            maxLength={500}
           />
           <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSend}>
-            <Ionicons name="send" size={16} color="#FFFFFF" />
+            <Ionicons name="send" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -724,32 +725,35 @@ const PostDetailScreen = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
             
-            <TextInput
-              style={[styles.messageInput, { color: theme.colors.text, borderColor: theme.colors.outline }]}
-              placeholder="Type your message..."
-              placeholderTextColor={theme.colors.placeholder}
-              value={messageText}
-              onChangeText={setMessageText}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-            
-            <View style={styles.messageModalActions}>
-              <TouchableOpacity
-                style={[styles.messageCancelBtn, { borderColor: theme.colors.outline }]}
-                onPress={() => setShowMessageModal(false)}
-              >
-                <Text style={[styles.messageCancelText, { color: theme.colors.text }]}>Cancel</Text>
-              </TouchableOpacity>
+            <View style={styles.messageInputContainer}>
+              <TextInput
+                style={[styles.messageInput, { color: theme.colors.text }]}
+                placeholder="Type your message..."
+                placeholderTextColor={theme.colors.placeholder}
+                value={messageText}
+                onChangeText={setMessageText}
+                multiline
+                maxLength={500}
+              />
               <TouchableOpacity
                 style={[styles.messageSendBtn, { backgroundColor: theme.colors.primary }]}
                 onPress={handleSendMessage}
                 disabled={!messageText.trim()}
               >
-                <Text style={styles.messageSendText}>Send</Text>
+                <Ionicons 
+                  name="send" 
+                  size={20} 
+                  color={messageText.trim() ? '#FFFFFF' : theme.colors.placeholder} 
+                />
               </TouchableOpacity>
             </View>
+            
+            <TouchableOpacity
+              style={[styles.messageCancelBtn, { borderColor: theme.colors.outline }]}
+              onPress={() => setShowMessageModal(false)}
+            >
+              <Text style={[styles.messageCancelText, { color: theme.colors.text }]}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -860,9 +864,33 @@ const styles = StyleSheet.create({
   replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   replyingText: { fontSize: 13, fontWeight: '600' },
-  replyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  replyInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10 },
-  sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  replyRow: { 
+    flexDirection: 'row', 
+    alignItems: 'flex-end', 
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 4,
+    borderTopWidth: 0.25,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  replyInput: { 
+    flex: 1, 
+    borderWidth: 0.25, 
+    borderColor: 'rgba(0,0,0,0.2)', 
+    borderRadius: 20, 
+    paddingHorizontal: 16, 
+    paddingVertical: 12, 
+    marginRight: 12, 
+    fontSize: 16, 
+    maxHeight: 100,
+  },
+  sendBtn: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
   menuButton: {
     width: 32,
     height: 32,
@@ -953,13 +981,21 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
   },
-  messageInput: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    minHeight: 100,
+  messageInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
     marginBottom: 20,
+  },
+  messageInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 12,
+    fontSize: 16,
+    maxHeight: 100,
   },
   messageModalActions: {
     flexDirection: 'row',
@@ -978,10 +1014,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   messageSendBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   messageSendText: {
     color: '#FFFFFF',

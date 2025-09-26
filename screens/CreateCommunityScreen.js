@@ -33,6 +33,8 @@ const CreateCommunityScreen = ({ navigation }) => {
       memberCount: Math.floor(Math.random() * 900) + 100,
     };
     navigation.navigate('Home', { newCommunity });
+    // Clear form after creating
+    setName('');
   };
 
   return (

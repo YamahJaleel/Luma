@@ -130,7 +130,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       />
 
-      <View style={[styles.inputBar, { backgroundColor: theme.colors.surface, borderTopColor: '#E5E7EB' }]}> 
+      <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
         <TextInput
           ref={inputRef}
           style={[styles.input, { color: theme.colors.text }]}
@@ -139,9 +139,10 @@ const MessageThreadScreen = ({ route, navigation }) => {
           value={draft}
           onChangeText={setDraft}
           multiline
+          maxLength={500}
         />
         <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={send}>
-          <Ionicons name="send" size={16} color="#FFFFFF" />
+          <Ionicons name="send" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
@@ -161,9 +162,33 @@ const styles = StyleSheet.create({
   bubbleThem: { borderTopLeftRadius: 4, borderWidth: 1, borderColor: '#E5E7EB' },
   bubbleText: { fontSize: 14 },
   bubbleTime: { fontSize: 11, marginTop: 4, textAlign: 'right' },
-  inputBar: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, borderTopWidth: 1 },
-  input: { flex: 1, maxHeight: 120, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 15 },
-  sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
+  inputBar: { 
+    flexDirection: 'row', 
+    alignItems: 'flex-end', 
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  input: { 
+    flex: 1, 
+    borderWidth: 1, 
+    borderColor: 'rgba(0,0,0,0.2)', 
+    borderRadius: 20, 
+    paddingHorizontal: 16, 
+    paddingVertical: 12, 
+    marginRight: 12, 
+    fontSize: 16, 
+    maxHeight: 100,
+  },
+  sendBtn: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
 });
 
 export default MessageThreadScreen; 

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Modal, TextInput } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -175,6 +176,12 @@ const MessagesScreen = ({ navigation, route }) => {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Messages</Text>
+          <TouchableOpacity 
+            style={styles.robotButton}
+            onPress={() => navigation.navigate('LumaAI')}
+          >
+            <AntDesign name="robot" size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -271,6 +278,11 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 60 },
   headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerTitle: { fontSize: 28, fontWeight: 'bold' },
+  robotButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(62, 95, 68, 0.1)',
+  },
   newChatBanner: {
     flexDirection: 'row',
     alignItems: 'center',

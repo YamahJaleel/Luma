@@ -15,7 +15,7 @@ const CATEGORIES = [
   { id: 'red-flags', label: 'Red Flags' },
   { id: 'success-stories', label: 'Green Flags' },
   { id: 'safety-tips', label: 'Safety' },
-  { id: 'vent-space', label: 'Open Up' },
+  { id: 'vent-space', label: 'Vent' },
 ];
 
 const MOCK_POSTS = [

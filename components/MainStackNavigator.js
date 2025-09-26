@@ -22,6 +22,7 @@ import ProfileDetailScreen from '../screens/ProfileDetailScreen';
 import CommunityNotificationSettingsScreen from '../screens/CommunityNotificationSettingsScreen';
 import VideoScrollScreen from '../screens/VideoScrollScreen';
 import LicenseVerificationScreen from '../screens/VerificationScreen';
+import LumaAIScreen from '../screens/LumaAIScreen';
 
 const Stack = createStackNavigator();
 
@@ -78,6 +79,7 @@ const MainStackNavigator = () => {
         <Stack.Screen name="CreateCommunity" component={CreateCommunityScreen} />
         <Stack.Screen name="CommunityNotificationSettings" component={CommunityNotificationSettingsScreen} />
         <Stack.Screen name="LicenseVerification" component={LicenseVerificationScreen} />
+        <Stack.Screen name="LumaAI" component={LumaAIScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>

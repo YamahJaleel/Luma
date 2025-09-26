@@ -124,6 +124,16 @@ const CreateAccountScreen = ({ navigation }) => {
       // After account creation, navigate to license verification
       const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
       navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
+      
+      // Clear form after successful account creation
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        pseudonym: '',
+      });
     } catch (error) {
       console.error('Error creating account:', error);
       Alert.alert('Error', 'Failed to create account. Please try again.');

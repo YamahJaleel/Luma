@@ -130,6 +130,12 @@ const CreateProfileScreen = ({ route, navigation }) => {
     };
     // Navigate back to Search with a serializable param
     navigation.navigate('Search', { newProfile });
+    // Clear form after creating
+    setName('');
+    setBio('');
+    setLocation('Toronto, ON');
+    setLocationInput('Toronto, ON');
+    setSelectedImage(null);
   };
 
   return (
