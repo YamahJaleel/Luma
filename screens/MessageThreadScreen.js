@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Keyboard
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TypingIndicator from '../components/TypingIndicator';
 
 const initialMessages = [
   { id: 'm1', from: 'them', text: 'Hey! How are you?', time: '2:15 PM' },
@@ -35,6 +36,81 @@ const MessageThreadScreen = ({ route, navigation }) => {
   const [draft, setDraft] = useState('');
   const listRef = useRef(null);
   const inputRef = useRef(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
+  const [autoReplyTimeout, setAutoReplyTimeout] = useState(null);
+
+  // Simulate other person typing for Test chat
+  const simulateOtherPersonTyping = () => {
+    if (conversation?.name === 'Test') {
+      setIsTyping(true);
+      
+      // Clear any existing timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+      
+      // Set timeout to stop typing after 3 seconds
+      const timeout = setTimeout(() => {
+        setIsTyping(false);
+      }, 3000);
+      setTypingTimeout(timeout);
+    }
+  };
+
+  const clearTestChat = async () => {
+    try {
+      // Clear messages from AsyncStorage
+      const messagesData = await AsyncStorage.getItem('messages');
+      if (messagesData) {
+        const messages = JSON.parse(messagesData);
+        const filteredMessages = messages.filter(message => 
+          message.recipientId !== 'test' && message.recipient !== 'Test'
+        );
+        await AsyncStorage.setItem('messages', JSON.stringify(filteredMessages));
+      }
+      
+      // Clear local state
+      setMessages([]);
+    } catch (error) {
+      console.error('Error clearing test chat:', error);
+    }
+  };
+
+  const sendAutoReply = async () => {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    const newMessage = {
+      id: `msg-${Date.now()}`,
+      from: 'them',
+      text: 'Sounds great!',
+      time: time,
+    };
+    
+    setMessages(prev => [...prev, newMessage]);
+    
+    // Save to AsyncStorage
+    try {
+      const messagesData = await AsyncStorage.getItem('messages');
+      const messages = messagesData ? JSON.parse(messagesData) : [];
+      messages.push({
+        ...newMessage,
+        recipientId: conversation?.id || conversation?.name,
+        recipient: conversation?.name,
+        sender: 'Test User',
+      });
+      await AsyncStorage.setItem('messages', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+    
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+  };
 
   // Load messages from AsyncStorage for this conversation
   const loadMessages = async () => {
@@ -51,12 +127,30 @@ const MessageThreadScreen = ({ route, navigation }) => {
         );
         
         // Convert to the format expected by the UI
-        const formattedMessages = conversationMessages.map(message => ({
-          id: message.id,
-          from: message.sender === 'You' ? 'me' : 'them',
-          text: message.text,
-          time: new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }));
+        const formattedMessages = conversationMessages.map(message => {
+          let time = 'Now';
+          try {
+            if (message.timestamp) {
+              const date = new Date(message.timestamp);
+              if (!isNaN(date.getTime())) {
+                time = date.toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: true 
+                });
+              }
+            }
+          } catch (error) {
+            console.log('Error parsing timestamp:', error);
+          }
+          
+          return {
+            id: message.id,
+            from: message.sender === 'You' ? 'me' : 'them',
+            text: message.text,
+            time: time
+          };
+        });
         
         setMessages(formattedMessages);
       } else {
@@ -72,6 +166,16 @@ const MessageThreadScreen = ({ route, navigation }) => {
   useEffect(() => {
     loadMessages();
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    
+    // Cleanup timeouts on unmount
+    return () => {
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+      if (autoReplyTimeout) {
+        clearTimeout(autoReplyTimeout);
+      }
+    };
   }, [conversation]);
 
   const send = async () => {
@@ -109,6 +213,16 @@ const MessageThreadScreen = ({ route, navigation }) => {
     }
     
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0);
+    
+    // Auto-reply for Test chat
+    if (conversation?.name === 'Test') {
+      setTimeout(() => {
+        simulateOtherPersonTyping();
+        setTimeout(() => {
+          sendAutoReply();
+        }, 3000);
+      }, 1000);
+    }
   };
 
   return (
@@ -118,7 +232,16 @@ const MessageThreadScreen = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{conversation?.name || 'Chat'}</Text>
-        <View style={{ width: 40 }} />
+        {conversation?.name === 'Test' ? (
+          <TouchableOpacity 
+            style={[styles.clearButton, { backgroundColor: theme.colors.surface }]} 
+            onPress={clearTestChat}
+          >
+            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
       </View>
 
       <FlatList
@@ -128,6 +251,17 @@ const MessageThreadScreen = ({ route, navigation }) => {
         keyExtractor={(item, index) => item.id || `message-${index}`}
         contentContainerStyle={styles.thread}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+        ListFooterComponent={() => (
+          isTyping ? (
+            <View style={[styles.bubbleRow, { justifyContent: 'flex-start' }]}>
+              <View style={[styles.bubble, styles.bubbleThem, { backgroundColor: theme.colors.surface }]}>
+                <View style={styles.typingDotsContainer}>
+                  <TypingIndicator />
+                </View>
+              </View>
+            </View>
+          ) : null
+        )}
       />
 
       <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
@@ -154,6 +288,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 56 },
   iconButton: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  clearButton: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 19, fontWeight: 'bold', maxWidth: '70%' },
   thread: { padding: 12 },
   bubbleRow: { flexDirection: 'row', marginVertical: 4 },
@@ -188,6 +323,11 @@ const styles = StyleSheet.create({
     borderRadius: 22, 
     alignItems: 'center', 
     justifyContent: 'center',
+  },
+  typingDotsContainer: {
+    paddingVertical: 1,
+    paddingHorizontal: 0,
+    minHeight: 12,
   },
 });
 

@@ -23,7 +23,7 @@ const MessagesScreen = ({ navigation, route }) => {
   const [conversations, setConversations] = useState([]); // Start with empty array instead of mock data
   const [newChatRecipient, setNewChatRecipient] = useState(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
-  
+
   // Load messages from AsyncStorage and create conversations
   const loadMessages = async () => {
     try {
@@ -48,7 +48,34 @@ const MessagesScreen = ({ navigation, route }) => {
         
         // Convert to array and set as conversations (replace instead of merge)
         const messageConversations = Object.values(conversationMap);
-        setConversations(messageConversations);
+        
+        // Always add Test conversation at the top (only if it doesn't already exist)
+        const hasTestConversation = messageConversations.some(conv => conv.id === 'test');
+        if (!hasTestConversation) {
+          const testConversation = {
+            id: 'test',
+            name: 'Test',
+            lastMessage: 'Sounds great!',
+            time: 'now',
+            unread: 0,
+          };
+          setConversations([testConversation, ...messageConversations]);
+        } else {
+          // Ensure Test conversation is always at the top
+          const testConv = messageConversations.find(conv => conv.id === 'test');
+          const otherConvs = messageConversations.filter(conv => conv.id !== 'test');
+          setConversations([testConv, ...otherConvs]);
+        }
+      } else {
+        // If no messages, still show Test conversation
+        const testConversation = {
+          id: 'test',
+          name: 'Test',
+          lastMessage: 'Sounds great!',
+          time: 'now',
+          unread: 0,
+        };
+        setConversations([testConversation]);
       }
     } catch (error) {
       console.error('Error loading messages:', error);
