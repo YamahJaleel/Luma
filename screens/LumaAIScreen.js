@@ -1,18 +1,113 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
+import TypingIndicator from '../components/TypingIndicator';
+import axios from 'axios';
 
 const LumaAIScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef(null);
+
+  const BACKEND_URL = 'https://proxyyyyyyy.onrender.com/chat';
+
+  // Format messages into Gemini-compatible format
+  const formatConversation = (messages) => {
+    return messages.map((msg) => ({
+      role: msg.sender === "user" ? "user" : "model",
+      parts: [{ text: msg.text }],
+    }));
+  };
+
+  // Clean up markdown formatting from AI responses
+  const cleanResponse = (text) => {
+    return text
+      .replace(/\*\*/g, '') // Remove ** bold markers
+      .replace(/\*/g, '') // Remove * italic markers
+      .replace(/#{1,6}\s/g, '') // Remove # headers
+      .replace(/`/g, '') // Remove ` code markers
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert [text](url) to just text
+      .trim();
+  };
+
+  // Send conversation with truncation (to save tokens)
+  const sendConversation = async (messages) => {
+    // Keep only the last 4 messages (2 user + 2 bot)
+    const recentMessages = messages.slice(-4);
+    const contents = formatConversation(recentMessages);
+
+    try {
+      const res = await axios.post(BACKEND_URL, { contents });
+      return cleanResponse(res.data.reply);
+    } catch (err) {
+      console.error("Error:", err.response?.data || err.message);
+      return "Error talking to the bot.";
+    }
+  };
+
+  // Load conversation history from AsyncStorage
+  const loadConversationHistory = async () => {
+    try {
+      const savedMessages = await AsyncStorage.getItem('lumaAI_messages');
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages);
+        setMessages(parsedMessages);
+      } else {
+        // Initialize with welcome message if no history
+        const welcomeMessage = {
+          id: 'welcome-1',
+          text: "Welcome to Luma AI! 🤖✨ I'm here to help you navigate the world of dating, relationships, and personal growth. I'm here to listen and provide thoughtful guidance. What's on your mind today?",
+          sender: 'model',
+          timestamp: new Date().toISOString(),
+        };
+        setMessages([welcomeMessage]);
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+      // Fallback to welcome message
+      const welcomeMessage = {
+        id: 'welcome-1',
+        text: "Welcome to Luma AI! 🤖✨ I'm here to help you navigate the world of dating, relationships, and personal growth. I'm here to listen and provide thoughtful guidance. What's on your mind today?",
+          sender: 'model',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages([welcomeMessage]);
+    }
+  };
+
+  // Save conversation history to AsyncStorage
+  const saveConversationHistory = async (messagesToSave) => {
+    try {
+      await AsyncStorage.setItem('lumaAI_messages', JSON.stringify(messagesToSave));
+    } catch (error) {
+      console.error('Error saving conversation history:', error);
+    }
+  };
+
+  // Clear chat for development
+  const clearChat = async () => {
+    try {
+      await AsyncStorage.removeItem('lumaAI_messages');
+      const welcomeMessage = {
+        id: 'welcome-1',
+        text: "Welcome to Luma AI! 🤖✨ I'm here to help you navigate the world of dating, relationships, and personal growth. I'm here to listen and provide thoughtful guidance. What's on your mind today?",
+          sender: 'model',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages([welcomeMessage]);
+    } catch (error) {
+      console.error('Error clearing chat:', error);
+    }
+  };
 
   // Hide tab bar when screen is focused, show when unfocused
   useFocusEffect(
@@ -22,58 +117,108 @@ const LumaAIScreen = ({ navigation }) => {
     }, [setTabHidden])
   );
 
-  // Initial AI welcome message
+  // Load conversation history on component mount
   useEffect(() => {
-    const welcomeMessage = {
-      id: 'welcome-1',
-      text: "Welcome to Luma AI! 🤖✨ I'm here to help you navigate the world of dating, relationships, and personal growth. Whether you need advice on first dates, relationship communication, red flags to watch out for, or just want to chat about your experiences - I'm here to listen and provide thoughtful guidance. What's on your mind today?",
-      isAI: true,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages([welcomeMessage]);
+    // For development: clear old welcome message and load fresh
+    // Remove this in production
+    AsyncStorage.removeItem('lumaAI_messages').then(() => {
+      loadConversationHistory();
+    });
   }, []);
 
+  // Save conversation history whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveConversationHistory(messages);
+    }
+  }, [messages]);
+
   const sendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isLoading) return;
 
     const userMessage = {
       id: `user-${Date.now()}`,
       text: inputText.trim(),
-      isAI: false,
+      sender: 'user',
       timestamp: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // Add user message immediately
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInputText('');
+    setIsLoading(true);
+    setIsTyping(true);
 
-    // Simulate AI response (you can replace this with actual AI API call)
-    setTimeout(() => {
+    try {
+      // Use the exact sendConversation function from your working code
+      const aiReply = await sendConversation(updatedMessages);
+      
+      // Add AI response
       const aiResponse = {
         id: `ai-${Date.now()}`,
-        text: "Thank you for your question! I'm here to help with dating advice, relationship guidance, and personal growth. How can I assist you today?",
-        isAI: true,
+        text: aiReply,
+        sender: 'model',
         timestamp: new Date().toISOString(),
       };
+
       setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+      
+    } catch (error) {
+      console.error('Error calling AI API:', error);
+      
+      // Add error message
+      const errorResponse = {
+        id: `error-${Date.now()}`,
+        text: "I'm sorry, I'm having trouble connecting right now. Please check your internet connection and try again.",
+        sender: 'model',
+        timestamp: new Date().toISOString(),
+      };
+      
+      setMessages(prev => [...prev, errorResponse]);
+      
+      // Show alert for debugging
+      Alert.alert(
+        'Connection Error',
+        'Failed to connect to Luma AI. Please check your internet connection.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoading(false);
+      setIsTyping(false);
+    }
   };
 
   const renderMessage = ({ item }) => (
     <View style={[
       styles.messageContainer,
-      item.isAI ? styles.aiMessage : styles.userMessage
+      item.sender === 'model' ? styles.aiMessage : styles.userMessage
     ]}>
       <View style={[
         styles.messageBubble,
-        item.isAI ? styles.aiBubble : styles.userBubble,
-        { backgroundColor: item.isAI ? theme.colors.surface : theme.colors.primary }
+        item.sender === 'model' ? styles.aiBubble : styles.userBubble,
+        { backgroundColor: item.sender === 'model' ? theme.colors.surface : theme.colors.primary }
       ]}>
         <Text style={[
           styles.messageText,
-          { color: item.isAI ? theme.colors.text : '#FFFFFF' }
+          { color: item.sender === 'model' ? theme.colors.text : '#FFFFFF' }
         ]}>
           {item.text}
         </Text>
+      </View>
+    </View>
+  );
+
+  const renderTypingIndicator = () => (
+    <View style={[styles.messageContainer, styles.aiMessage]}>
+      <View style={[
+        styles.messageBubble,
+        styles.aiBubble,
+        { backgroundColor: theme.colors.surface }
+      ]}>
+        <View style={styles.typingDotsContainer}>
+          <TypingIndicator />
+        </View>
       </View>
     </View>
   );
@@ -95,7 +240,12 @@ const LumaAIScreen = ({ navigation }) => {
           <AntDesign name="robot" size={24} color={theme.colors.primary} />
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Luma AI</Text>
         </View>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity 
+          style={styles.clearButton}
+          onPress={clearChat}
+        >
+          <Ionicons name="trash-outline" size={24} color="#EF4444" />
+        </TouchableOpacity>
       </View>
 
       {/* Messages */}
@@ -107,6 +257,7 @@ const LumaAIScreen = ({ navigation }) => {
         style={styles.messagesList}
         contentContainerStyle={styles.messagesContent}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        ListFooterComponent={() => isTyping ? renderTypingIndicator() : null}
       />
 
       {/* Input */}
@@ -119,17 +270,28 @@ const LumaAIScreen = ({ navigation }) => {
           onChangeText={setInputText}
           multiline
           maxLength={500}
+          editable={!isLoading}
         />
         <TouchableOpacity 
-          style={[styles.sendButton, { backgroundColor: theme.colors.primary }]}
+          style={[
+            styles.sendButton, 
+            { 
+              backgroundColor: isLoading ? theme.colors.placeholder : theme.colors.primary,
+              opacity: isLoading ? 0.6 : 1
+            }
+          ]}
           onPress={sendMessage}
-          disabled={!inputText.trim()}
+          disabled={!inputText.trim() || isLoading}
         >
-          <Ionicons 
-            name="send" 
-            size={20} 
-            color={inputText.trim() ? '#FFFFFF' : theme.colors.placeholder} 
-          />
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Ionicons 
+              name="send" 
+              size={20} 
+              color={inputText.trim() ? '#FFFFFF' : theme.colors.placeholder} 
+            />
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -165,6 +327,11 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  clearButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
   messagesList: {
     flex: 1,
@@ -223,6 +390,11 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  typingDotsContainer: {
+    paddingVertical: 1,
+    paddingHorizontal: 0,
+    minHeight: 12,
   },
 });
 
