@@ -626,30 +626,13 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         })}
       >
         {/* Profile Image and Basic Info */}
-        <View style={[styles.profileSection, { backgroundColor: theme.colors.surface }]}>
+        <View style={styles.profileSection}>
           <View style={styles.imageContainer}>
             <Image source={{ uri: profile.avatar }} style={styles.profileImage} />
           </View>
 
         </View>
 
-        {/* AI Overview with All Community Signals */}
-        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>What's being said</Text>
-          <Text style={[styles.aiText, theme.dark && { color: theme.colors.text }]}>{overviewText}</Text>
-          
-          {/* All Community Signals */}
-          <View style={styles.trustIndicatorsContainer}>
-            {profile.flags.map((flag, index) => (
-              <View key={index} style={styles.trustIndicatorItem}>
-                <Ionicons name={getFlagIcon(flag)} size={18} color={getFlagColor(flag)} />
-                <Text style={[styles.trustIndicatorText, { color: getFlagColor(flag) }, theme.dark && { color: theme.colors.text }]}>
-                  {flag.replace('_', ' ')}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
 
         {/* Discussion */}
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}> 
@@ -766,15 +749,11 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     marginHorizontal: 20,
     marginBottom: 20,
-    borderRadius: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
   },
-    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4 },
-  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, backgroundColor: '#F0F0F0' },
+    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', backgroundColor: 'transparent' },
+  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, backgroundColor: 'transparent' },
   
   profileName: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
 
@@ -783,12 +762,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     padding: 20,
-    borderRadius: 16,
-    elevation: 2,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   sectionTitle: { fontSize: 19, fontWeight: 'bold', marginBottom: 16 },
   aiText: { fontSize: 14, lineHeight: 22, color: '#4B5563' },
@@ -802,6 +784,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 12,
     marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   commentBody: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -842,19 +828,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
   },
   replyInput: { 
     flex: 1, 
     borderWidth: 1, 
-    borderColor: 'rgba(0,0,0,0.2)', 
+    borderColor: 'rgba(255, 255, 255, 0.4)', 
     borderRadius: 20, 
     paddingHorizontal: 16, 
     paddingVertical: 12, 
     marginRight: 12, 
     fontSize: 16, 
     maxHeight: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   sendBtn: { 
     width: 44, 
@@ -871,17 +859,17 @@ const styles = StyleSheet.create({
   voteButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   voteCount: { fontSize: 12, fontWeight: '600' },
   ownerNoteTab: {
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#3E5F44',
-    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 12,
     padding: 16,
-    elevation: 1,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   actionRow: { 
     flexDirection: 'row', 
@@ -931,14 +919,14 @@ const styles = StyleSheet.create({
     width: 140,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
     zIndex: 1000,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -970,8 +958,16 @@ const styles = StyleSheet.create({
   messageModal: {
     width: '90%',
     maxWidth: 400,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -992,8 +988,9 @@ const styles = StyleSheet.create({
   messageInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginRight: 12,

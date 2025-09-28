@@ -149,6 +149,9 @@ const LumaAIScreen = ({ navigation }) => {
     setInputText('');
     setIsLoading(true);
     setIsTyping(true);
+    
+    // Scroll to bottom after user message
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
     try {
       // Use the exact sendConversation function from your working code
@@ -163,6 +166,9 @@ const LumaAIScreen = ({ navigation }) => {
       };
 
       setMessages(prev => [...prev, aiResponse]);
+      
+      // Scroll to bottom after AI response
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
       
     } catch (error) {
       console.error('Error calling AI API:', error);

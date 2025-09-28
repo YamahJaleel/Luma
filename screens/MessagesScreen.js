@@ -31,19 +31,36 @@ const MessagesScreen = ({ navigation, route }) => {
       if (messagesData) {
         const messages = JSON.parse(messagesData);
         
-        // Group messages by recipient
+        // Group messages by recipient and get the most recent message for each
         const conversationMap = {};
         messages.forEach(message => {
           const recipientKey = message.recipientId || message.recipient;
-          if (!conversationMap[recipientKey]) {
-            conversationMap[recipientKey] = {
-              id: recipientKey,
-              name: message.recipient?.replace(/^u\//i, '') || 'Unknown User',
-              lastMessage: message.text,
-              time: 'now',
-              unread: 0,
-            };
+          
+          // Format timestamp to show real time
+          let time = 'Now';
+          try {
+            if (message.timestamp) {
+              const date = new Date(message.timestamp);
+              if (!isNaN(date.getTime())) {
+                time = date.toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: true 
+                });
+              }
+            }
+          } catch (error) {
+            console.log('Error parsing timestamp:', error);
           }
+          
+          // Always update with the most recent message (last one wins)
+          conversationMap[recipientKey] = {
+            id: recipientKey,
+            name: message.recipient?.replace(/^u\//i, '') || 'Unknown User',
+            lastMessage: message.text,
+            time: time,
+            unread: 0,
+          };
         });
         
         // Convert to array and set as conversations (replace instead of merge)
@@ -56,7 +73,11 @@ const MessagesScreen = ({ navigation, route }) => {
             id: 'test',
             name: 'Test',
             lastMessage: 'Sounds great!',
-            time: 'now',
+            time: new Date().toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: true 
+            }),
             unread: 0,
           };
           setConversations([testConversation, ...messageConversations]);
@@ -137,7 +158,11 @@ const MessagesScreen = ({ navigation, route }) => {
       id: `new-${Date.now()}`,
       name: user.name,
       lastMessage: 'Start a conversation...',
-      time: 'now',
+      time: new Date().toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      }),
       unread: 0,
     };
     

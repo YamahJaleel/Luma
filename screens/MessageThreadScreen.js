@@ -103,6 +103,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
         recipientId: conversation?.id || conversation?.name,
         recipient: conversation?.name,
         sender: 'Test User',
+        timestamp: now.toISOString(),
       });
       await AsyncStorage.setItem('messages', JSON.stringify(messages));
     } catch (error) {
@@ -183,7 +184,11 @@ const MessageThreadScreen = ({ route, navigation }) => {
     if (!text) return;
     
     const now = new Date();
-    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
     const newMessage = { id: `${Date.now()}`, from: 'me', text, time };
     
     // Add to local state immediately for UI responsiveness
