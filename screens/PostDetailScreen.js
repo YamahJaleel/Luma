@@ -681,29 +681,27 @@ const PostDetailScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
 
-      <View style={[styles.replyBarWrap, { backgroundColor: theme.colors.surface, borderTopColor: '#E5E7EB' }]}> 
-        {replyTarget && (
-          <View style={styles.replyingTo}>
-            <Text style={[styles.replyingText, { color: theme.colors.text }]}>Replying to {replyTarget.author}</Text>
-            <TouchableOpacity onPress={() => setReplyTarget(null)}>
-              <Ionicons name="close" size={16} color={theme.colors.placeholder} />
-            </TouchableOpacity>
-          </View>
-        )}
-        <View style={styles.replyRow}>
-          <TextInput
-            style={[styles.replyInput, { color: theme.colors.text }]}
-            placeholder={replyTarget ? 'Write a reply...' : 'Write a comment...'}
-            placeholderTextColor={theme.colors.placeholder}
-            value={replyText}
-            onChangeText={setReplyText}
-            multiline
-            maxLength={500}
-          />
-          <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSend}>
-            <Ionicons name="send" size={20} color="#FFFFFF" />
+      {replyTarget && (
+        <View style={[styles.replyingTo, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.replyingText, { color: theme.colors.text }]}>Replying to {replyTarget.author}</Text>
+          <TouchableOpacity onPress={() => setReplyTarget(null)}>
+            <Ionicons name="close" size={16} color={theme.colors.placeholder} />
           </TouchableOpacity>
         </View>
+      )}
+      <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
+        <TextInput
+          style={[styles.input, { color: theme.colors.text }]}
+          placeholder={replyTarget ? 'Write a reply...' : 'Write a comment...'}
+          placeholderTextColor={theme.colors.placeholder}
+          value={replyText}
+          onChangeText={setReplyText}
+          multiline
+          maxLength={500}
+        />
+        <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSend}>
+          <Ionicons name="send" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
       <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
       
@@ -861,21 +859,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   replyText: { fontSize: 13, fontWeight: '600' },
-  replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
-  replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  replyingText: { fontSize: 13, fontWeight: '600' },
-  replyRow: { 
+  inputBar: { 
     flexDirection: 'row', 
     alignItems: 'flex-end', 
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 4,
-    borderTopWidth: 0.25,
+    paddingBottom: 16,
+    borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.1)',
   },
-  replyInput: { 
+  replyingTo: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  replyingText: { fontSize: 13, fontWeight: '600' },
+  input: { 
     flex: 1, 
-    borderWidth: 0.25, 
+    borderWidth: 1, 
     borderColor: 'rgba(0,0,0,0.2)', 
     borderRadius: 20, 
     paddingHorizontal: 16, 

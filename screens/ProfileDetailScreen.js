@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LottieView from 'lottie-react-native';
 
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
@@ -274,6 +275,16 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [messageRecipient, setMessageRecipient] = useState(null);
+  
+  // Flag state
+  const [greenFlagCount, setGreenFlagCount] = useState(0);
+  const [redFlagCount, setRedFlagCount] = useState(0);
+  const [userGreenFlag, setUserGreenFlag] = useState(false);
+  const [userRedFlag, setUserRedFlag] = useState(false);
+  
+  // Lottie animation refs
+  const thumbUpAnimationRef = useRef(null);
+  const thumbDownAnimationRef = useRef(null);
   // Count total nested replies for a node
   const countReplies = (node) => {
     if (!node?.replies || node.replies.length === 0) return 0;
@@ -447,6 +458,44 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
   const handleCancelSelection = () => {
     setSelectedComment(null);
+  };
+
+  const handleGreenFlag = () => {
+    if (userGreenFlag) {
+      // Remove green flag
+      setUserGreenFlag(false);
+      setGreenFlagCount(prev => Math.max(0, prev - 1));
+    } else {
+      // Add green flag
+      setUserGreenFlag(true);
+      setGreenFlagCount(prev => prev + 1);
+      // Play thumb up animation
+      thumbUpAnimationRef.current?.play();
+      // Remove red flag if it was set
+      if (userRedFlag) {
+        setUserRedFlag(false);
+        setRedFlagCount(prev => Math.max(0, prev - 1));
+      }
+    }
+  };
+
+  const handleRedFlag = () => {
+    if (userRedFlag) {
+      // Remove red flag
+      setUserRedFlag(false);
+      setRedFlagCount(prev => Math.max(0, prev - 1));
+    } else {
+      // Add red flag
+      setUserRedFlag(true);
+      setRedFlagCount(prev => prev + 1);
+      // Play thumb down animation
+      thumbDownAnimationRef.current?.play();
+      // Remove green flag if it was set
+      if (userGreenFlag) {
+        setUserGreenFlag(false);
+        setGreenFlagCount(prev => Math.max(0, prev - 1));
+      }
+    }
   };
 
   const toggleDropdown = (commentId) => {
@@ -630,7 +679,66 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           <View style={styles.imageContainer}>
             <Image source={{ uri: profile.avatar }} style={styles.profileImage} />
           </View>
-
+        </View>
+        
+        {/* What People Are Saying and Flag Buttons */}
+        <View style={styles.feedbackContainer}>
+          <View style={[styles.whatPeopleSayingBox, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
+            <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>
+              Press to see
+            </Text>
+          </View>
+          
+          <View style={styles.flagButtonsContainerRight}>
+            <View style={styles.flagButtonWrapper}>
+              <TouchableOpacity 
+                style={[
+                  styles.flagButton, 
+                  styles.greenFlagButton
+                ]} 
+                onPress={handleGreenFlag}
+              >
+                <LottieView
+                  ref={thumbUpAnimationRef}
+                  source={require('../assets/animations/Thumb.json')}
+                  autoPlay={false}
+                  loop={false}
+                  style={styles.lottieAnimation}
+                />
+              </TouchableOpacity>
+              <Text style={[
+                styles.flagCountText,
+                { color: theme.colors.primary }
+              ]}>
+                {greenFlagCount}
+              </Text>
+            </View>
+            
+            <View style={[styles.flagButtonWrapper, { marginLeft: -15 }]}>
+              <TouchableOpacity 
+                style={[
+                  styles.flagButton, 
+                  styles.redFlagButton
+                ]} 
+                onPress={handleRedFlag}
+              >
+                <LottieView
+                  ref={thumbDownAnimationRef}
+                  source={require('../assets/animations/Thumb.json')}
+                  autoPlay={false}
+                  loop={false}
+                  style={[styles.lottieAnimation, { transform: [{ scaleX: -1 }, { scaleY: -1 }] }]}
+                />
+              </TouchableOpacity>
+              <Text style={[
+                styles.flagCountText,
+                { color: userRedFlag ? '#F44336' : '#F44336' }
+              ]}>
+                {redFlagCount}
+              </Text>
+            </View>
+          </View>
         </View>
 
 
@@ -647,7 +755,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
 
-      <View style={[styles.replyBarWrap, { backgroundColor: theme.colors.surface, borderTopColor: '#E5E7EB' }]}> 
+      <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
         {replyTarget && (
           <View style={styles.replyingTo}>
             <Text style={[styles.replyingText, { color: theme.colors.text }]}>Replying to {replyTarget.author}</Text>
@@ -656,20 +764,18 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             </TouchableOpacity>
           </View>
         )}
-        <View style={styles.replyRow}>
-          <TextInput
-            style={[styles.replyInput, { color: theme.colors.text }]}
-            placeholder={replyTarget ? 'Write a reply...' : 'Share your experience'}
-            placeholderTextColor={theme.colors.placeholder}
-            value={replyText}
-            onChangeText={setReplyText}
-            multiline
-            maxLength={500}
-          />
-          <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSend}>
-            <Ionicons name="send" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
+        <TextInput
+          style={[styles.input, { color: theme.colors.text }]}
+          placeholder={replyTarget ? 'Write a reply...' : 'Share your experience'}
+          placeholderTextColor={theme.colors.placeholder}
+          value={replyText}
+          onChangeText={setReplyText}
+          multiline
+          maxLength={500}
+        />
+        <TouchableOpacity style={[styles.sendBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSend}>
+          <Ionicons name="send" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
       <View style={{ height: 12, backgroundColor: theme.colors.surface }} />
 
@@ -745,15 +851,15 @@ const styles = StyleSheet.create({
   profileSection: {
     alignItems: 'center',
     paddingTop: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingBottom: 10,
     marginHorizontal: 20,
     marginBottom: 20,
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
-    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', backgroundColor: 'transparent' },
-  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, backgroundColor: 'transparent' },
+    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', backgroundColor: 'rgba(255, 255, 255, 0.75)', padding: 8 },
+  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, backgroundColor: 'white' },
   
   profileName: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
 
@@ -819,30 +925,27 @@ const styles = StyleSheet.create({
   votingButtons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 
   commentSeparator: { height: 10 },
-  replyBarWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
-  replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  replyingText: { fontSize: 13, fontWeight: '600' },
-  replyRow: { 
+  inputBar: { 
     flexDirection: 'row', 
     alignItems: 'flex-end', 
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    paddingBottom: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    borderTopColor: 'rgba(0,0,0,0.1)',
   },
-  replyInput: { 
+  replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  replyingText: { fontSize: 13, fontWeight: '600' },
+  input: { 
     flex: 1, 
     borderWidth: 1, 
-    borderColor: 'rgba(255, 255, 255, 0.4)', 
+    borderColor: 'rgba(0,0,0,0.2)', 
     borderRadius: 20, 
     paddingHorizontal: 16, 
     paddingVertical: 12, 
     marginRight: 12, 
     fontSize: 16, 
     maxHeight: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   sendBtn: { 
     width: 44, 
@@ -1017,6 +1120,92 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  flagButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 24,
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  feedbackContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: -15,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  whatPeopleSayingBox: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  whatPeopleSayingTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  whatPeopleSayingText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  flagButtonsContainerRight: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: -5,
+  },
+  flagButtonWrapper: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  flagButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    width: 70,
+    height: 70,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  greenFlagButton: {
+    borderColor: 'transparent',
+    backgroundColor: 'transparent',
+  },
+  redFlagButton: {
+    borderColor: 'transparent',
+    backgroundColor: 'transparent',
+  },
+  flagButtonActive: {
+    // This will be overridden by specific button styles
+  },
+  flagButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  flagCountText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  lottieAnimation: {
+    width: 70,
+    height: 70,
   },
 });
 
