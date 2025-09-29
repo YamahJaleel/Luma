@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Card, List, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { useTabContext } from '../components/TabContext';
 
 const UserScreen = ({ navigation }) => {
@@ -54,27 +55,6 @@ const UserScreen = ({ navigation }) => {
 
       {/* Verification removed: already performed during sign-up */}
 
-            {/* User Statistics */}
-      <Card style={[styles.userStatsCard, { backgroundColor: theme.colors.surface }]}>
-        <Card.Content>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>My Activity</Text>
-          <View style={styles.userStats}>
-            <View style={styles.userStat}>
-              <Text style={[styles.userStatNumber, { color: theme.dark ? theme.colors.text : theme.colors.primary }]}>12</Text>
-              <Text style={[styles.userStatLabel, theme.dark && { color: theme.colors.text }]}>Posts</Text>
-            </View>
-            <View style={styles.userStat}>
-              <Text style={[styles.userStatNumber, { color: theme.dark ? theme.colors.text : theme.colors.primary }]}>45</Text>
-              <Text style={[styles.userStatLabel, theme.dark && { color: theme.colors.text }]}>Liked</Text>
-            </View>
-            <View style={styles.userStat}>
-              <Text style={[styles.userStatNumber, { color: theme.dark ? theme.colors.text : theme.colors.primary }]}>8</Text>
-              <Text style={[styles.userStatLabel, theme.dark && { color: theme.colors.text }]}>Comments</Text>
-            </View>
-          </View>
-        </Card.Content>
-      </Card>
-
       {/* Activity link (hidden, merged into Quick Links) */}
       {false && (
         <Card style={[styles.menuCard, { backgroundColor: theme.colors.surface }]}> 
@@ -96,6 +76,7 @@ const UserScreen = ({ navigation }) => {
       {/* Quick Links */}
       <Card style={[styles.menuCard, { backgroundColor: theme.colors.surface }]}>
         <Card.Content style={styles.menuContent}>
+          <Text style={[styles.menuSectionTitle, { color: theme.colors.text }]}>My Activity</Text>
           <List.Item
             title="Created Posts"
             description="See posts you've created"
@@ -115,6 +96,20 @@ const UserScreen = ({ navigation }) => {
             descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
             style={styles.menuItem}
             onPress={() => navigation.navigate('LikedPosts')}
+          />
+          <List.Item
+            title="My Comments"
+            description="See your comments in community posts"
+            left={(props) => (
+              <View style={props.style}>
+                <AntDesign name="comment" size={24} color={theme.colors.primary} />
+              </View>
+            )}
+            right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
+            titleStyle={{ color: theme.colors.text }}
+            descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('UserComments')}
           />
           <List.Item
             title="About Luma"
@@ -191,6 +186,7 @@ const styles = StyleSheet.create({
   menuContent: { padding: 0 },
   menuItem: { paddingVertical: 8 },
   menuItemDescription: { fontSize: 14 },
+  menuSectionTitle: { fontSize: 18, fontWeight: 'bold', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   settingsButton: {
     width: 48,
     height: 48,

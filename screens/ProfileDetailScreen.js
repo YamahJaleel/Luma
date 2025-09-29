@@ -608,8 +608,8 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       <View
         style={[
           styles.commentRow,
-          { backgroundColor: theme.colors.surface, marginLeft: depth * 16 },
-          isOwnerNote && styles.ownerNoteTab,
+          styles.ownerNoteTab,
+          { marginLeft: depth * 16 },
         ]}
       >
         <View style={styles.commentBody}>
@@ -1019,7 +1019,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 12,
     marginBottom: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',

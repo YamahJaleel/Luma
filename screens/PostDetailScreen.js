@@ -114,6 +114,24 @@ const deleteCommentById = (nodes, targetId) => {
   return out;
 };
 
+// Persist post-specific comments
+const COMMENTS_KEY_PREFIX = 'postComments:';
+const loadSavedComments = async (postId) => {
+  try {
+    const raw = await AsyncStorage.getItem(`${COMMENTS_KEY_PREFIX}${postId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+};
+const saveCommentsForPost = async (postId, list) => {
+  try {
+    await AsyncStorage.setItem(`${COMMENTS_KEY_PREFIX}${postId}`, JSON.stringify(list));
+  } catch (e) {
+    // ignore
+  }
+};
+
 const PostDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { post, comments: passedComments } = route.params || {};
@@ -187,6 +205,16 @@ const PostDetailScreen = ({ route, navigation }) => {
     loadCommentVotes();
   }, []);
 
+  // Load saved comments for the post on mount
+  React.useEffect(() => {
+    (async () => {
+      const saved = await loadSavedComments(post?.id);
+      if (Array.isArray(saved)) {
+        setComments(saved);
+      }
+    })();
+  }, [post?.id]);
+
   // Save comment votes to AsyncStorage
   const saveCommentVotes = async (upvoted, downvoted, voteCounts) => {
     try {
@@ -247,8 +275,24 @@ const PostDetailScreen = ({ route, navigation }) => {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          setComments((prev) => deleteCommentById(prev, commentId));
+          const nextComments = deleteCommentById(comments, commentId);
+          setComments(nextComments);
           setDropdownVisible(null);
+          // Persist updated post comments
+          (async () => {
+            await saveCommentsForPost(post?.id, nextComments);
+          })();
+          // Remove from stored 'userCommunityComments' if it exists
+          (async () => {
+            try {
+              const raw = await AsyncStorage.getItem('userCommunityComments');
+              const list = raw ? JSON.parse(raw) : [];
+              const filtered = list.filter((c) => String(c.id) !== String(commentId));
+              await AsyncStorage.setItem('userCommunityComments', JSON.stringify(filtered));
+            } catch (e) {
+              // ignore
+            }
+          })();
         },
       },
     ]);
@@ -274,7 +318,7 @@ const PostDetailScreen = ({ route, navigation }) => {
   };
   const flatComments = useMemo(() => flattenVisible(comments), [comments, expandedThreads]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = replyText.trim();
     if (!text) return;
     const newItem = {
@@ -285,6 +329,32 @@ const PostDetailScreen = ({ route, navigation }) => {
       timestamp: 'now',
       replies: [],
     };
+
+    // Save user's comment to AsyncStorage for My Comments screen (community posts only)
+    const persistUserComment = async () => {
+      try {
+        const raw = await AsyncStorage.getItem('userCommunityComments');
+        const list = raw ? JSON.parse(raw) : [];
+        const entry = {
+          id: newItem.id,
+          text: newItem.text,
+          timestamp: newItem.timestamp,
+          post: {
+            id: post?.id,
+            title: post?.title,
+            text: post?.text,
+            community: post?.community,
+            comments: post?.comments,
+          },
+          passedComments: comments,
+        };
+        list.unshift(entry);
+        await AsyncStorage.setItem('userCommunityComments', JSON.stringify(list));
+      } catch (e) {
+        // ignore
+      }
+    };
+
     if (replyTarget && replyTarget.id) {
       // Auto-expand the top-level thread that contains the target
       const findRootId = (nodes, targetId) => {
@@ -305,9 +375,15 @@ const PostDetailScreen = ({ route, navigation }) => {
         next.add(rootId);
         return next;
       });
-      setComments((prev) => addReplyById(prev, replyTarget.id, newItem));
+      const nextComments = addReplyById(comments, replyTarget.id, newItem);
+      setComments(nextComments);
+      await saveCommentsForPost(post?.id, nextComments);
+      await persistUserComment();
     } else {
-      setComments((prev) => [...prev, newItem]);
+      const nextComments = [...comments, newItem];
+      setComments(nextComments);
+      await saveCommentsForPost(post?.id, nextComments);
+      await persistUserComment();
     }
     setReplyText('');
     setReplyTarget(null);

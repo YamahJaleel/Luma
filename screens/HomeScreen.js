@@ -101,6 +101,16 @@ const MOCK_POSTS = [
   },
 ];
 
+// Category icon/color metas for nicer chips
+const CATEGORY_META = {
+  'all': { icon: 'grid', color: '#0D9488' },
+  'dating-advice': { icon: 'heart', color: '#EC4899' },
+  'red-flags': { icon: 'warning', color: '#EF4444' },
+  'success-stories': { icon: 'checkmark-circle', color: '#10B981' },
+  'safety-tips': { icon: 'shield-checkmark', color: '#3B82F6' },
+  'vent-space': { icon: 'chatbubble', color: '#8B5CF6' },
+};
+
 // CategoryPicker (inline, mimics clone props)
 const CategoryPicker = ({ selectedCategory, onClick, addAll = true }) => {
   const theme = useTheme();
@@ -109,13 +119,22 @@ const CategoryPicker = ({ selectedCategory, onClick, addAll = true }) => {
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catList}>
       {items.map((c) => {
         const isActive = (selectedCategory || 'all') === c.id;
+        const meta = CATEGORY_META[c.id] || CATEGORY_META['all'];
+        const bgColor = isActive ? theme.colors.primary : `${meta.color}25`;
+        const borderColor = isActive ? theme.colors.primary : `${meta.color}40`;
+        const iconColor = isActive ? '#FFFFFF' : meta.color;
+        const textColor = isActive ? '#FFFFFF' : theme.colors.text;
         return (
           <TouchableOpacity
             key={c.id}
-            style={[styles.catChip, { borderColor: theme.colors.outline }, isActive && { backgroundColor: theme.colors.primary }]}
+            style={[styles.catChip, { backgroundColor: bgColor, borderColor }, isActive && styles.catChipActive]}
             onPress={() => onClick(c.id)}
+            activeOpacity={0.9}
           >
-            <Text style={[styles.catChipText, { color: isActive ? '#FFFFFF' : theme.colors.text }]}>{c.label}</Text>
+            <View style={styles.catChipContent}>
+              <Ionicons name={meta.icon} size={14} color={iconColor} style={styles.catChipIcon} />
+              <Text style={[styles.catChipText, { color: textColor }]}>{c.label}</Text>
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -424,17 +443,11 @@ const HomeScreen = () => {
     }, [getPostData])
   );
 
+  const canCreate = category !== 'all';
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
-      <View style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <View style={styles.headerRow}>
-            <Image source={require('../assets/AppIcon.png')} style={styles.headerLogo} />
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Luma</Text>
-            </View>
-        </View>
-      </View>
       {postData ? (
         <FlatList
           data={filterPosts(sortPosts(postData))}
@@ -456,6 +469,14 @@ const HomeScreen = () => {
           scrollEventThrottle={16}
           ListHeaderComponent={
             <View>
+              <View style={styles.header}>
+                <View style={styles.headerTopRow}>
+                  <View style={styles.headerRow}>
+                    <Image source={require('../assets/AppIcon.png')} style={styles.headerLogo} />
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Luma</Text>
+                  </View>
+                </View>
+              </View>
               <CategoryPicker selectedCategory={category} onClick={setCategory} addAll />
               <View style={styles.actionsUnderCats}>
                 <View style={[styles.searchPill, { backgroundColor: colors.surface }]}>
@@ -477,10 +498,11 @@ const HomeScreen = () => {
             <Ionicons name="filter" size={18} color="#3E5F44" />
           </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.iconSquare, { backgroundColor: colors.surface }]}
-                  onPress={() => navigation.navigate('CreatePost', { communityId: category === 'all' ? 'dating-advice' : category })}
+                  style={[styles.iconSquare, { backgroundColor: colors.surface, opacity: canCreate ? 1 : 0.5 }]}
+                  onPress={canCreate ? () => navigation.navigate('CreatePost', { communityId: category }) : undefined}
+                  disabled={!canCreate}
                 >
-            <Ionicons name="add" size={18} color="#3E5F44" />
+            <Ionicons name="add" size={18} color={canCreate ? '#3E5F44' : colors.placeholder} />
           </TouchableOpacity>
         </View>
             </View>
@@ -584,7 +606,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingTop: 4,
-    paddingBottom: 8,
+    paddingBottom: 0,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -599,27 +621,27 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#2D3748' },
   categoryPicker: {
     padding: 5,
-    marginVertical: 7,
+    marginTop: 0,
+    marginBottom: 4,
     elevation: 3,
   },
-  catList: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 8,
-    backgroundColor: 'transparent',
-  },
+  catList: { paddingHorizontal: 10, paddingVertical: 6, gap: 8, backgroundColor: 'transparent' },
   catChip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    backgroundColor: 'transparent',
   },
-  catChipText: {
-    fontWeight: '700',
-    fontSize: 13,
-    textTransform: 'capitalize',
+  catChipActive: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
   },
+  catChipContent: { flexDirection: 'row', alignItems: 'center' },
+  catChipIcon: { marginRight: 6 },
+  catChipText: { fontWeight: '700', fontSize: 13, textTransform: 'capitalize' },
   empty: {
     fontWeight: 'bold',
     textAlign: 'center',
@@ -676,7 +698,8 @@ const styles = StyleSheet.create({
   actionsUnderCats: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginTop: 4,
+    marginBottom: 4,
     paddingHorizontal: 16,
   },
   iconSquare: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E5E7EB', marginLeft: 8 },
