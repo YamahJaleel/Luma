@@ -4,7 +4,7 @@ import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
-import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useSharedValue, withSpring, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
@@ -111,6 +111,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     const cauPart = cautions.length ? ` Cautionary signals: ${cautions.map((f) => f.replace('_',' ')).join(', ')}.` : '';
     return `Overview: ${risk} overall. ${posPart}${cauPart}`.trim();
   })();
+
+  const expandedAiText = useMemo(() => {
+    return (
+      `Simulated AI overview for ${profile?.name} (demo)\n\n` +
+      overviewText +
+      `\n\nThis is placeholder content to show how an AI summary could appear when expanded.`
+    );
+  }, [profile?.name, overviewText]);
 
   // Threaded comments (profile discussion)
   const makeMockComments = () => {
@@ -263,6 +271,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   };
 
   const [comments, setComments] = useState(makeMockComments());
+  const originalPosterName = useMemo(() => {
+    try {
+      const owner = comments?.find?.((n) => n?.id === 'owner-note');
+      return owner?.author || null;
+    } catch {
+      return null;
+    }
+  }, [comments]);
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for profile-level comment
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // top-level ids expanded
@@ -294,6 +310,8 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const aiBoxX = useSharedValue(0);
   const aiBoxY = useSharedValue(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const smallAICardRef = useRef(null);
+  const [inlineAICardLayout, setInlineAICardLayout] = useState(null);
   // Count total nested replies for a node
   const countReplies = (node) => {
     if (!node?.replies || node.replies.length === 0) return 0;
@@ -471,24 +489,44 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
   const handleAIBoxPress = () => {
     if (!isExpanded) {
-      // Expand to profile picture size (square)
-      const profilePictureSize = screenWidth - 40; // Same width as profile picture container
-      const centerX = (screenWidth - profilePictureSize) / 2;
-      // Position above comments container (around 60% down the screen)
-      const centerY = screenHeight * 0.6 - profilePictureSize / 2;
-      
-      aiBoxWidth.value = withSpring(profilePictureSize);
-      aiBoxHeight.value = withSpring(profilePictureSize);
-      aiBoxX.value = withSpring(centerX);
-      aiBoxY.value = withSpring(centerY);
-      setIsExpanded(true);
+      // Measure inline card to animate from its exact position
+      smallAICardRef.current?.measure?.((x, y, width, height, pageX, pageY) => {
+        setInlineAICardLayout({ x: pageX, y: pageY, width, height });
+
+        // Set starting values to match the inline card for a seamless start
+        aiBoxWidth.value = width || 200;
+        aiBoxHeight.value = height || 80;
+        aiBoxX.value = pageX || 0;
+        aiBoxY.value = pageY || 0;
+
+        // Show overlay at the measured position first
+        runOnJS(setIsExpanded)(true);
+
+        // Then animate smoothly to the centered square
+        const profilePictureSize = screenWidth - 40;
+        const targetX = (screenWidth - profilePictureSize) / 2;
+        const targetY = screenHeight * 0.6 - profilePictureSize / 2;
+
+        aiBoxWidth.value = withTiming(profilePictureSize, { duration: 260, easing: Easing.inOut(Easing.cubic) });
+        aiBoxHeight.value = withTiming(profilePictureSize, { duration: 260, easing: Easing.inOut(Easing.cubic) });
+        aiBoxX.value = withTiming(targetX, { duration: 260, easing: Easing.inOut(Easing.cubic) });
+        aiBoxY.value = withTiming(targetY, { duration: 260, easing: Easing.inOut(Easing.cubic) });
+      });
     } else {
-      // Return to original size and position
-      aiBoxWidth.value = withSpring(200);
-      aiBoxHeight.value = withSpring(80);
-      aiBoxX.value = withSpring(0);
-      aiBoxY.value = withSpring(0);
-      setIsExpanded(false);
+      // Animate back smoothly to the inline card's position
+      const toX = inlineAICardLayout ? inlineAICardLayout.x : 0;
+      const toY = inlineAICardLayout ? inlineAICardLayout.y : 0;
+      const toW = inlineAICardLayout ? inlineAICardLayout.width : 200;
+      const toH = inlineAICardLayout ? inlineAICardLayout.height : 80;
+
+      aiBoxWidth.value = withTiming(toW, { duration: 260, easing: Easing.inOut(Easing.cubic) });
+      aiBoxHeight.value = withTiming(toH, { duration: 260, easing: Easing.inOut(Easing.cubic) });
+      aiBoxX.value = withTiming(toX, { duration: 260, easing: Easing.inOut(Easing.cubic) });
+      aiBoxY.value = withTiming(toY, { duration: 260, easing: Easing.inOut(Easing.cubic) }, (finished) => {
+        if (finished) {
+          runOnJS(setIsExpanded)(false);
+        }
+      });
     }
   };
 
@@ -582,9 +620,16 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                   {(c.author || 'U').replace(/^u\//i, '').charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
-                {c.author}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
+                  {c.author}
+                </Text>
+                {originalPosterName && c.author === originalPosterName && (
+                  <View style={styles.opBadge}>
+                    <Text style={styles.opBadgeText}>OP</Text>
+                  </View>
+                )}
+              </View>
             </View>
             <Text style={[styles.commentTime, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{c.timestamp}</Text>
           </View>
@@ -728,6 +773,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                     width: '100%'
                   }
                 ]}
+                ref={smallAICardRef}
+                onLayout={() => {
+                  try {
+                    smallAICardRef.current?.measure?.((x, y, width, height, pageX, pageY) => {
+                      setInlineAICardLayout({ x: pageX, y: pageY, width, height });
+                    });
+                  } catch {}
+                }}
               >
                 <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
                 <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>
@@ -823,7 +876,9 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleAIBoxPress}>
             <View style={[styles.expandedAIContent, { backgroundColor: theme.colors.surface }] }>
               <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
-              <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Press to see</Text>
+              <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>
+                {expandedAiText}
+              </Text>
             </View>
           </TouchableOpacity>
         </Animated.View>
@@ -972,6 +1027,16 @@ const styles = StyleSheet.create({
   commentBody: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   commentAuthor: { fontSize: 15, fontWeight: 'bold' },
+  opBadge: {
+    marginLeft: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+  },
+  opBadgeText: { fontSize: 10, fontWeight: '800', color: '#065F46' },
   commentTime: { fontSize: 13 },
   authorRow: {
     flexDirection: 'row',
