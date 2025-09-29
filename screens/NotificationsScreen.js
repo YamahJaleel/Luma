@@ -101,46 +101,21 @@ const NotificationsScreen = ({ navigation }) => {
       const savedNotifications = await AsyncStorage.getItem('notifications');
       if (savedNotifications) {
         const parsed = JSON.parse(savedNotifications);
-        setNotifications(parsed);
+        // Filter out legacy welcome/system notifications
+        const filtered = parsed.filter(n => !(n?.type === 'system' && (n?.title === 'Welcome to Luma!' || n?.communityId === 'system' || n?.community === 'Welcome')));
+        setNotifications(filtered);
+        if (filtered.length !== parsed.length) {
+          await AsyncStorage.setItem('notifications', JSON.stringify(filtered));
+        }
       } else {
-        // Set default notifications if none saved
-        const defaultNotifications = [
-          {
-            id: 1,
-            type: 'system',
-            title: 'Welcome to Luma!',
-            message: 'Welcome to our safety-first platform!',
-            timestamp: '1 day ago',
-            isRead: false,
-            community: 'Welcome',
-            communityId: 'system',
-            postId: null,
-            icon: 'checkmark-circle',
-            color: '#3E5F44',
-          },
-        ];
-        setNotifications(defaultNotifications);
-        await AsyncStorage.setItem('notifications', JSON.stringify(defaultNotifications));
+        // No defaults anymore; start empty
+        setNotifications([]);
+        await AsyncStorage.setItem('notifications', JSON.stringify([]));
       }
     } catch (error) {
       console.log('Error loading notifications:', error);
-      // Fallback to default notifications
-      const defaultNotifications = [
-        {
-          id: 1,
-          type: 'system',
-          title: 'Welcome to Luma!',
-          message: 'Welcome to our safety-first platform!',
-          timestamp: '1 day ago',
-          isRead: false,
-          community: 'Welcome',
-          communityId: 'system',
-          postId: null,
-          icon: 'checkmark-circle',
-          color: '#3E5F44',
-        },
-      ];
-      setNotifications(defaultNotifications);
+      // Fallback to empty list
+      setNotifications([]);
     }
   };
 
@@ -169,7 +144,7 @@ const NotificationsScreen = ({ navigation }) => {
     });
   };
 
-  const handleNotificationPress = (notification) => {
+  const handleNotificationPress = async (notification) => {
     // Mark as read first
     markAsRead(notification.id);
     
@@ -183,12 +158,21 @@ const NotificationsScreen = ({ navigation }) => {
     }
     
     // Navigate to post if available
-    if (notification.postId && mockPosts[notification.postId]) {
-      const post = mockPosts[notification.postId];
-      navigation.navigate('PostDetail', { 
-        post,
-        comments: [], // Mock comments would go here
-      });
+    if (notification.postId) {
+      let post = mockPosts[notification.postId];
+      if (!post) {
+        try {
+          const createdPostsRaw = await AsyncStorage.getItem('createdPosts');
+          const createdPosts = createdPostsRaw ? JSON.parse(createdPostsRaw) : [];
+          post = createdPosts.find(p => p.id === notification.postId);
+        } catch {}
+      }
+      if (post) {
+        navigation.navigate('PostDetail', { 
+          post,
+          comments: [],
+        });
+      }
     }
   };
 
@@ -346,18 +330,17 @@ const NotificationsScreen = ({ navigation }) => {
           </View>
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
-              style={[styles.testButton, { backgroundColor: theme.colors.primary }]}
-              onPress={simulateNewPost}
+              style={[styles.iconSquare, { backgroundColor: theme.colors.surface }]}
+              onPress={async () => {
+                try {
+                  await AsyncStorage.removeItem('notifications');
+                  setNotifications([]);
+                } catch (e) {
+                  console.log('Error clearing notifications', e);
+                }
+              }}
             >
-              <Ionicons name="add" size={20} color="white" />
-              <Text style={styles.testButtonText}>Test</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.resetButton, { backgroundColor: theme.colors.error }]}
-              onPress={resetNotifications}
-            >
-              <Ionicons name="refresh" size={20} color="white" />
-              <Text style={styles.resetButtonText}>Reset</Text>
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
             </TouchableOpacity>
           </View>
         </View>
@@ -407,32 +390,7 @@ const styles = StyleSheet.create({
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerText: { flexDirection: 'row', alignItems: 'center' },
   buttonContainer: { flexDirection: 'row', gap: 8 },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 4,
-  },
-  resetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 4,
-  },
-  testButtonText: {
-    color: 'white',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  resetButtonText: {
-    color: 'white',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  iconSquare: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 26, fontWeight: 'bold' },
   badge: {
     backgroundColor: '#EF4444',

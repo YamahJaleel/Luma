@@ -162,7 +162,7 @@ const HomeScreen = () => {
   const { dark, colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
-  const { setTabHidden } = useTabContext();
+  const { setTabHidden, setHasUnreadNotifications } = useTabContext();
   const scrollYRef = React.useRef(0);
 
   const [postData, setPostData] = React.useState(null);
@@ -195,6 +195,32 @@ const HomeScreen = () => {
             // Add new post to the beginning of createdPosts array
             const updatedPosts = [newPost, ...createdPosts];
             await AsyncStorage.setItem('createdPosts', JSON.stringify(updatedPosts));
+          }
+
+          // Create an in-app notification for the new post
+          try {
+            const notificationsRaw = await AsyncStorage.getItem('notifications');
+            const notifications = notificationsRaw ? JSON.parse(notificationsRaw) : [];
+            const categoryLabel = (CATEGORIES.find(c => c.id === (newPost.category || ''))?.label) || 'Community';
+            const newNotification = {
+              id: Date.now(),
+              type: 'community',
+              title: `New post in ${categoryLabel}`,
+              message: newPost.title,
+              timestamp: 'Just now',
+              isRead: false,
+              community: categoryLabel,
+              communityId: newPost.category,
+              postId: newPost.id,
+              icon: 'people',
+              color: '#6B7280',
+            };
+            const updatedNotifications = [newNotification, ...notifications];
+            await AsyncStorage.setItem('notifications', JSON.stringify(updatedNotifications));
+            // Mark app tab as having unread notifications
+            setHasUnreadNotifications(true);
+          } catch (err) {
+            // ignore in dev
           }
         } catch (error) {
           console.error('Error saving new post to AsyncStorage:', error);

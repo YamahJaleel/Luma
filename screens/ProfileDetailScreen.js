@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal, Dimensions } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
+import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
 
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
@@ -285,6 +286,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   // Lottie animation refs
   const thumbUpAnimationRef = useRef(null);
   const thumbDownAnimationRef = useRef(null);
+  
+  // Animation values
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const aiBoxWidth = useSharedValue(200);
+  const aiBoxHeight = useSharedValue(80);
+  const aiBoxX = useSharedValue(0);
+  const aiBoxY = useSharedValue(0);
+  const [isExpanded, setIsExpanded] = useState(false);
   // Count total nested replies for a node
   const countReplies = (node) => {
     if (!node?.replies || node.replies.length === 0) return 0;
@@ -458,6 +467,29 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
   const handleCancelSelection = () => {
     setSelectedComment(null);
+  };
+
+  const handleAIBoxPress = () => {
+    if (!isExpanded) {
+      // Expand to profile picture size (square)
+      const profilePictureSize = screenWidth - 40; // Same width as profile picture container
+      const centerX = (screenWidth - profilePictureSize) / 2;
+      // Position above comments container (around 60% down the screen)
+      const centerY = screenHeight * 0.6 - profilePictureSize / 2;
+      
+      aiBoxWidth.value = withSpring(profilePictureSize);
+      aiBoxHeight.value = withSpring(profilePictureSize);
+      aiBoxX.value = withSpring(centerX);
+      aiBoxY.value = withSpring(centerY);
+      setIsExpanded(true);
+    } else {
+      // Return to original size and position
+      aiBoxWidth.value = withSpring(200);
+      aiBoxHeight.value = withSpring(80);
+      aiBoxX.value = withSpring(0);
+      aiBoxY.value = withSpring(0);
+      setIsExpanded(false);
+    }
   };
 
   const handleGreenFlag = () => {
@@ -669,6 +701,9 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       <ScrollView 
         style={styles.content} 
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!isExpanded}
+        {...(Platform.OS === 'ios' ? { bounces: !isExpanded } : {})}
+        keyboardShouldPersistTaps="handled"
         // Web-specific scrolling fix
         {...(Platform.OS === 'web' && {
           style: [styles.content, { height: '100vh', overflow: 'auto' }],
@@ -683,62 +718,76 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         
         {/* What People Are Saying and Flag Buttons */}
         <View style={styles.feedbackContainer}>
-          <View style={[styles.whatPeopleSayingBox, { backgroundColor: theme.colors.surface }]}>
-            <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
-            <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>
-              Press to see
-            </Text>
-          </View>
+          {!isExpanded && (
+            <TouchableOpacity onPress={handleAIBoxPress} style={{ flex: 1 }}>
+              <View 
+                style={[
+                  styles.whatPeopleSayingBox, 
+                  { 
+                    backgroundColor: theme.colors.surface,
+                    width: '100%'
+                  }
+                ]}
+              >
+                <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
+                <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>
+                  Press to see
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
           
-          <View style={styles.flagButtonsContainerRight}>
-            <View style={styles.flagButtonWrapper}>
-              <TouchableOpacity 
-                style={[
-                  styles.flagButton, 
-                  styles.greenFlagButton
-                ]} 
-                onPress={handleGreenFlag}
-              >
-                <LottieView
-                  ref={thumbUpAnimationRef}
-                  source={require('../assets/animations/Thumb.json')}
-                  autoPlay={false}
-                  loop={false}
-                  style={styles.lottieAnimation}
-                />
-              </TouchableOpacity>
-              <Text style={[
-                styles.flagCountText,
-                { color: theme.colors.primary }
-              ]}>
-                {greenFlagCount}
-              </Text>
-            </View>
-            
-            <View style={[styles.flagButtonWrapper, { marginLeft: -15 }]}>
-              <TouchableOpacity 
-                style={[
-                  styles.flagButton, 
-                  styles.redFlagButton
-                ]} 
-                onPress={handleRedFlag}
-              >
-                <LottieView
-                  ref={thumbDownAnimationRef}
-                  source={require('../assets/animations/Thumb.json')}
-                  autoPlay={false}
-                  loop={false}
-                  style={[styles.lottieAnimation, { transform: [{ scaleX: -1 }, { scaleY: -1 }] }]}
-                />
-              </TouchableOpacity>
-              <Text style={[
-                styles.flagCountText,
-                { color: userRedFlag ? '#F44336' : '#F44336' }
-              ]}>
-                {redFlagCount}
-              </Text>
-            </View>
-          </View>
+            {!isExpanded && (
+              <View style={styles.flagButtonsContainerRight}>
+                <View style={styles.flagButtonWrapper}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.flagButton, 
+                      styles.greenFlagButton
+                    ]} 
+                    onPress={handleGreenFlag}
+                  >
+                    <LottieView
+                      ref={thumbUpAnimationRef}
+                      source={require('../assets/animations/Thumb.json')}
+                      autoPlay={false}
+                      loop={false}
+                      style={styles.lottieAnimation}
+                    />
+                  </TouchableOpacity>
+                  <Text style={[
+                    styles.flagCountText,
+                    { color: theme.colors.primary }
+                  ]}>
+                    {greenFlagCount}
+                  </Text>
+                </View>
+                
+                <View style={[styles.flagButtonWrapper, { marginLeft: -15 }]}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.flagButton, 
+                      styles.redFlagButton
+                    ]} 
+                    onPress={handleRedFlag}
+                  >
+                    <LottieView
+                      ref={thumbDownAnimationRef}
+                      source={require('../assets/animations/Thumb.json')}
+                      autoPlay={false}
+                      loop={false}
+                      style={[styles.lottieAnimation, { transform: [{ scaleX: -1 }, { scaleY: -1 }] }]}
+                    />
+                  </TouchableOpacity>
+                  <Text style={[
+                    styles.flagCountText,
+                    { color: userRedFlag ? '#F44336' : '#F44336' }
+                  ]}>
+                    {redFlagCount}
+                  </Text>
+                </View>
+              </View>
+            )}
         </View>
 
 
@@ -754,6 +803,31 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           />
         </View>
       </ScrollView>
+
+      {/* Fullscreen overlay for expanded AI Overview */}
+      {isExpanded && (
+        <Animated.View
+          pointerEvents="auto"
+          style={[
+            styles.expandedAIOverlay,
+            {
+              width: aiBoxWidth,
+              height: aiBoxHeight,
+              transform: [
+                { translateX: aiBoxX },
+                { translateY: aiBoxY }
+              ]
+            }
+          ]}
+        >
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleAIBoxPress}>
+            <View style={[styles.expandedAIContent, { backgroundColor: theme.colors.surface }] }>
+              <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
+              <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Press to see</Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
         {replyTarget && (
@@ -1135,7 +1209,8 @@ const styles = StyleSheet.create({
     marginTop: -15,
     marginBottom: 20,
     paddingHorizontal: 20,
-    gap: 16,
+    gap: 6,
+    minHeight: 100,
   },
   whatPeopleSayingBox: {
     flex: 1,
@@ -1158,11 +1233,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  expandedAIOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 9999,
+  },
+  expandedAIContent: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   flagButtonsContainerRight: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
     gap: -5,
+    marginLeft: 'auto',
   },
   flagButtonWrapper: {
     alignItems: 'center',
