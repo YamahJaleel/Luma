@@ -92,7 +92,7 @@ const AnimatedTabBar = () => {
     transform: [{ translateX: xPos.value }],
   }));
 
-  const hasUnread = hasUnreadNotifications;
+  const hasUnread = false; // Disable red dot on alerts
 
   const getIconName = (routeName, focused) => {
     switch (routeName) {
@@ -179,7 +179,7 @@ const AnimatedTabBar = () => {
               label={tab.label}
               onPress={onPress}
               onLayout={(e) => setCenter(index, e.nativeEvent.layout.x, e.nativeEvent.layout.width)}
-              showBadge={tab.name === 'Notifications' && notificationsEnabled && hasUnread}
+              showBadge={false}
             />
           );
         })}
