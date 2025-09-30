@@ -10,6 +10,32 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { profile } = route.params;
 
+  // Local avatar support (mirrors SearchScreen): static requires so Metro can bundle images
+  const LOCAL_AVATARS = [
+    require('../assets/profiles/pexels-albert-bilousov-210750737-12471262.jpg'),
+    require('../assets/profiles/pexels-cottonbro-4100484.jpg'),
+    require('../assets/profiles/pexels-cottonbro-4812648.jpg'),
+    require('../assets/profiles/pexels-cottonbro-7654096.jpg'),
+    require('../assets/profiles/pexels-cottonbro-8209192.jpg'),
+    require('../assets/profiles/pexels-david-garrison-1128051-2128807.jpg'),
+    require('../assets/profiles/pexels-ekaterinabelinskaya-4923041.jpg'),
+    require('../assets/profiles/pexels-jeffreyreed-769772.jpg'),
+    require('../assets/profiles/pexels-ketut-subiyanto-4584262.jpg'),
+    require('../assets/profiles/pexels-mart-production-7290614.jpg'),
+    require('../assets/profiles/pexels-olly-3779489.jpg'),
+    require('../assets/profiles/pexels-salvador-olague-682304070-17910228.jpg'),
+    require('../assets/profiles/pexels-shvets-production-6975110.jpg'),
+    require('../assets/profiles/pexels-silverkblack-30535621.jpg'),
+    require('../assets/profiles/pexels-waldirevora-15037720.jpg'),
+    require('../assets/profiles/pexels-yankrukov-7315748.jpg'),
+    require('../assets/profiles/pexels-yaroslav-shuraev-6283228.jpg'),
+  ];
+
+  const getAvatarSource = (index, remoteUri) => {
+    if (index >= 0 && index < LOCAL_AVATARS.length) return LOCAL_AVATARS[index];
+    return { uri: remoteUri };
+  };
+
   const getRiskLevelColor = (level) => {
     switch (level) {
       case 'green':
@@ -765,11 +791,12 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             { backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.75)' }
           ]}>
             <Image 
-              source={{ uri: profile.avatar }} 
+              source={getAvatarSource((profile.id || 1) - 1, profile.avatar)}
               style={[
                 styles.profileImage,
                 { backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.2)' : 'white' }
-              ]} 
+              ]}
+              resizeMode="cover"
             />
           </View>
         </View>
@@ -1000,8 +1027,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
-    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', padding: 8 },
-  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
+    imageContainer: { position: 'relative', marginBottom: 6.5, width: 260, height: 260, alignSelf: 'center', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', padding: 8 },
+  profileImage: { width: '100%', height: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
   
   profileName: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
 

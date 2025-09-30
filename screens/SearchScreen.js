@@ -498,6 +498,32 @@ const SearchScreen = ({ navigation, route }) => {
     return `${uri}${joiner}q=40&auto=format`;
   };
 
+  // Local avatar support: static requires so Metro can bundle images
+  const LOCAL_AVATARS = [
+    require('../assets/profiles/pexels-albert-bilousov-210750737-12471262.jpg'),
+    require('../assets/profiles/pexels-cottonbro-4100484.jpg'),
+    require('../assets/profiles/pexels-cottonbro-4812648.jpg'),
+    require('../assets/profiles/pexels-cottonbro-7654096.jpg'),
+    require('../assets/profiles/pexels-cottonbro-8209192.jpg'),
+    require('../assets/profiles/pexels-david-garrison-1128051-2128807.jpg'),
+    require('../assets/profiles/pexels-ekaterinabelinskaya-4923041.jpg'),
+    require('../assets/profiles/pexels-jeffreyreed-769772.jpg'),
+    require('../assets/profiles/pexels-ketut-subiyanto-4584262.jpg'),
+    require('../assets/profiles/pexels-mart-production-7290614.jpg'),
+    require('../assets/profiles/pexels-olly-3779489.jpg'),
+    require('../assets/profiles/pexels-salvador-olague-682304070-17910228.jpg'),
+    require('../assets/profiles/pexels-shvets-production-6975110.jpg'),
+    require('../assets/profiles/pexels-silverkblack-30535621.jpg'),
+    require('../assets/profiles/pexels-waldirevora-15037720.jpg'),
+    require('../assets/profiles/pexels-yankrukov-7315748.jpg'),
+    require('../assets/profiles/pexels-yaroslav-shuraev-6283228.jpg'),
+  ];
+
+  const getAvatarSource = (index, remoteUri) => {
+    if (index >= 0 && index < LOCAL_AVATARS.length) return LOCAL_AVATARS[index];
+    return { uri: withDataSaver(remoteUri) };
+  };
+
   const handleProfilePress = (profile) => {
     navigation.navigate('ProfileDetail', { profile });
   };
@@ -510,7 +536,7 @@ const SearchScreen = ({ navigation, route }) => {
       onPress={() => handleProfilePress(item)}
       activeOpacity={0.9}
     >
-      <Image source={{ uri: withDataSaver(item.avatar) }} style={styles.profileImage} />
+      <Image source={getAvatarSource((item.id || 1) - 1, item.avatar)} style={styles.profileImage} />
     </TouchableOpacity>
   );
 
