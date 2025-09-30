@@ -609,7 +609,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         style={[
           styles.commentRow,
           styles.ownerNoteTab,
-          { marginLeft: depth * 16 },
+          { 
+            marginLeft: depth * 16,
+            backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)',
+            borderColor: theme.dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
+          },
         ]}
       >
         <View style={styles.commentBody}>
@@ -756,8 +760,17 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       >
         {/* Profile Image and Basic Info */}
         <View style={styles.profileSection}>
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: profile.avatar }} style={styles.profileImage} />
+          <View style={[
+            styles.imageContainer,
+            { backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.75)' }
+          ]}>
+            <Image 
+              source={{ uri: profile.avatar }} 
+              style={[
+                styles.profileImage,
+                { backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.2)' : 'white' }
+              ]} 
+            />
           </View>
         </View>
         
@@ -987,8 +1000,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
-    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', backgroundColor: 'rgba(255, 255, 255, 0.75)', padding: 8 },
-  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, backgroundColor: 'white' },
+    imageContainer: { position: 'relative', marginBottom: 6.5, width: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', padding: 8 },
+  profileImage: { width: '100%', aspectRatio: 1, borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
   
   profileName: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
 
@@ -1019,10 +1032,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 12,
     marginBottom: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   commentBody: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -1103,8 +1114,6 @@ const styles = StyleSheet.create({
   ownerNoteTab: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 12,
     padding: 16,
     elevation: 4,

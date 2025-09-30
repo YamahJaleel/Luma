@@ -28,7 +28,7 @@ const AnimatedTabBar = () => {
   });
 
   // Colors updated per request
-  const BAR_BG = '#FFFFFF';
+  const BAR_BG = theme.colors.surface;
   const ACTIVE_BG = theme.colors.primary;
   const ICON_ACTIVE = '#FFFFFF';
   const ICON_INACTIVE = theme.dark ? '#9AA0A6' : '#9CA3AF';
@@ -136,7 +136,7 @@ const AnimatedTabBar = () => {
           <Ionicons name={iconName} size={21} color={tint} />
           {showBadge && <View style={[styles.badgeDot]} />}
         </Animated.View>
-        <Animated.Text style={[styles.label, labelStyle, { color: isFocused ? '#FFFFFF' : '#6B7280' }]}>{label}</Animated.Text>
+        <Animated.Text style={[styles.label, labelStyle, { color: isFocused ? '#FFFFFF' : (theme.dark ? '#9AA0A6' : '#6B7280') }]}>{label}</Animated.Text>
       </Pressable>
     );
   };

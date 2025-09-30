@@ -575,7 +575,10 @@ const PostDetailScreen = ({ route, navigation }) => {
       <View
         style={[
           styles.commentRow,
-          { backgroundColor: theme.colors.surface, marginLeft: depth * 16 },
+          { 
+            backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)', 
+            marginLeft: depth * 16 
+          },
         ]}
       >
         <View style={styles.commentBody}>

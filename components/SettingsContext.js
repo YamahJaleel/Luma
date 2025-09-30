@@ -7,7 +7,6 @@ const STORAGE_KEYS = {
   notificationsEnabled: 'settings.notificationsEnabled',
   communityAlertsEnabled: 'settings.communityAlertsEnabled',
   locationEnabled: 'settings.locationEnabled',
-  biometricEnabled: 'settings.biometricEnabled',
   autoBackupEnabled: 'settings.autoBackupEnabled',
   dataUsageEnabled: 'settings.dataUsageEnabled',
   darkModeEnabled: 'settings.darkModeEnabled',
@@ -18,7 +17,6 @@ export const SettingsProvider = ({ children }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [communityAlertsEnabled, setCommunityAlertsEnabled] = useState(true);
   const [locationEnabled, setLocationEnabled] = useState(false);
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
   const [dataUsageEnabled, setDataUsageEnabled] = useState(false);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
@@ -32,7 +30,6 @@ export const SettingsProvider = ({ children }) => {
         if (map[STORAGE_KEYS.notificationsEnabled] != null) setNotificationsEnabled(map[STORAGE_KEYS.notificationsEnabled] === 'true');
         if (map[STORAGE_KEYS.communityAlertsEnabled] != null) setCommunityAlertsEnabled(map[STORAGE_KEYS.communityAlertsEnabled] === 'true');
         if (map[STORAGE_KEYS.locationEnabled] != null) setLocationEnabled(map[STORAGE_KEYS.locationEnabled] === 'true');
-        if (map[STORAGE_KEYS.biometricEnabled] != null) setBiometricEnabled(map[STORAGE_KEYS.biometricEnabled] === 'true');
         if (map[STORAGE_KEYS.autoBackupEnabled] != null) setAutoBackupEnabled(map[STORAGE_KEYS.autoBackupEnabled] === 'true');
         if (map[STORAGE_KEYS.dataUsageEnabled] != null) setDataUsageEnabled(map[STORAGE_KEYS.dataUsageEnabled] === 'true');
         if (map[STORAGE_KEYS.darkModeEnabled] != null) setDarkModeEnabled(map[STORAGE_KEYS.darkModeEnabled] === 'true');
@@ -50,7 +47,6 @@ export const SettingsProvider = ({ children }) => {
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.notificationsEnabled, String(notificationsEnabled)); }, [notificationsEnabled]);
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.communityAlertsEnabled, String(communityAlertsEnabled)); }, [communityAlertsEnabled]);
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.locationEnabled, String(locationEnabled)); }, [locationEnabled]);
-  useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.biometricEnabled, String(biometricEnabled)); }, [biometricEnabled]);
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.autoBackupEnabled, String(autoBackupEnabled)); }, [autoBackupEnabled]);
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.dataUsageEnabled, String(dataUsageEnabled)); }, [dataUsageEnabled]);
   useEffect(() => { AsyncStorage.setItem(STORAGE_KEYS.darkModeEnabled, String(darkModeEnabled)); }, [darkModeEnabled]);
@@ -72,7 +68,6 @@ export const SettingsProvider = ({ children }) => {
       notificationsEnabled, setNotificationsEnabled,
       communityAlertsEnabled, setCommunityAlertsEnabled,
       locationEnabled, setLocationEnabled,
-      biometricEnabled, setBiometricEnabled,
       autoBackupEnabled, setAutoBackupEnabled,
       dataUsageEnabled, setDataUsageEnabled,
       darkModeEnabled, setDarkModeEnabled,
@@ -84,7 +79,6 @@ export const SettingsProvider = ({ children }) => {
       notificationsEnabled,
       communityAlertsEnabled,
       locationEnabled,
-      biometricEnabled,
       autoBackupEnabled,
       dataUsageEnabled,
       darkModeEnabled,

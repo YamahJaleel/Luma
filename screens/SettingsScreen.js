@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { Card, List, Button, Divider, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSettings } from '../components/SettingsContext';
 import * as Location from 'expo-location';
-import * as LocalAuthentication from 'expo-local-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabContext } from '../components/TabContext';
 
@@ -30,8 +30,6 @@ const SettingsScreen = ({ navigation }) => {
     setLocationEnabled,
     darkModeEnabled,
     setDarkModeEnabled,
-    biometricEnabled,
-    setBiometricEnabled,
   } = useSettings();
 
   const handleLogout = () => {
@@ -59,22 +57,6 @@ const SettingsScreen = ({ navigation }) => {
     setLocationEnabled(next);
   };
 
-  const onToggleBiometric = async (next) => {
-    if (next) {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const supported = await LocalAuthentication.supportedAuthenticationTypesAsync();
-      if (!hasHardware || (supported || []).length === 0) {
-        Alert.alert('Not supported', 'Biometric authentication is not available on this device.');
-        return;
-      }
-      const enrolled = await LocalAuthentication.isEnrolledAsync();
-      if (!enrolled) {
-        Alert.alert('Not set up', 'No biometrics enrolled on this device. Set up Face/Touch ID first.');
-        return;
-      }
-    }
-    setBiometricEnabled(next);
-  };
 
   const settingsSections = [
     {
@@ -111,15 +93,6 @@ const SettingsScreen = ({ navigation }) => {
           type: 'toggle',
           value: locationEnabled,
           onValueChange: onToggleLocation,
-        },
-        {
-          id: 'biometric_lock',
-          title: 'Biometric Lock',
-          subtitle: 'Use fingerprint or face ID',
-          icon: 'fingerprint',
-          type: 'toggle',
-          value: biometricEnabled,
-          onValueChange: onToggleBiometric,
         },
         { id: 'privacy_settings', title: 'Privacy Settings', subtitle: 'Manage your data and privacy', icon: 'shield-check-outline', type: 'navigate' },
         { id: 'safety_resources', title: 'Safety Resources', subtitle: 'Access safety tips and resources', icon: 'medical-bag', type: 'navigate' },
@@ -222,7 +195,13 @@ const SettingsScreen = ({ navigation }) => {
           key={item.id}
           title={item.title || ''}
           description={item.subtitle || ''}
-          left={(props) => <List.Icon {...props} icon={item.icon || 'help-circle-outline'} color={theme.colors.primary} />}
+          left={(props) => 
+            item.id === 'app_version' ? (
+              <List.Icon {...props} icon={() => <MaterialCommunityIcons name="cellphone" size={24} color={theme.colors.primary} />} />
+            ) : (
+              <List.Icon {...props} icon={item.icon || 'help-circle-outline'} color={theme.colors.primary} />
+            )
+          }
           titleStyle={[styles.menuItemTitle, { color: theme.colors.text }]}
           descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
           style={styles.menuItem}
