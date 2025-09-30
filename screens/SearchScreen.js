@@ -540,43 +540,6 @@ const SearchScreen = ({ navigation, route }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      {/* Search Container */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchHeaderRow}>
-          <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}> 
-            <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
-          <TextInput
-              style={[styles.searchInput, { color: theme.colors.text } ]}
-            placeholder="Search name"
-              placeholderTextColor={theme.colors.placeholder}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')}>
-                <Ionicons name="close-circle" size={20} color={theme.colors.placeholder} />
-            </TouchableOpacity>
-          )}
-          </View>
-          <TouchableOpacity
-            style={[styles.addBtn, { backgroundColor: theme.colors.surface }]}
-            onPress={() =>
-              navigation.navigate('CreateProfile')
-            }
-          >
-            <Ionicons name="add" size={22} color={theme.colors.primary} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity
-          style={styles.locationRow}
-          onPress={() => { setLocationInput(location); setShowLocationModal(true); }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="location" size={12} color="#3E5F44" />
-          <Text style={[styles.locationText, { color: "#3E5F44" }]}>{location}</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Profile Grid */}
       <FlatList
         data={rows}
@@ -592,6 +555,41 @@ const SearchScreen = ({ navigation, route }) => {
         keyExtractor={(item, index) => `row-${index}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.gridContainer}
+        ListHeaderComponent={
+          <View style={styles.searchContainer}>
+            <View style={styles.searchHeaderRow}>
+              <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}> 
+                <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
+                <TextInput
+                  style={[styles.searchInput, { color: theme.colors.text } ]}
+                  placeholder="Search name"
+                  placeholderTextColor={theme.colors.placeholder}
+                  value={searchQuery}
+                  onChangeText={handleSearch}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => handleSearch('')}>
+                    <Ionicons name="close-circle" size={20} color={theme.colors.placeholder} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <TouchableOpacity
+                style={[styles.addBtn, { backgroundColor: theme.colors.surface }]}
+                onPress={() => navigation.navigate('CreateProfile')}
+              >
+                <Ionicons name="add" size={22} color={theme.colors.primary} />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.locationRow}
+              onPress={() => { setLocationInput(location); setShowLocationModal(true); }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="location" size={12} color="#3E5F44" />
+              <Text style={[styles.locationText, { color: "#3E5F44" }]}>{location}</Text>
+            </TouchableOpacity>
+          </View>
+        }
         initialNumToRender={dataUsageEnabled ? 4 : 8}
         windowSize={dataUsageEnabled ? 3 : 5}
         removeClippedSubviews={true}
@@ -667,14 +665,14 @@ const SearchScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  searchContainer: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 12 },
-  searchHeaderRow: { flexDirection: 'row', alignItems: 'center' },
+  searchContainer: { paddingHorizontal: 0, paddingTop: 60, paddingBottom: 12 },
+  searchHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 0, paddingRight: 0 },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
     elevation: 2,
     shadowColor: '#000',
@@ -685,7 +683,7 @@ const styles = StyleSheet.create({
   addBtn: {
     width: 44,
     height: 44,
-    marginLeft: 10,
+    marginLeft: 2,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
