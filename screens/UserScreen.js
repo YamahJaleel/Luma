@@ -135,7 +135,11 @@ Privacy is our foundation we use secure systems to ensure user information is ne
         <Card.Content style={styles.menuContent}>
           <TouchableOpacity style={[styles.logoutRow]} onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?', [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Logout', style: 'destructive', onPress: () => Alert.alert('Logged Out', 'You have been successfully logged out.') }
+              { text: 'Logout', style: 'destructive', onPress: () => {
+                  // Hide tab bar immediately across auth flow until Home is shown again
+                  setTabHidden(true);
+                  navigation.reset({ index: 0, routes: [{ name: 'SignInCopy' }] });
+                } }
             ])}>
             <Ionicons name="log-out-outline" size={20} color="#FC8181" />
             <Text style={[styles.logoutText, { color: '#FC8181' }]}>Logout</Text>

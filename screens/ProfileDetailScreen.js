@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import Animated, { useSharedValue, withSpring, withTiming, Easing, runOnJS } from 'react-native-reanimated';
+import axios from 'axios';
 
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
@@ -128,6 +129,29 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     }
   };
 
+  // AI Overview via backend (summarize first 6 top-level comments)
+  const BACKEND_URL = 'https://proxyyyyyyy2.onrender.com/chat';
+
+  const cleanResponse = (text) => {
+    return (text || '')
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/`/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .trim();
+  };
+
+  const shortenText = (t, maxLen = 200) => {
+    const s = (t || '').replace(/\s+/g, ' ').trim();
+    if (!s) return '';
+    return s.length <= maxLen ? s : s.slice(0, maxLen - 1) + '…';
+  };
+
+  const [aiOverview, setAiOverview] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
   // Simple AI overview text synthesized from profile signals
   const overviewText = (() => {
     const risk = getRiskLevelText(profile.riskLevel);
@@ -138,13 +162,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     return `Overview: ${risk} overall. ${posPart}${cauPart}`.trim();
   })();
 
-  const expandedAiText = useMemo(() => {
-    return (
-      `Simulated AI overview for ${profile?.name} (demo)\n\n` +
-      overviewText +
-      `\n\nThis is placeholder content to show how an AI summary could appear when expanded.`
-    );
-  }, [profile?.name, overviewText]);
+  // removed expandedAiText in favor of rendering bullet lines directly
 
   // Threaded comments (profile discussion)
   const makeMockComments = () => {
@@ -358,6 +376,41 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   };
   const flatComments = useMemo(() => flattenVisible(comments), [comments, expandedThreads]);
 
+  // Build AI prompt and fetch overview from first 6 top-level comments
+  const requestAiOverview = async () => {
+    try {
+      setAiError(null);
+      setAiLoading(true);
+
+      // Gather first up to 6 top-level comments (exclude owner-note)
+      const topLevel = (comments || []).filter((c) => c.id !== 'owner-note').slice(0, 6);
+      if (!topLevel.length) {
+        setAiOverview('');
+        setAiLoading(false);
+        return;
+      }
+
+      const summaries = topLevel.map((c, idx) => `${idx + 1}. ${shortenText(c.text, 200)}`);
+      const prompt = `You are Luma AI. Read the comments and extract ONLY the 4-7 most important, distinct bullet points.\n- Output format: one line per bullet, no numbering, no emojis, no bold, no preface or conclusion.\n- Each bullet must be short (max 120 chars), clear, neutral, and safety-focused.\n- Capture themes, risks, and any positives.\n\nComments:\n${summaries.join('\n')}\n\nBullets:`;
+
+      const contents = [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ];
+
+      const res = await axios.post(BACKEND_URL, { contents });
+      const reply = cleanResponse(res?.data?.reply || '');
+      setAiOverview(reply);
+    } catch (e) {
+      console.error('AI overview error:', e?.response?.data || e?.message);
+      setAiError('Failed to load AI overview');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleSend = () => {
     const text = replyText.trim();
     if (!text) return;
@@ -514,6 +567,9 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   };
 
   const handleAIBoxPress = () => {
+    if (!aiOverview && !aiLoading) {
+      requestAiOverview();
+    }
     if (!isExpanded) {
       // Measure inline card to animate from its exact position
       smallAICardRef.current?.measure?.((x, y, width, height, pageX, pageY) => {
@@ -823,9 +879,24 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 }}
               >
                 <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
-                <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>
-                  Press to see
-                </Text>
+                {aiLoading ? (
+                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Loading overview…</Text>
+                ) : aiError ? (
+                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>{aiError}</Text>
+                ) : !!aiOverview ? (
+                  <View>
+                    {aiOverview.split(/\r?\n/).filter(Boolean).slice(0, 4).map((line, idx) => (
+                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
+                        <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>• </Text>
+                        <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text, flex: 1 }]} numberOfLines={1}>
+                          {line.trim()}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Press to see</Text>
+                )}
               </View>
             </TouchableOpacity>
           )}
@@ -916,9 +987,22 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleAIBoxPress}>
             <View style={[styles.expandedAIContent, { backgroundColor: theme.colors.surface }] }>
               <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
-              <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>
-                {expandedAiText}
-              </Text>
+              {aiLoading ? (
+                <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Loading overview…</Text>
+              ) : aiError ? (
+                <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>{aiError}</Text>
+              ) : !!aiOverview ? (
+                <View>
+                  {aiOverview.split(/\r?\n/).filter(Boolean).map((line, idx) => (
+                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>• </Text>
+                      <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text, flex: 1 }]}>
+                        {line.trim()}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
             </View>
           </TouchableOpacity>
         </Animated.View>

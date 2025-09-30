@@ -439,6 +439,8 @@ const HomeScreen = () => {
   // Reload data when screen comes into focus (e.g., returning from PostDetailScreen)
   useFocusEffect(
     React.useCallback(() => {
+      // Ensure tab bar is visible again on Home
+      setTabHidden(false);
       getPostData();
     }, [getPostData])
   );

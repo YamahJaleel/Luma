@@ -94,8 +94,7 @@ const SettingsScreen = ({ navigation }) => {
           value: locationEnabled,
           onValueChange: onToggleLocation,
         },
-        { id: 'privacy_settings', title: 'Privacy Settings', subtitle: 'Manage your data and privacy', icon: 'shield-check-outline', type: 'navigate' },
-        { id: 'safety_resources', title: 'Safety Resources', subtitle: 'Access safety tips and resources', icon: 'medical-bag', type: 'navigate' },
+        
       ],
     },
     {

@@ -6,6 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useOnboarding } from '../components/OnboardingContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTabContext } from '../components/TabContext';
 import LottieView from 'lottie-react-native';
 
 // Utility: normalize a name into a set of tokens for rough matching
@@ -70,6 +72,7 @@ const roughlyNamesMatch = (extractedText, signupName) => {
 const LicenseVerificationScreen = ({ route, navigation }) => {
   const signupName = route?.params?.signupName || '';
   const { setIsOnboarded } = useOnboarding();
+  const { setTabHidden } = useTabContext();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const cameraPermissionAskedRef = useRef(false);
@@ -79,6 +82,13 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
   const [verificationStatus, setVerificationStatus] = useState(null); // 'success' | 'failed' | null
   const [forceEnableFinish, setForceEnableFinish] = useState(false);
   
+  useFocusEffect(
+    React.useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [])
+  );
+
 
   const ensureCameraPermission = useCallback(async () => {
     // Ask only once per session

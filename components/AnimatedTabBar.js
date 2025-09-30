@@ -19,7 +19,15 @@ const AnimatedTabBar = () => {
       if (!s || !s.routes) return false;
       for (let i = 0; i < s.routes.length; i++) {
         const route = s.routes[i];
-        if (route?.name === 'PostDetail' || route?.name === 'MessageThread' || route?.name === 'ProfileDetail') return true;
+        if (
+          route?.name === 'PostDetail' ||
+          route?.name === 'MessageThread' ||
+          route?.name === 'ProfileDetail' ||
+          route?.name === 'SignInCopy' ||
+          route?.name === 'CreateAccountCopy' ||
+          route?.name === 'LicenseVerification' ||
+          route?.name === 'Congrats'
+        ) return true;
         if (route?.state && contains(route.state)) return true;
       }
       return false;

@@ -27,6 +27,9 @@ import LumaAIScreen from '../screens/LumaAIScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
 import CommunityGuidelinesScreen from '../screens/CommunityGuidelinesScreen';
+import CongratsScreen from '../screens/CongratsScreen';
+import SignInScreenCopy from '../screens/SignInScreenCopy';
+import CreateAccountScreenCopy from '../screens/CreateAccountScreenCopy';
 
 const Stack = createStackNavigator();
 
@@ -88,6 +91,9 @@ const MainStackNavigator = () => {
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
         <Stack.Screen name="CommunityGuidelines" component={CommunityGuidelinesScreen} />
+        <Stack.Screen name="Congrats" component={CongratsScreen} />
+        <Stack.Screen name="SignInCopy" component={SignInScreenCopy} />
+        <Stack.Screen name="CreateAccountCopy" component={CreateAccountScreenCopy} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>

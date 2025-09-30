@@ -4,9 +4,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { useOnboarding } from '../components/OnboardingContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTabContext } from '../components/TabContext';
 
 const CongratsScreen = ({ navigation }) => {
-  const { setIsOnboarded } = useOnboarding();
+  const { isOnboarded, setIsOnboarded } = useOnboarding();
+  const { setTabHidden, setCurrentTab } = useTabContext();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [])
+  );
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#FAF6F0", "#F5F1EB"]} style={styles.gradient}>
@@ -25,11 +35,13 @@ const CongratsScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => {
-              if (typeof setIsOnboarded === 'function') {
+              // Ensure the tab bar selects Home
+              setCurrentTab && setCurrentTab('Home');
+              if (!isOnboarded) {
                 setIsOnboarded(true);
-              } else {
-                navigation.replace('Home');
+                return;
               }
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
             }}
           >
             <LinearGradient colors={["#3E5F44", "#4A7C59"]} style={styles.primaryButtonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>

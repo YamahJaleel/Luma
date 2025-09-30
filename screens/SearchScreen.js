@@ -449,7 +449,7 @@ const SearchScreen = ({ navigation, route }) => {
     },
   ];
 
-  const [profiles, setProfiles] = useState(mockProfiles);
+  const [profiles, setProfiles] = useState(mockProfiles.slice(0, 17));
 
   const handleSearch = (query) => {
     setSearchQuery(query);
