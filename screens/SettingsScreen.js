@@ -118,7 +118,6 @@ const SettingsScreen = ({ navigation }) => {
           value: darkModeEnabled,
           onValueChange: setDarkModeEnabled,
         },
-        { id: 'clear_cache', title: 'Clear Cache', subtitle: 'Free up storage space', icon: 'trash-can-outline', type: 'action' },
       ],
     },
     {
@@ -177,13 +176,8 @@ const SettingsScreen = ({ navigation }) => {
           descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
           right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
           style={styles.menuItem}
-          onPress={async () => {
-            if (item.id === 'clear_cache') {
-              Alert.alert('Clear Cache', 'This will free up storage space. Continue?', [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Clear', onPress: async () => { await AsyncStorage.clear(); Alert.alert('Success', 'Cache cleared successfully!'); } },
-              ]);
-            }
+          onPress={() => {
+            Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }}
         />
       );
@@ -238,6 +232,12 @@ const SettingsScreen = ({ navigation }) => {
  Privacy is our foundation we use secure systems to ensure user information is never exposed.`,
               [{ text: 'OK', style: 'default' }]
             );
+          } else if (item.id === 'privacy_policy') {
+            navigation.navigate('PrivacyPolicy');
+          } else if (item.id === 'terms_of_service') {
+            navigation.navigate('TermsOfService');
+          } else if (item.id === 'community_guidelines') {
+            navigation.navigate('CommunityGuidelines');
           } else {
             Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }

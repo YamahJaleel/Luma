@@ -100,11 +100,7 @@ const UserScreen = ({ navigation }) => {
           <List.Item
             title="My Comments"
             description="See your comments in community posts"
-            left={(props) => (
-              <View style={props.style}>
-                <AntDesign name="comment" size={24} color={theme.colors.primary} />
-              </View>
-            )}
+            left={(props) => <List.Icon {...props} icon={() => <AntDesign name="comment" size={24} color={theme.colors.primary} style={{ marginTop: 4 }} />} />}
             right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
             titleStyle={{ color: theme.colors.text }}
             descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}

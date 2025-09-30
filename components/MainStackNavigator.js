@@ -24,6 +24,9 @@ import CommunityNotificationSettingsScreen from '../screens/CommunityNotificatio
 import VideoScrollScreen from '../screens/VideoScrollScreen';
 import LicenseVerificationScreen from '../screens/VerificationScreen';
 import LumaAIScreen from '../screens/LumaAIScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
+import CommunityGuidelinesScreen from '../screens/CommunityGuidelinesScreen';
 
 const Stack = createStackNavigator();
 
@@ -82,6 +85,9 @@ const MainStackNavigator = () => {
         <Stack.Screen name="CommunityNotificationSettings" component={CommunityNotificationSettingsScreen} />
         <Stack.Screen name="LicenseVerification" component={LicenseVerificationScreen} />
         <Stack.Screen name="LumaAI" component={LumaAIScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+        <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+        <Stack.Screen name="CommunityGuidelines" component={CommunityGuidelinesScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>
