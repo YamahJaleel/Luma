@@ -880,7 +880,12 @@ const ProfileDetailScreen = ({ route, navigation }) => {
               >
                 <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
                 {aiLoading ? (
-                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Loading overview…</Text>
+                  <LottieView
+                    source={require('../assets/animations/Loading Dots Blue.json')}
+                    autoPlay
+                    loop
+                    style={{ width: 60, height: 24, alignSelf: 'flex-start' }}
+                  />
                 ) : aiError ? (
                   <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>{aiError}</Text>
                 ) : !!aiOverview ? (
@@ -988,7 +993,12 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             <View style={[styles.expandedAIContent, { backgroundColor: theme.colors.surface }] }>
               <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
               {aiLoading ? (
-                <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Loading overview…</Text>
+                <LottieView
+                  source={require('../assets/animations/Loading Dots Blue.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 100, height: 40, alignSelf: 'flex-start' }}
+                />
               ) : aiError ? (
                 <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>{aiError}</Text>
               ) : !!aiOverview ? (

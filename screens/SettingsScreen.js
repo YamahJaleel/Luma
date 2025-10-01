@@ -13,7 +13,6 @@ import { Card, List, Button, Divider, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSettings } from '../components/SettingsContext';
-import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabContext } from '../components/TabContext';
 
@@ -26,8 +25,6 @@ const SettingsScreen = ({ navigation }) => {
     setNotificationsEnabled,
     communityAlertsEnabled,
     setCommunityAlertsEnabled,
-    locationEnabled,
-    setLocationEnabled,
     darkModeEnabled,
     setDarkModeEnabled,
   } = useSettings();
@@ -46,16 +43,6 @@ const SettingsScreen = ({ navigation }) => {
     ]);
   };
 
-  const onToggleLocation = async (next) => {
-    if (next) {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Location permission was not granted.');
-        return;
-      }
-    }
-    setLocationEnabled(next);
-  };
 
 
   const settingsSections = [
@@ -83,26 +70,10 @@ const SettingsScreen = ({ navigation }) => {
       ],
     },
     {
-      title: 'Privacy & Safety',
-      items: [
-        {
-          id: 'location_services',
-          title: 'Location Services',
-          subtitle: 'Allow location for safety features',
-          icon: 'map-marker-outline',
-          type: 'toggle',
-          value: locationEnabled,
-          onValueChange: onToggleLocation,
-        },
-        
-      ],
-    },
-    {
       title: 'Account',
       items: [
         { id: 'edit_profile', title: 'Edit Profile', subtitle: 'Update your profile information', icon: 'account-outline', type: 'navigate' },
         { id: 'change_password', title: 'Change Password', subtitle: 'Update your account password', icon: 'lock-outline', type: 'navigate' },
-        { id: 'two_factor', title: 'Two-Factor Authentication', subtitle: 'Add an extra layer of security', icon: 'shield-outline', type: 'navigate' },
       ],
     },
     {
@@ -231,6 +202,10 @@ const SettingsScreen = ({ navigation }) => {
  Privacy is our foundation we use secure systems to ensure user information is never exposed.`,
               [{ text: 'OK', style: 'default' }]
             );
+          } else if (item.id === 'edit_profile') {
+            navigation.navigate('EditProfile');
+          } else if (item.id === 'change_password') {
+            navigation.navigate('ChangePassword');
           } else if (item.id === 'privacy_policy') {
             navigation.navigate('PrivacyPolicy');
           } else if (item.id === 'terms_of_service') {

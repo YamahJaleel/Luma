@@ -30,6 +30,8 @@ import CommunityGuidelinesScreen from '../screens/CommunityGuidelinesScreen';
 import CongratsScreen from '../screens/CongratsScreen';
 import SignInScreenCopy from '../screens/SignInScreenCopy';
 import CreateAccountScreenCopy from '../screens/CreateAccountScreenCopy';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 
 const Stack = createStackNavigator();
 
@@ -94,6 +96,8 @@ const MainStackNavigator = () => {
         <Stack.Screen name="Congrats" component={CongratsScreen} />
         <Stack.Screen name="SignInCopy" component={SignInScreenCopy} />
         <Stack.Screen name="CreateAccountCopy" component={CreateAccountScreenCopy} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>
