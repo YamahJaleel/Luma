@@ -13,7 +13,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -31,12 +30,7 @@ const ChangePasswordScreen = ({ navigation }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      setTabHidden(true);
-      return () => setTabHidden(false);
-    }, [])
-  );
+  // Keep tab bar behavior consistent with other settings pages (no hide on push)
 
   const validateForm = () => {
     const newErrors = {};

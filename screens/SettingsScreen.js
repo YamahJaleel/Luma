@@ -23,8 +23,6 @@ const SettingsScreen = ({ navigation }) => {
   const {
     notificationsEnabled,
     setNotificationsEnabled,
-    communityAlertsEnabled,
-    setCommunityAlertsEnabled,
     darkModeEnabled,
     setDarkModeEnabled,
   } = useSettings();
@@ -57,15 +55,6 @@ const SettingsScreen = ({ navigation }) => {
           type: 'toggle',
           value: notificationsEnabled,
           onValueChange: setNotificationsEnabled,
-        },
-        {
-          id: 'community_alerts',
-          title: 'Community Alerts',
-          subtitle: 'Notifications for community activity',
-          icon: 'account-group-outline',
-          type: 'toggle',
-          value: communityAlertsEnabled,
-          onValueChange: setCommunityAlertsEnabled,
         },
       ],
     },
@@ -212,6 +201,12 @@ const SettingsScreen = ({ navigation }) => {
             navigation.navigate('TermsOfService');
           } else if (item.id === 'community_guidelines') {
             navigation.navigate('CommunityGuidelines');
+          } else if (item.id === 'contact_support') {
+            navigation.navigate('ContactSupport');
+          } else if (item.id === 'report_bug') {
+            navigation.navigate('ReportBug');
+          } else if (item.id === 'feedback') {
+            navigation.navigate('SendFeedback');
           } else {
             Alert.alert('Feature', `${item.title || 'This feature'} coming soon!`);
           }

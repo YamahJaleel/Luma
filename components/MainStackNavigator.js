@@ -33,6 +33,9 @@ import SignInScreenCopy from '../screens/SignInScreenCopy';
 import CreateAccountScreenCopy from '../screens/CreateAccountScreenCopy';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import ContactSupportScreen from '../screens/ContactSupportScreen';
+import ReportBugScreen from '../screens/ReportBugScreen';
+import SendFeedbackScreen from '../screens/SendFeedbackScreen';
 
 const Stack = createStackNavigator();
 
@@ -100,6 +103,9 @@ const MainStackNavigator = () => {
         <Stack.Screen name="CreateAccountCopy" component={CreateAccountScreenCopy} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+        <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
+        <Stack.Screen name="ReportBug" component={ReportBugScreen} />
+        <Stack.Screen name="SendFeedback" component={SendFeedbackScreen} />
       </Stack.Navigator>
       <AnimatedTabBar />
     </View>

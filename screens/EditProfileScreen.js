@@ -13,7 +13,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -28,12 +27,7 @@ const EditProfileScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      setTabHidden(true);
-      return () => setTabHidden(false);
-    }, [])
-  );
+  // Keep tab bar behavior consistent with other settings pages (no hide on push)
 
   // Load current user data on mount
   React.useEffect(() => {
