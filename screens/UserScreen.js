@@ -88,6 +88,16 @@ const UserScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('CreatedPosts')}
           />
           <List.Item
+            title="Created Profiles"
+            description="Profiles you've created"
+            left={(props) => <List.Icon {...props} icon="account" color={theme.colors.primary} />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" color="#A0AEC0" />}
+            titleStyle={{ color: theme.colors.text }}
+            descriptionStyle={[styles.menuItemDescription, theme.dark && { color: theme.colors.text }]}
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('CreatedProfiles')}
+          />
+          <List.Item
             title="Liked Posts"
             description="See posts you've liked"
             left={(props) => <List.Icon {...props} icon="heart" color={theme.colors.primary} />} 

@@ -13,6 +13,7 @@ import CreatePostScreen from '../screens/CreatePostScreen';
 import BrowseCommunitiesScreen from '../screens/BrowseCommunitiesScreen';
 import LikedPostsScreen from '../screens/LikedPostsScreen';
 import CreatedPostsScreen from '../screens/CreatedPostsScreen';
+import CreatedProfilesScreen from '../screens/CreatedProfilesScreen';
 import UserCommentsScreen from '../screens/UserCommentsScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import CreateProfileScreen from '../screens/CreateProfileScreen';
@@ -80,6 +81,7 @@ const MainStackNavigator = () => {
         <Stack.Screen name="BrowseCommunities" component={BrowseCommunitiesScreen} />
         <Stack.Screen name="LikedPosts" component={LikedPostsScreen} />
         <Stack.Screen name="CreatedPosts" component={CreatedPostsScreen} />
+        <Stack.Screen name="CreatedProfiles" component={CreatedProfilesScreen} />
         <Stack.Screen name="UserComments" component={UserCommentsScreen} />
         <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />

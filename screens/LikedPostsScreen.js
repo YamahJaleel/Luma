@@ -87,8 +87,14 @@ const LikedPostsScreen = ({ navigation }) => {
         data={data}
         renderItem={renderItem}
         keyExtractor={(item, index) => String(item.id) || `liked-post-${index}`}
-        contentContainerStyle={{ paddingBottom: 12 }}
-        ListEmptyComponent={<Text style={[styles.empty, { color: theme.colors.text }]}>No liked posts yet.</Text>}
+        contentContainerStyle={{ paddingBottom: 12, flexGrow: 1 }}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="heart-outline" size={64} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Liked Posts</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.dark ? '#9CA3AF' : '#6B7280' }]}>Like posts to see them here.</Text>
+          </View>
+        }
         refreshing={isLoading}
         onRefresh={load}
       />
@@ -102,6 +108,23 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 19, fontWeight: 'bold' },
   empty: { fontWeight: 'bold', textAlign: 'center', marginTop: 50, fontSize: 22 },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
 
   // Match Home1Screen.js card format
   postCard: {

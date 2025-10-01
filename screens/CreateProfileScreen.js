@@ -114,9 +114,21 @@ const CreateProfileScreen = ({ route, navigation }) => {
       Alert.alert('Missing Info', 'Please enter a name.');
       return;
     }
+    
+    // Auto-generate username from name
+    const generateUsername = (fullName) => {
+      const nameParts = fullName.trim().toLowerCase().split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0]}${nameParts[1].charAt(0)}`;
+      } else {
+        return nameParts[0];
+      }
+    };
+    
     const newProfile = {
       id: Date.now(),
       name: name.trim(),
+      username: generateUsername(name.trim()),
       avatar: selectedImage ? selectedImage.uri : 'https://via.placeholder.com/150',
       size: 'small',
       isOnline: false,

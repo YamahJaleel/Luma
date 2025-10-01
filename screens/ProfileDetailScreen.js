@@ -9,7 +9,7 @@ import axios from 'axios';
 
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
-  const { profile } = route.params;
+  const { profile, fromScreen } = route.params;
 
   // Local avatar support (mirrors SearchScreen): static requires so Metro can bundle images
   const LOCAL_AVATARS = [
@@ -167,15 +167,25 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   // Threaded comments (profile discussion)
   const makeMockComments = () => {
     const items = [];
-    const ownerNote = (profile?.bio && profile.bio.trim()) ? profile.bio.trim() : 'I created this profile because I had a really concerning experience with Tyler. He seemed charming at first but quickly became controlling and manipulative. He would text me constantly and get angry if I didn\'t respond immediately. When I tried to set boundaries, he became verbally abusive. I\'m sharing this to help protect other women.';
-    items.push({
-      id: 'owner-note',
-      author: 'Sarah M.',
-      avatarColor: '#7C9AFF',
-      text: ownerNote,
-      timestamp: 'now',
-      replies: [],
-    });
+    
+    // For new profiles (no existing comments), only show the owner note if there's a bio
+    if (profile?.bio && profile.bio.trim()) {
+      const ownerNote = profile.bio.trim();
+      items.push({
+        id: 'owner-note',
+        author: (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'Anonymous',
+        avatarColor: '#7C9AFF',
+        text: ownerNote,
+        timestamp: 'now',
+        replies: [],
+      });
+    }
+    
+    // Only add mock community comments for established profiles (not new ones)
+    // New profiles use Date.now() for ID, which will be much larger than mock profile IDs (1-30)
+    if (profile?.id && profile.id > 10000) { 
+      return items; // Return early for new profiles
+    }
     items.push(
       {
         id: 1,
@@ -317,12 +327,17 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [comments, setComments] = useState(makeMockComments());
   const originalPosterName = useMemo(() => {
     try {
+      // For new profiles, the current user is always the OP
+      if (profile?.id && profile.id > 10000) {
+        return (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'Anonymous';
+      }
+      // For established profiles, find the owner note
       const owner = comments?.find?.((n) => n?.id === 'owner-note');
       return owner?.author || null;
     } catch {
       return null;
     }
-  }, [comments]);
+  }, [comments, profile]);
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for profile-level comment
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // top-level ids expanded
@@ -331,6 +346,8 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [voteCounts, setVoteCounts] = useState({}); // Track vote counts for each comment
   const [selectedComment, setSelectedComment] = useState(null); // for long-press selection
   const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false); // three-dots in header
+  const isUserCreatedProfile = !!(profile?.id && profile.id > 10000);
   
   // Message modal state
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -384,8 +401,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
       // Gather first up to 6 top-level comments (exclude owner-note)
       const topLevel = (comments || []).filter((c) => c.id !== 'owner-note').slice(0, 6);
-      if (!topLevel.length) {
+      // Require at least 6 posts to generate an overview
+      if (topLevel.length < 6) {
         setAiOverview('');
+        setAiError('Not enough posts to generate an overview.');
         setAiLoading(false);
         return;
       }
@@ -416,7 +435,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     if (!text) return;
     const newItem = {
       id: Date.now(),
-      author: 'You',
+      author: (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'You',
       avatarColor: '#7C9AFF',
       text,
       timestamp: 'now',
@@ -547,7 +566,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         recipientId: messageRecipient.id,
         text: messageText.trim(),
         timestamp: new Date().toISOString(),
-        sender: 'You',
+        sender: (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'You',
         senderId: 'current_user',
       };
       
@@ -656,6 +675,24 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
   const closeDropdown = () => {
     setDropdownVisible(null);
+  };
+
+  const handleDeleteProfile = async () => {
+    try {
+      // Remove from AsyncStorage list of user profiles
+      const stored = await AsyncStorage.getItem('userProfiles');
+      const list = stored ? JSON.parse(stored) : [];
+      const next = Array.isArray(list) ? list.filter((p) => p.id !== profile.id) : [];
+      await AsyncStorage.setItem('userProfiles', JSON.stringify(next));
+
+      // Return to the screen you came from
+      const returnScreen = fromScreen || 'Search';
+      navigation.navigate(returnScreen, { deletedProfileId: profile.id });
+    } catch (e) {
+      console.warn('Failed to delete profile', e);
+    } finally {
+      setHeaderMenuOpen(false);
+    }
   };
 
   // Delete a comment (and its subtree) by id from the nested comments structure
@@ -793,7 +830,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 activeOpacity={1}
               />
               <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
-                {c.author === 'You' ? (
+                {c.author === ((profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'You') ? (
                   <TouchableOpacity 
                     style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
                     onPress={() => handleDeleteComment(c.id)}
@@ -826,7 +863,37 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{profile?.name}</Text>
-        <View style={styles.placeholder} />
+        {isUserCreatedProfile ? (
+          <View style={styles.menuContainer}>
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => setHeaderMenuOpen((v) => !v)}
+            >
+              <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
+            </TouchableOpacity>
+            {headerMenuOpen && (
+              <>
+                {/* Touchable overlay to close dropdown when tapping outside */}
+                <TouchableOpacity 
+                  style={styles.dropdownOverlay}
+                  onPress={() => setHeaderMenuOpen(false)}
+                  activeOpacity={1}
+                />
+                <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}> 
+                  <TouchableOpacity 
+                    style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                    onPress={handleDeleteProfile}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                    <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Delete Profile</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        ) : (
+          <View style={styles.placeholder} />
+        )}
       </View>
 
       <ScrollView 

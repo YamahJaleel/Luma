@@ -15,6 +15,7 @@ import { useSettings } from '../components/SettingsContext';
 import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const screenPadding = 20;
@@ -451,6 +452,35 @@ const SearchScreen = ({ navigation, route }) => {
 
   const [profiles, setProfiles] = useState(mockProfiles.slice(0, 17));
 
+  // Merge helper to avoid duplicates by id
+  const mergeUniqueById = (primary, secondary) => {
+    const seen = new Set(primary.map((p) => p.id));
+    const merged = [...primary];
+    for (const p of secondary) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id);
+        merged.push(p);
+      }
+    }
+    return merged;
+  };
+
+  // Load any user-created profiles from storage on mount
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem('userProfiles');
+        const userProfiles = stored ? JSON.parse(stored) : [];
+        if (Array.isArray(userProfiles) && userProfiles.length) {
+          // Put user-created profiles first, then mock (dedup by id)
+          setProfiles((prev) => mergeUniqueById(userProfiles, prev));
+        }
+      } catch (e) {
+        // no-op on read error
+      }
+    })();
+  }, []);
+
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query.trim() === '') {
@@ -469,9 +499,32 @@ const SearchScreen = ({ navigation, route }) => {
   useFocusEffect(
     React.useCallback(() => {
       const params = route?.params || {};
+      // Handle profile deletion coming back from detail
+      if (params.deletedProfileId) {
+        const deletedId = params.deletedProfileId;
+        setProfiles((prev) => prev.filter((p) => p.id !== deletedId));
+        if (searchQuery.trim()) handleSearch(searchQuery);
+        navigation.setParams({ deletedProfileId: undefined });
+      }
       if (params.newProfile && params.newProfile.id) {
         const np = params.newProfile;
-        setProfiles((prev) => [np, ...prev]);
+        // Update in-memory list (ensure newest first)
+        setProfiles((prev) => {
+          const withoutDup = prev.filter((p) => p.id !== np.id);
+          return [np, ...withoutDup];
+        });
+        // Persist to storage so it survives navigation/unmounts
+        (async () => {
+          try {
+            const stored = await AsyncStorage.getItem('userProfiles');
+            const list = stored ? JSON.parse(stored) : [];
+            const withoutDup = Array.isArray(list) ? list.filter((p) => p.id !== np.id) : [];
+            const next = [np, ...withoutDup];
+            await AsyncStorage.setItem('userProfiles', JSON.stringify(next));
+          } catch (e) {
+            // ignore write errors
+          }
+        })();
         if (searchQuery.trim()) handleSearch(searchQuery);
         navigation.setParams({ newProfile: undefined });
       }
@@ -525,7 +578,7 @@ const SearchScreen = ({ navigation, route }) => {
   };
 
   const handleProfilePress = (profile) => {
-    navigation.navigate('ProfileDetail', { profile });
+    navigation.navigate('ProfileDetail', { profile, fromScreen: 'Search' });
   };
 
   // Render a profile square, allowing the grid to override the visual size to
