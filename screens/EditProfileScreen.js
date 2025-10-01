@@ -21,10 +21,9 @@ const EditProfileScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
   const [formData, setFormData] = useState({
-    username: '',
-    firstName: '',
-    lastName: '',
-    email: '',
+    currentUsername: '',
+    newUsername: '',
+    confirmUsername: '',
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -47,10 +46,9 @@ const EditProfileScreen = ({ navigation }) => {
       if (userData) {
         const parsed = JSON.parse(userData);
         setFormData({
-          username: parsed.pseudonym || '',
-          firstName: parsed.firstName || '',
-          lastName: parsed.lastName || '',
-          email: parsed.email || '',
+          currentUsername: parsed.pseudonym || '',
+          newUsername: '',
+          confirmUsername: '',
         });
       }
     } catch (error) {
@@ -61,28 +59,30 @@ const EditProfileScreen = ({ navigation }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Username validation
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (formData.username.trim().length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    } else if (formData.username.trim().length > 20) {
-      newErrors.username = 'Username must be 20 characters or less';
+    // Current username validation
+    if (!formData.currentUsername.trim()) {
+      newErrors.currentUsername = 'Current username is required';
     }
 
-    // First/Last name validation
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+    // New username validation
+    if (!formData.newUsername.trim()) {
+      newErrors.newUsername = 'New username is required';
+    } else if (formData.newUsername.trim().length < 3) {
+      newErrors.newUsername = 'Username must be at least 3 characters';
+    } else if (formData.newUsername.trim().length > 20) {
+      newErrors.newUsername = 'Username must be 20 characters or less';
     }
 
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+    // Confirm username validation
+    if (!formData.confirmUsername.trim()) {
+      newErrors.confirmUsername = 'Please confirm your new username';
+    } else if (formData.newUsername !== formData.confirmUsername) {
+      newErrors.confirmUsername = 'Usernames do not match';
+    }
+
+    // Check if new username is different from current
+    if (formData.currentUsername && formData.newUsername && formData.currentUsername === formData.newUsername) {
+      newErrors.newUsername = 'New username must be different from current username';
     }
 
     setErrors(newErrors);
@@ -112,24 +112,29 @@ const EditProfileScreen = ({ navigation }) => {
       const existingUserData = await AsyncStorage.getItem('userData');
       if (existingUserData) {
         const userData = JSON.parse(existingUserData);
+        
+        // Check if current username matches
+        if (userData.pseudonym !== formData.currentUsername.trim()) {
+          Alert.alert('Error', 'Current username is incorrect.');
+          setIsLoading(false);
+          return;
+        }
+
         const updatedUserData = {
           ...userData,
-          pseudonym: formData.username.trim(),
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          email: formData.email.trim(),
+          pseudonym: formData.newUsername.trim(),
         };
 
         await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
-        Alert.alert('Success', 'Profile updated successfully!', [
+        Alert.alert('Success', 'Username updated successfully!', [
           { text: 'OK', onPress: () => navigation.goBack() }
         ]);
       } else {
         Alert.alert('Error', 'No user data found. Please try again.');
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      console.error('Error updating username:', error);
+      Alert.alert('Error', 'Failed to update username. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +149,10 @@ const EditProfileScreen = ({ navigation }) => {
     return (
       <View style={styles.inputContainer}>
         <Text style={[styles.inputLabel, { color: theme.colors.text }]}>{label}</Text>
-        <View style={[styles.inputWrapper, { borderColor: errors[field] ? theme.colors.error : '#E2E8F0' }]}>
+        <View style={[styles.inputWrapper, { 
+          borderColor: errors[field] ? theme.colors.error : '#E2E8F0',
+          backgroundColor: theme.colors.surface 
+        }]}>
           <TextInput
             style={[styles.textInput, { color: theme.colors.text }]}
             placeholder={placeholder}
@@ -169,7 +177,7 @@ const EditProfileScreen = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={['#FAF6F0', '#F5F1EB']}
+        colors={theme.dark ? ['#1F2937', '#111827'] : ['#FAF6F0', '#F5F1EB']}
         style={styles.gradient}
       >
         {/* Header */}
@@ -178,9 +186,9 @@ const EditProfileScreen = ({ navigation }) => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#3E5F44" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Change Username</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -196,18 +204,17 @@ const EditProfileScreen = ({ navigation }) => {
                 <Ionicons name="person" size={32} color="white" />
               </View>
             </View>
-            <Text style={styles.welcomeTitle}>Update Your Profile</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Keep your information up to date
+            <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>Change Username</Text>
+            <Text style={[styles.welcomeSubtitle, { color: theme.colors.text }]}>
+              Update your username
             </Text>
           </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
-            {renderInput('username', 'Username', 'Enter your username')}
-            {renderInput('firstName', 'First Name', 'Enter your first name')}
-            {renderInput('lastName', 'Last Name', 'Enter your last name')}
-            {renderInput('email', 'Email', 'Enter your email address', { keyboardType: 'email-address', autoCapitalize: 'none' })}
+            {renderInput('currentUsername', 'Current Username', 'Enter your current username', { autoCapitalize: 'none' })}
+            {renderInput('newUsername', 'New Username', 'Enter your new username', { autoCapitalize: 'none' })}
+            {renderInput('confirmUsername', 'Confirm Username', 'Confirm your new username', { autoCapitalize: 'none' })}
           </View>
 
           {/* Save Button */}
@@ -226,7 +233,7 @@ const EditProfileScreen = ({ navigation }) => {
                 <Text style={styles.saveButtonText}>Saving...</Text>
               ) : (
                 <>
-                  <Text style={styles.saveButtonText}>Save Changes</Text>
+                  <Text style={styles.saveButtonText}>Update Username</Text>
                   <Ionicons name="checkmark" size={20} color="white" style={styles.checkIcon} />
                 </>
               )}
@@ -255,7 +262,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#3E5F44',
   },
   placeholder: { width: 40 },
   scrollView: { flex: 1 },
@@ -279,13 +285,11 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#3E5F44',
     marginBottom: 8,
     textAlign: 'center',
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#4B5563',
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: 20,
@@ -301,18 +305,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#374151',
   },
   inputWrapper: {
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: 'white',
   },
   textInput: {
     fontSize: 16,
-    color: '#1F2937',
   },
   errorText: {
     fontSize: 14,

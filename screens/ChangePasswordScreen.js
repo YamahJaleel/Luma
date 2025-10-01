@@ -134,7 +134,10 @@ const ChangePasswordScreen = ({ navigation }) => {
     return (
       <View style={styles.inputContainer}>
         <Text style={[styles.inputLabel, { color: theme.colors.text }]}>{label}</Text>
-        <View style={[styles.inputWrapper, { borderColor: errors[field] ? theme.colors.error : '#E2E8F0' }]}>
+        <View style={[styles.inputWrapper, { 
+          borderColor: errors[field] ? theme.colors.error : '#E2E8F0',
+          backgroundColor: theme.colors.surface 
+        }]}>
           <TextInput
             style={[styles.textInput, { color: theme.colors.text }]}
             placeholder={placeholder}
@@ -196,7 +199,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={['#FAF6F0', '#F5F1EB']}
+        colors={theme.dark ? ['#1F2937', '#111827'] : ['#FAF6F0', '#F5F1EB']}
         style={styles.gradient}
       >
         {/* Header */}
@@ -205,9 +208,9 @@ const ChangePasswordScreen = ({ navigation }) => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#3E5F44" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Change Password</Text>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Change Password</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -223,8 +226,8 @@ const ChangePasswordScreen = ({ navigation }) => {
                 <Ionicons name="lock-closed" size={32} color="white" />
               </View>
             </View>
-            <Text style={styles.welcomeTitle}>Update Your Password</Text>
-            <Text style={styles.welcomeSubtitle}>
+            <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>Update Your Password</Text>
+            <Text style={[styles.welcomeSubtitle, { color: theme.colors.text }]}>
               Keep your account secure with a strong password
             </Text>
           </View>
@@ -295,7 +298,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#3E5F44',
   },
   placeholder: { width: 40 },
   scrollView: { flex: 1 },
@@ -319,13 +321,11 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#3E5F44',
     marginBottom: 8,
     textAlign: 'center',
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#4B5563',
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: 20,
@@ -341,21 +341,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#374151',
   },
   inputWrapper: {
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: 'white',
     flexDirection: 'row',
     alignItems: 'center',
   },
   textInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1F2937',
   },
   eyeIcon: {
     padding: 4,

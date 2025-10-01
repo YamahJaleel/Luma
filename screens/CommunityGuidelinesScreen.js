@@ -1,115 +1,162 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { useTheme } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from 'react-native-paper';
 
 const CommunityGuidelinesScreen = ({ navigation }) => {
   const theme = useTheme();
-
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Community Guidelines</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+      <View style={[styles.header, { backgroundColor: theme.colors.background, borderBottomColor: theme.colors.outline }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Community Guidelines</Text>
+        <View style={styles.placeholder} />
       </View>
 
       {/* Content */}
-      <View style={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Our Community Standards</Text>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.iconContainer}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="people" size={48} color={theme.colors.primary} />
+          </View>
+        </View>
         
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          Luma is a safety-first platform designed to provide a truly protected space in the dating world. Our community guidelines ensure that every user feels safe, respected, and empowered to share their experiences.
-        </Text>
-
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Core Principles</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Community Guidelines</Text>
         
-        <Text style={[styles.subsectionTitle, { color: theme.colors.text }]}>1. Safety First</Text>
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          Your safety is our top priority. We maintain strict privacy measures and provide tools to help you verify concerns and share experiences without fear of exposure.
-        </Text>
+        <View style={[styles.guidelinesContent, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.guidelinesText, { color: theme.colors.text }]}>
 
-        <Text style={[styles.subsectionTitle, { color: theme.colors.text }]}>2. Respectful Communication</Text>
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          Treat all community members with respect and kindness. Harassment, bullying, or abusive behavior will not be tolerated.
-        </Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>1. Purpose of the Guidelines{'\n\n'}</Text>
+            Luma is designed as a safety-first platform that empowers women in their relationships by offering protection, security, and peace of mind. These Community Guidelines establish the expectations and responsibilities for all users to ensure that the platform remains respectful, supportive, and safe.{'\n\n'}
 
-        <Text style={[styles.subsectionTitle, { color: theme.colors.text }]}>3. Authentic Sharing</Text>
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          Share genuine experiences and insights. False information or misleading content undermines our community's trust and safety.
-        </Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>2. Core Principles{'\n\n'}</Text>
+            <Text style={[styles.subsectionTitle, { color: theme.colors.primary }]}>a) Safety{'\n'}</Text>
+            Safety is our highest priority. Users are expected to use the platform in a manner that does not endanger or compromise others.{'\n\n'}
+            <Text style={[styles.subsectionTitle, { color: theme.colors.primary }]}>b) Respect{'\n'}</Text>
+            Interactions must be courteous and free from harassment, intimidation, or discrimination of any kind.{'\n\n'}
+            <Text style={[styles.subsectionTitle, { color: theme.colors.primary }]}>c) Integrity{'\n'}</Text>
+            All contributions should be honest, authentic, and free from intentional deception or misinformation.{'\n\n'}
+            <Text style={[styles.subsectionTitle, { color: theme.colors.primary }]}>d) Privacy{'\n'}</Text>
+            Users must respect the confidentiality and anonymity of others, refraining from disclosing personal or identifying information without consent.{'\n\n'}
 
-        <Text style={[styles.subsectionTitle, { color: theme.colors.text }]}>4. Privacy Protection</Text>
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          Respect others' privacy and anonymity. Do not attempt to identify or expose other users' personal information.
-        </Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>3. Prohibited Content{'\n\n'}</Text>
+            The following types of content are expressly prohibited:{'\n\n'}
+            • Harassment, threats, or intimidation{'\n'}
+            • Defamatory, libelous, or slanderous statements{'\n'}
+            • Hate speech or discriminatory language{'\n'}
+            • Spam, fraudulent activity, or unsolicited promotions{'\n'}
+            • Sharing of personal or sensitive information without consent{'\n'}
+            • Inappropriate, obscene, or sexually explicit material{'\n'}
+            • Misinformation, false claims, or deceptive content{'\n\n'}
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Prohibited Content</Text>
-        
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          • Harassment, threats, or intimidation{'\n'}
-          • Hate speech or discriminatory language{'\n'}
-          • Spam or promotional content{'\n'}
-          • Personal information sharing{'\n'}
-          • Inappropriate or explicit content{'\n'}
-          • False or misleading information
-        </Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>4. Defamation and Harmful Conduct{'\n\n'}</Text>
+            Users are strictly prohibited from engaging in any form of defamation or reputational harm. Specifically:{'\n\n'}
+            • Publishing false statements presented as fact that may damage another’s reputation{'\n'}
+            • Engaging in personal attacks or derogatory commentary{'\n'}
+            • Circulating malicious rumors or targeted harassment campaigns{'\n\n'}
+            The platform is not intended to disparage individuals, but to provide empowerment, protection, and constructive dialogue.{'\n\n'}
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Reporting & Enforcement</Text>
-        
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          If you encounter content or behavior that violates these guidelines, please report it immediately. Our moderation team reviews all reports and takes appropriate action to maintain our community standards.
-        </Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>5. Reporting and Enforcement{'\n\n'}</Text>
+            Users are encouraged to report content or behavior that violates these Guidelines. All reports will be reviewed by our moderation team. Depending on severity and frequency, enforcement actions may include:{'\n\n'}
+            • Removal of violating content{'\n'}
+            • Issuance of formal warnings{'\n'}
+            • Temporary suspension of account privileges{'\n'}
+            • Permanent termination of accounts{'\n'}
+            • Referral to law enforcement or legal authorities when appropriate{'\n\n'}
 
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          Violations may result in content removal, account warnings, or account suspension depending on the severity and frequency of violations.
-        </Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>6. Shared Responsibility{'\n\n'}</Text>
+            Every member of the community contributes to maintaining an environment of trust and respect. By using Luma, you agree to uphold these standards, act responsibly, and contribute positively to the well-being of all members.{'\n\n'}
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Questions?</Text>
-        
-        <Text style={[styles.paragraph, { color: theme.colors.text }]}>
-          If you have questions about these guidelines or need clarification on any policy, please contact our support team.
-        </Text>
-      </View>
-    </ScrollView>
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>7. Questions and Clarifications{'\n\n'}</Text>
+            For questions about these Community Guidelines or to seek clarification, users contact us at:{'\n\n'}
+            luma312003@gmail.com{'\n'}
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { padding: 20, paddingTop: 60 },
-  headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  container: {
+    flex: 1,
   },
-  headerTitle: { fontSize: 26, fontWeight: 'bold' },
-  headerSpacer: { width: 40 },
-  content: { padding: 20 },
-  sectionTitle: { fontSize: 22, fontWeight: 'bold', marginTop: 24, marginBottom: 12 },
-  subsectionTitle: { fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  paragraph: { fontSize: 16, lineHeight: 24, marginBottom: 16 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+    marginTop: 20,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F0E4D3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  guidelinesContent: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  guidelinesText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 4,
+  },
 });
 
 export default CommunityGuidelinesScreen;

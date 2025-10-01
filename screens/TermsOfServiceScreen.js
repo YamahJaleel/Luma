@@ -29,28 +29,60 @@ const TermsOfServiceScreen = ({ navigation }) => {
         
         <Text style={[styles.title, { color: theme.colors.text }]}>Terms of Service</Text>
         
-        <View style={[styles.termsContent, { backgroundColor: theme.colors.surface }]}>
-          <Text style={[styles.termsText, { color: theme.colors.text }]}>
+        <View style={[styles.policyContent, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.policyText, { color: theme.colors.text }]}>
+
             <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>1. Acceptance of Terms{'\n\n'}</Text>
-            By accessing and using the Luma application, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>2. Privacy and Safety{'\n\n'}</Text>
-            Your privacy and safety are our top priorities. All personal information shared within the app is encrypted and protected. Users are encouraged to maintain anonymity and use pseudonyms for their safety.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>3. Community Guidelines{'\n\n'}</Text>
-            Users must respect community guidelines and maintain a safe environment. Harassment, hate speech, or any form of abuse will not be tolerated and may result in account termination.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>4. User Responsibilities{'\n\n'}</Text>
-            Users are responsible for the content they post and share. All information should be accurate and helpful to the community. Users must not share false or misleading information.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>5. Data Protection{'\n\n'}</Text>
-            We implement industry-standard security measures to protect your data. Your information is never sold to third parties and is only used to provide and improve our services.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>6. Service Modifications{'\n\n'}</Text>
-            We reserve the right to modify or discontinue the service at any time. Users will be notified of significant changes to these terms.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>7. Contact Information{'\n\n'}</Text>
-            For questions about these terms, please contact our support team through the app or at luma312003@gmail.com
+            By accessing or using this application (“Luma”), you agree to be bound by these Terms of Service, together with our Privacy Policy and Community Guidelines. If you do not agree, you must not use the platform.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>2. Eligibility{'\n\n'}</Text>
+            The platform is intended solely for individuals aged 18 years or older. By using the platform, you represent and warrant that you are at least 18 years of age and legally capable of entering into these Terms.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>3. User Accounts and Responsibilities{'\n\n'}</Text>
+            Users are responsible for maintaining the confidentiality of their login credentials and for all activities conducted under their account. You agree to immediately notify us of any unauthorized use of your account or security breach.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>4. Prohibited Uses{'\n\n'}</Text>
+            You agree not to use the platform for any unlawful or harmful purpose, including but not limited to:{'\n\n'}
+            • Posting defamatory, libelous, or slanderous statements{'\n'}
+            • Harassment, bullying, or targeted abuse of individuals or groups{'\n'}
+            • Hate speech or discriminatory conduct{'\n'}
+            • Sharing personal information of others without consent{'\n'}
+            • Uploading obscene, sexually explicit, or harmful content{'\n'}
+            • Attempting to hack, disrupt, or compromise the platform’s security{'\n'}
+            • Engaging in spam, scams, or fraudulent activity{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>5. Defamation and Harmful Conduct{'\n\n'}</Text>
+            This platform is intended to provide empowerment, safety, and peace of mind. Users are strictly prohibited from posting or transmitting content that harms the reputation, character, or dignity of others. This includes false statements, personal attacks, or malicious rumors.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>6. Intellectual Property{'\n\n'}</Text>
+            All intellectual property rights in the platform, including trademarks, logos, and content created by Luma, are owned by us. Users retain ownership of content they create but grant Luma a limited license to host, display, and share it within the platform in accordance with these Terms.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>7. Enforcement and Termination{'\n\n'}</Text>
+            We reserve the right to investigate violations of these Terms. Depending on the severity of misconduct, actions may include:{'\n\n'}
+            • Immediate removal of offending content{'\n'}
+            • Issuance of account warnings{'\n'}
+            • Temporary suspension of account privileges{'\n'}
+            • Permanent termination of account access{'\n'}
+            • Referral to law enforcement or legal authorities, where appropriate{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>8. Disclaimers{'\n\n'}</Text>
+            The platform is provided on an “as is” and “as available” basis. We do not warrant that the platform will be uninterrupted, error-free, or completely secure. We do not guarantee the accuracy, reliability, or completeness of user-generated content.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>9. Limitation of Liability{'\n\n'}</Text>
+            To the maximum extent permitted by law, Luma shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform, including but not limited to emotional distress, reputational harm, or loss of data.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>10. Indemnification{'\n\n'}</Text>
+            You agree to indemnify, defend, and hold harmless Luma, its affiliates, and team members from any claims, damages, or expenses arising from your violation of these Terms or misuse of the platform.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>11. Governing Law and Jurisdiction{'\n\n'}</Text>
+            These Terms shall be governed by and construed under the laws of Ontario, Canada. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts located in Ontario.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>12. Changes to the Terms{'\n\n'}</Text>
+            We may update or modify these Terms at any time. Material changes will be communicated through the app. Continued use of the platform after changes take effect constitutes acceptance of the revised Terms.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>13. Contact Information{'\n\n'}</Text>
+            For questions regarding these Terms of Service, please contact us at:{'\n\n'}
+            luma312003@gmail.com{'\n'}
           </Text>
         </View>
       </ScrollView>
@@ -105,7 +137,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  termsContent: {
+  policyContent: {
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -118,7 +150,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  termsText: {
+  policyText: {
     fontSize: 16,
     lineHeight: 24,
   },
@@ -129,4 +161,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TermsOfServiceScreen; 
+export default TermsOfServiceScreen;

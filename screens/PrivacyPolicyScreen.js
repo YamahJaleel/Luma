@@ -31,35 +31,54 @@ const PrivacyPolicyScreen = ({ navigation }) => {
         
         <View style={[styles.policyContent, { backgroundColor: theme.colors.surface }]}>
           <Text style={[styles.policyText, { color: theme.colors.text }]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>1. Information We Collect{'\n\n'}</Text>
-            We collect information you provide directly to us, such as when you create an account, post content, or communicate with other users. This may include your pseudonym, email address, and any content you choose to share.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>2. How We Use Your Information{'\n\n'}</Text>
-            We use the information we collect to provide, maintain, and improve our services, to communicate with you, and to ensure the safety and security of our community. Your personal information is never sold to third parties.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>3. Information Sharing and Disclosure{'\n\n'}</Text>
-            We do not share your personal information with third parties except as described in this policy. We may share information when required by law, to protect our rights, or to ensure community safety.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>4. Data Security{'\n\n'}</Text>
-            We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. All data is encrypted and stored securely.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>5. Your Privacy Choices{'\n\n'}</Text>
-            You can control your privacy settings through the app, including what information is visible to other users. You can also request deletion of your account and associated data at any time.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>6. Data Retention{'\n\n'}</Text>
-            We retain your information for as long as your account is active or as needed to provide services. When you delete your account, we will delete or anonymize your personal information.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>7. Children's Privacy{'\n\n'}</Text>
-            Our service is not intended for children under 18 years of age. We do not knowingly collect personal information from children under 18. If we become aware of such information, we will delete it immediately.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>8. International Data Transfers{'\n\n'}</Text>
-            Your information may be transferred to and processed in countries other than your own. We ensure appropriate safeguards are in place to protect your information in accordance with this policy.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>9. Changes to This Policy{'\n\n'}</Text>
-            We may update this privacy policy from time to time. We will notify you of any material changes by posting the new policy in the app and updating the effective date.{'\n\n'}
-            
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>10. Contact Us{'\n\n'}</Text>
-            If you have any questions about this privacy policy or our privacy practices, please contact us at luma312003@gmail.com or through the app's support system.
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>1. Introduction{'\n\n'}</Text>
+            This Privacy Policy explains how Luma collects, uses, discloses, and protects your personal information. By using this platform, you consent to the practices described herein.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>2. Information We Collect{'\n\n'}</Text>
+            We collect the following categories of information:{'\n\n'}
+            • Information you provide directly, such as your pseudonym, email address, and content you choose to share{'\n'}
+            • Technical and device-related information, including identifiers, usage data, and log information{'\n'}
+            • Communications and interactions with other users or with the support team{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>3. How We Use Information{'\n\n'}</Text>
+            We use your information to:{'\n\n'}
+            • Operate, maintain, and improve the platform{'\n'}
+            • Enforce our Terms of Service and Community Guidelines{'\n'}
+            • Provide support and respond to inquiries{'\n'}
+            • Protect user safety and security{'\n'}
+            • Comply with applicable legal obligations{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>4. Sharing and Disclosure{'\n\n'}</Text>
+            We do not sell or rent your personal data. Information may be shared only in the following circumstances:{'\n\n'}
+            • When required by law or in response to valid legal process{'\n'}
+            • To protect the rights, property, or safety of the platform or its users{'\n'}
+            • With trusted service providers who support our operations under strict confidentiality obligations{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>5. Data Security{'\n\n'}</Text>
+            We implement administrative, technical, and physical safeguards to secure your information. Sensitive data is encrypted both in transit and at rest to mitigate risks of unauthorized access, disclosure, or misuse.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>6. Your Rights and Choices{'\n\n'}</Text>
+            You may exercise the following rights:{'\n\n'}
+            • Access and update your personal information{'\n'}
+            • Control visibility of your information within the app{'\n'}
+            • Request deletion of your account and associated data, subject to legal retention requirements{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>7. Data Retention{'\n\n'}</Text>
+            We retain information only for as long as necessary to provide services or comply with legal requirements. Upon account deletion, personal data will either be deleted or irreversibly anonymized, unless retention is required by law.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>8. Children’s Privacy{'\n\n'}</Text>
+            This platform is not directed to individuals under the age of 18. We do not knowingly collect data from minors. If such data is inadvertently collected, it will be promptly deleted in compliance with applicable law.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>9. International Data Transfers{'\n\n'}</Text>
+            Your information may be transferred to and processed in countries other than your own. Where such transfers occur, we ensure that appropriate safeguards are in place to protect your personal information in accordance with applicable data protection laws.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>10. Changes to This Policy{'\n\n'}</Text>
+            We may update this Privacy Policy periodically to reflect changes in our practices, services, or legal obligations. Material changes will be communicated through the application, and the effective date will be updated accordingly.{'\n\n'}
+
+            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>11. Contact Information{'\n\n'}</Text>
+            For questions, concerns, or requests regarding this Privacy Policy, please contact us at:{'\n\n'}
+            Email: luma312003@gmail.com{'\n'}
           </Text>
         </View>
       </ScrollView>
@@ -138,4 +157,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PrivacyPolicyScreen; 
+export default PrivacyPolicyScreen;
