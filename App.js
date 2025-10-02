@@ -8,6 +8,7 @@ import * as Notifications from 'expo-notifications';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
 import { TabProvider } from './components/TabContext';
 import { OnboardingProvider, useOnboarding } from './components/OnboardingContext';
+import { FirebaseProvider } from './contexts/FirebaseContext';
 import TabNavigator from './components/MainStackNavigator';
 
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -203,13 +204,15 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <OnboardingProvider>
-      <SettingsProvider>
-        <TabProvider>
-          <AppContent />
-        </TabProvider>
-      </SettingsProvider>
-    </OnboardingProvider>
+    <FirebaseProvider>
+      <OnboardingProvider>
+        <SettingsProvider>
+          <TabProvider>
+            <AppContent />
+          </TabProvider>
+        </SettingsProvider>
+      </OnboardingProvider>
+    </FirebaseProvider>
   );
 }
 

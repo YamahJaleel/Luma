@@ -8,10 +8,13 @@ import { useTheme } from 'react-native-paper';
 import { useOnboarding } from '../components/OnboardingContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
+import { authService } from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 
 const LicenseVerificationScreen = ({ route, navigation }) => {
   const signupName = route?.params?.signupName || '';
+  const pendingUserData = route?.params?.pendingUserData || null;
   const { setIsOnboarded } = useOnboarding();
   const { setTabHidden } = useTabContext();
   const [loading, setLoading] = useState(false);
@@ -21,6 +24,7 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
   const [photoUri, setPhotoUri] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null); // 'success' | 'failed' | null
   const [detectedGender, setDetectedGender] = useState(null);
+  const [creatingAccount, setCreatingAccount] = useState(false);
   
   useFocusEffect(
     React.useCallback(() => {
@@ -177,6 +181,88 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
     }
   }, []);
 
+  // Create Firebase account after gender verification passes
+  const createFirebaseAccount = async () => {
+    if (!pendingUserData) {
+      console.log('⚠️ No pending user data found, proceeding without Firebase account creation');
+      navigation.navigate('Congrats');
+      return;
+    }
+
+    // 🧪 DEV MODE: Skip verification for testing
+    if (__DEV__ && false) { // Set to true to enable testing bypass
+      console.log('🧪 DEV MODE: Skipping gender verification for testing');
+      setDetectedGender('Man');
+      setVerificationStatus('success');
+      setResult({ gender: 'Man' });
+    }
+
+    setCreatingAccount(true);
+    console.log('🔥 Creating Firebase account...');
+
+    try {
+      // Create Firebase account with the stored form data
+      const user = await authService.createUser(
+        pendingUserData.email,
+        pendingUserData.password,
+        pendingUserData.pseudonym
+      );
+
+      console.log('✅ Firebase account created successfully:', user.uid);
+
+      // Save additional user data to Firestore (optional)
+      const completeUserData = {
+        ...pendingUserData,
+        firebaseUid: user.uid,
+        isVerified: true,
+        detectedGender: detectedGender,
+        emailVerified: user.emailVerified,
+      };
+
+      // Remove pending data from AsyncStorage
+      await AsyncStorage.removeItem('pendingUserData');
+      
+      // Save complete user data 
+      await AsyncStorage.setItem('userData', JSON.stringify(completeUserData));
+
+      console.log('🎉 Account setup complete!');
+
+      Alert.alert(
+        '🎉 Account Created!',
+        `Welcome ${pendingUserData.pseudonym}! Your account has been created successfully.`,
+        [
+          {
+            text: 'Continue',
+            onPress: () => {
+              setIsOnboarded(true);
+              // navigation.navigate('Congrats') // Will happen automatically due to onboarding state change
+            }
+          }
+        ]
+      );
+
+    } catch (error) {
+      console.error('❌ Failed to create Firebase account:', error);
+      Alert.alert(
+        'Account Creation Failed',
+        'There was an error creating your account. Please try again.',
+        [
+          {
+            text: 'Retry',
+            onPress: () => createFirebaseAccount()
+          },
+          {
+            text: 'Continue Anyway',
+            style: 'cancel',
+            onPress: () => navigation.navigate('Congrats')
+          }
+        ]
+      );
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#FAF6F0", "#F5F1EB"]} style={styles.gradient}>
@@ -220,6 +306,21 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
                   <Text style={styles.primaryButtonText}>Take Selfie</Text>
                 </LinearGradient>
               </TouchableOpacity>
+
+              {/* 🧪 DEVELOPMENT TEST BUTTON */}
+              {__DEV__ && (
+                <TouchableOpacity 
+                  style={[styles.secondaryButton, { marginTop: 10 }]} 
+                  onPress={() => {
+                    console.log('🧪 TEST: Simulating successful gender verification');
+                    setDetectedGender('Man');
+                    setVerificationStatus('success');
+                    setResult({ gender: 'Man' });
+                  }}
+                >
+                  <Text style={styles.secondaryButtonText}>🧪 Test: Skip Verification</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
 
@@ -275,15 +376,22 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
               </View>
               <View style={{ height: 8 }} />
               <TouchableOpacity
-                style={[styles.primaryButton, verificationStatus !== 'success' && styles.primaryButtonDisabled]}
-                onPress={() => {
-                  navigation.navigate('Congrats');
-                }}
-                disabled={verificationStatus !== 'success'}
+                style={[styles.primaryButton, (verificationStatus !== 'success' || creatingAccount) && styles.primaryButtonDisabled]}
+                onPress={createFirebaseAccount}
+                disabled={verificationStatus !== 'success' || creatingAccount}
               >
                 <LinearGradient colors={["#3E5F44", "#4A7C59"]} style={styles.primaryButtonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={styles.primaryButtonText}>Finish</Text>
+                  {creatingAccount ? (
+                    <>
+                      <ActivityIndicator color="#fff" />
+                      <Text style={styles.primaryButtonText}> Creating Account...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
+                      <Text style={styles.primaryButtonText}>Finish</Text>
+                    </>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -333,8 +441,8 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   lottieContainer: {
-    width: 240,
-    height: 240,
+    width: 280,
+    height: 280,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,

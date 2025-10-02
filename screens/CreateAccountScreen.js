@@ -83,8 +83,29 @@ const CreateAccountScreen = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const formatDateInput = (value) => {
+    // Remove all non-numeric characters
+    const numericValue = value.replace(/\D/g, '');
+    
+    // Format as MM/DD/YYYY
+    if (numericValue.length <= 2) {
+      return numericValue;
+    } else if (numericValue.length <= 4) {
+      return `${numericValue.slice(0, 2)}/${numericValue.slice(2)}`;
+    } else {
+      return `${numericValue.slice(0, 2)}/${numericValue.slice(2, 4)}/${numericValue.slice(4, 8)}`;
+    }
+  };
+
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let processedValue = value;
+    
+    // Auto-format date of birth input
+    if (field === 'dateOfBirth') {
+      processedValue = formatDateInput(value);
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: processedValue }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -99,23 +120,26 @@ const CreateAccountScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Save user data to AsyncStorage (in a real app, this would go to your backend)
+      // Save form data temporarily - Firebase account will be created after gender verification
       const userData = {
         ...formData,
         id: Date.now().toString(),
         createdAt: new Date().toISOString(),
         isVerified: false,
+        pendingVerification: true, // Flag to indicate account creation is pending verification
       };
 
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
-
-      // After account creation, navigate to gender verification
-      navigation.navigate('LicenseVerification', { signupName: formData.pseudonym });
+      await AsyncStorage.setItem('pendingUserData', JSON.stringify(userData));
       
-      // Clear form after successful account creation
+      console.log('📝 Form data saved temporarily, proceeding to gender verification');
+
+      // Navigate to gender verification - Firebase account will be created after verification passes
+      navigation.navigate('LicenseVerification', { 
+        signupName: formData.pseudonym,
+        pendingUserData: userData 
+      });
+      
+      // Clear form after navigation
       setFormData({
         email: '',
         password: '',
@@ -124,8 +148,8 @@ const CreateAccountScreen = ({ navigation }) => {
         dateOfBirth: '',
       });
     } catch (error) {
-      console.error('Error creating account:', error);
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      console.error('Error saving form data:', error);
+      Alert.alert('Error', 'Failed to save data. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +237,7 @@ const CreateAccountScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.skipButton}
             onPress={() => {
-              // Skip account creation and go to gender verification
+              // Skip account creation and go to gender verification  
               navigation.navigate('LicenseVerification', { signupName: formData.pseudonym });
             }}
           >
@@ -247,7 +271,7 @@ const CreateAccountScreen = ({ navigation }) => {
           <View style={styles.formContainer}>
             {renderInput('pseudonym', 'Pseudonym', 'Choose a unique username')}
             {renderInput('email', 'Email', 'Enter your email address')}
-            {renderInput('dateOfBirth', 'Date of Birth', 'MM/DD/YYYY', { keyboardType: 'default' })}
+            {renderInput('dateOfBirth', 'Date of Birth', 'MM/DD/YYYY', { keyboardType: 'numeric' })}
             {renderInput('password', 'Password', 'Create a strong password', { secureTextEntry: !showPassword })}
             {renderInput('confirmPassword', 'Confirm Password', 'Confirm your password', { secureTextEntry: !showConfirmPassword })}
           </View>

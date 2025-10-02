@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { profileService, postService, commentService, messageService } from '../services/firebaseService';
 
@@ -13,8 +13,10 @@ export const useFirebase = () => {
 };
 
 export const FirebaseProvider = ({ children }) => {
+  // Set an initializing state whilst Firebase connects
+  const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [profiles, setProfiles] = useState([]);
   const [posts, setPosts] = useState([]);
   const [userProfiles, setUserProfiles] = useState([]);
@@ -23,15 +25,19 @@ export const FirebaseProvider = ({ children }) => {
   const [likedPosts, setLikedPosts] = useState([]);
   const [messages, setMessages] = useState([]);
 
+  // Handle user state changes
+  const handleAuthStateChanged = useCallback((user) => {
+    setUser(user);
+    if (initializing) setInitializing(false);
+    console.log('🔥 Auth state changed:', user ? `User logged in: ${user.email}` : 'User logged out');
+  }, [initializing]);
+
   // Initialize Firebase auth listener
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged((user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
+    console.log('🔥 Setting up Firebase auth listener...');
+    const subscriber = authService.onAuthStateChanged(handleAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, [handleAuthStateChanged]);
 
   // Load user-specific data when user changes
   useEffect(() => {
@@ -130,6 +136,25 @@ export const FirebaseProvider = ({ children }) => {
   const resetPassword = async (email) => {
     try {
       await authService.resetPassword(email);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signInAnonymously = async () => {
+    try {
+      const user = await authService.signInAnonymously();
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Get ID token for backend authentication
+  const getIdToken = async () => {
+    try {
+      const token = await authService.getIdToken();
+      return token;
     } catch (error) {
       throw error;
     }
@@ -253,6 +278,7 @@ export const FirebaseProvider = ({ children }) => {
     // State
     user,
     loading,
+    initializing, // New: Add initializing state
     profiles,
     posts,
     userProfiles,
@@ -265,8 +291,10 @@ export const FirebaseProvider = ({ children }) => {
     signIn,
     signUp,
     signInWithGoogle,
+    signInAnonymously, // New: Anonymous sign-in
     signOut,
     resetPassword,
+    getIdToken, // New: Backend authentication token
 
     // Data loading methods
     loadProfiles,
@@ -291,6 +319,12 @@ export const FirebaseProvider = ({ children }) => {
     // Message methods
     createMessage
   };
+
+  // Prevent rendering until Firebase connection is established
+  if (initializing) {
+    console.log('🔥 Firebase initializing...');
+    return null;
+  }
 
   return (
     <FirebaseContext.Provider value={value}>

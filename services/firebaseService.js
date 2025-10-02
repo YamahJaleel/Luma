@@ -103,6 +103,24 @@ export const profileService = {
       console.error('Error deleting profile:', error);
       throw error;
     }
+  },
+
+  // Get profiles by user ID
+  getUserProfiles: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.PROFILES),
+        where('userId', '==', userId)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting user profiles:', error);
+      throw error;
+    }
   }
 };
 
@@ -181,6 +199,44 @@ export const postService = {
       await deleteDoc(docRef);
     } catch (error) {
       console.error('Error deleting post:', error);
+      throw error;
+    }
+  },
+
+  // Get posts by user ID
+  getUserPosts: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.POSTS),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting user posts:', error);
+      throw error;
+    }
+  },
+
+  // Get liked posts by user ID
+  getLikedPosts: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.POSTS),
+        where('likedBy', 'array-contains', userId),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting liked posts:', error);
       throw error;
     }
   }
@@ -264,6 +320,25 @@ export const commentService = {
       console.error('Error deleting comment:', error);
       throw error;
     }
+  },
+
+  // Get comments by user ID
+  getUserComments: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.COMMENTS),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
+	  const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting user comments:', error);
+      throw error;
+    }
   }
 };
 
@@ -318,6 +393,25 @@ export const messageService = {
       }));
     } catch (error) {
       console.error('Error getting user conversations:', error);
+      throw error;
+    }
+  },
+
+  // Get messages by user ID
+  getUserMessages: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.MESSAGES),
+        where('participants', 'array-contains', userId),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting user messages:', error);
       throw error;
     }
   }

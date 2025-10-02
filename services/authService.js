@@ -1,6 +1,7 @@
 import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInAnonymously,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -9,7 +10,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  getIdToken
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -114,6 +116,36 @@ export const authService = {
       throw new Error('No user is currently signed in');
     } catch (error) {
       console.error('Error sending email verification:', error);
+      throw error;
+    }
+  },
+
+  // Anonymous sign-in
+  signInAnonymously: async () => {
+    try {
+      const userCredential = await signInAnonymously(auth);
+      console.log('User signed in anonymously:', userCredential.user.uid);
+      return userCredential.user;
+    } catch (error) {
+      if (error.code === 'auth/operation-not-allowed') {
+        console.log('Enable anonymous in your firebase console.');
+      }
+      console.error('Error signing in anonymously:', error);
+      throw error;
+    }
+  },
+
+  // Get ID token for backend authentication
+  getIdToken: async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await getIdToken(user);
+        return token;
+      }
+      throw new Error('No user is currently signed in');
+    } catch (error) {
+      console.error('Error getting ID token:', error);
       throw error;
     }
   }
