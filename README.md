@@ -1,6 +1,6 @@
 # Luma
 
-Luma is a safety-focused dating app that allows users to anonymously check if someone they're dating is already in a relationship, has red flags, or is trustworthy—based on community feedback.
+Luma is a safety-focused dating app that allows users to anonymously check if someone they're dating is already in a relationship, has red flags, or is trustworthy, based on community feedback.
 
 ## 🛡️ Mission
 
