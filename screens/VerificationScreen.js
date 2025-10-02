@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { View, Text, Alert, ActivityIndicator, StyleSheet, TouchableOpacity, Image, ScrollView, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
@@ -10,65 +10,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
 import LottieView from 'lottie-react-native';
 
-// Utility: normalize a name into a set of tokens for rough matching
-const tokenizeName = (name) => {
-  if (!name) return [];
-  return name
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean);
-};
-
-const normalizeLetters = (text) => {
-  if (!text) return '';
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z]/g, '');
-};
-
-const collapseRepeats = (text) => text.replace(/(.)\1+/g, '$1');
-
-// Return the fraction of characters of needle that appear in order within haystack (not necessarily contiguous)
-const subsequenceMatchRatio = (needle, haystack) => {
-  if (!needle) return 0;
-  let i = 0;
-  for (let j = 0; j < haystack.length && i < needle.length; j++) {
-    if (haystack[j] === needle[i]) i++;
-  }
-  return i / needle.length;
-};
-
-const roughlyNamesMatch = (extractedText, signupName) => {
-  if (!extractedText || !signupName) return false;
-  const haystackRaw = normalizeLetters(extractedText);
-  const haystack = haystackRaw;
-  const haystackCollapsed = collapseRepeats(haystackRaw);
-  const tokens = tokenizeName(signupName).map(normalizeLetters).filter(Boolean);
-  if (tokens.length === 0) return false;
-
-  // Threshold tolerant to OCR noise
-  const threshold = 0.6;
-
-  const tokenPasses = (token) => {
-    const r1 = subsequenceMatchRatio(token, haystack);
-    const r2 = subsequenceMatchRatio(token, haystackCollapsed);
-    const r = Math.max(r1, r2);
-    return r >= threshold || (token.length >= 5 && r >= 0.55);
-  };
-
-  // If there are 2+ tokens, require at least two tokens to meet threshold (order-insensitive across tokens)
-  if (tokens.length >= 2) {
-    const matches = tokens.reduce((acc, token) => acc + (tokenPasses(token) ? 1 : 0), 0);
-    return matches >= 2;
-  }
-
-  // Single-token names: require that one token matches
-  return tokenPasses(tokens[0]);
-};
-
 const LicenseVerificationScreen = ({ route, navigation }) => {
   const signupName = route?.params?.signupName || '';
   const { setIsOnboarded } = useOnboarding();
@@ -78,9 +19,8 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
   const cameraPermissionAskedRef = useRef(false);
   const theme = useTheme();
   const [photoUri, setPhotoUri] = useState(null);
-  const [uploadedUri, setUploadedUri] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null); // 'success' | 'failed' | null
-  const [forceEnableFinish, setForceEnableFinish] = useState(false);
+  const [detectedGender, setDetectedGender] = useState(null);
   
   useFocusEffect(
     React.useCallback(() => {
@@ -88,7 +28,6 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
       return () => setTabHidden(false);
     }, [])
   );
-
 
   const ensureCameraPermission = useCallback(async () => {
     // Ask only once per session
@@ -129,6 +68,7 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
       setPhotoUri(originalUri);
       setResult(null);
       setVerificationStatus(null);
+      setDetectedGender(null);
       try {
         const normalized = await manipulateAsync(
           originalUri,
@@ -142,55 +82,100 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
     }
   }, [ensureCameraPermission]);
 
-  const uploadLicense = useCallback(async (imageUri) => {
+  const uploadSelfie = useCallback(async (imageUri) => {
     setLoading(true);
-    setUploadedUri(imageUri);
+    console.log('🚀 Starting selfie upload process...');
+    console.log('📸 Image URI:', imageUri);
+    
     const formData = new FormData();
     formData.append('file', {
       uri: imageUri,
       type: 'image/jpeg',
-      name: 'license.jpg',
+      name: 'selfie.jpg',
     });
 
+    console.log('📡 Making API request to: https://reactlover-gender-api.hf.space/analyze');
+    console.log('🔧 FormData:', formData);
+
     try {
-      const response = await fetch('https://ReactLover-OCR-2.hf.space/extract_gender', {
+      const response = await fetch('https://reactlover-gender-api.hf.space/analyze', {
         method: 'POST',
-        headers: { accept: 'application/json' },
+        headers: { 
+          'Accept': 'application/json',
+        },
         body: formData,
       });
 
-      const data = await response.json();
-      if (__DEV__) console.log('API response:', data);
+      console.log('📊 Response received:');
+      console.log('   - Status:', response.status);
+      console.log('   - OK:', response.ok);
+      console.log('   - Status Text:', response.statusText);
+      console.log('   - Headers:', Object.fromEntries(response.headers.entries()));
 
-      if (data?.picture_quality === 'not clear') {
-        Alert.alert('⚠️ Picture not clear', 'Please retake the photo.');
-        // Re-open camera automatically
-        setPhotoUri(null);
-        openCamera();
+      // Check if response is ok
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error Response:');
+        console.error('   - Status:', response.status);
+        console.error('   - Response Body:', errorText);
+        Alert.alert('API Error', `Server returned ${response.status}: ${errorText}`);
+        setVerificationStatus('failed');
         return;
       }
 
-      const isMatch = roughlyNamesMatch(data?.extracted_text || '', signupName || '');
-      if (isMatch) {
-        Alert.alert('✅ Verification Successful', 'Name verified successfully');
+      // Check content type
+      const contentType = response.headers.get('content-type');
+      console.log('📄 Content-Type:', contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('⚠️ Non-JSON Response received:');
+        console.error('   - Content-Type:', contentType);
+        console.error('   - Response Body:', textResponse);
+        console.error('   - First 500 chars:', textResponse.substring(0, 500));
+        Alert.alert('Invalid Response', 'The server returned an unexpected response format.');
+        setVerificationStatus('failed');
+        return;
+      }
+
+      console.log('✅ Attempting to parse JSON response...');
+      const data = await response.json();
+      console.log('🎉 Gender API response parsed successfully:', data);
+
+      if (data && data.gender) {
+        console.log('🎯 Gender detected:', data.gender);
+        setDetectedGender(data.gender);
         setVerificationStatus('success');
+        Alert.alert('✅ Gender Detected', `Detected gender: ${data.gender}`);
       } else {
-        Alert.alert('❌ Verification Failed', 'Name does not match. Please try again.');
+        console.log('⚠️ No gender detected in response');
+        Alert.alert('⚠️ Unable to analyze', 'Could not determine gender from the photo. Please try again.');
         setVerificationStatus('failed');
       }
 
       setResult({
         gender: data?.gender,
-        picture_quality: data?.picture_quality,
-        extracted_text: data?.extracted_text,
       });
     } catch (error) {
-      console.error('Upload failed', error);
-      Alert.alert('Error', 'Something went wrong, please try again.');
+      console.error('💥 Upload failed with error:');
+      console.error('   - Error name:', error.name);
+      console.error('   - Error message:', error.message);
+      console.error('   - Error stack:', error.stack);
+      
+      if (error.message.includes('JSON Parse error')) {
+        console.error('🔍 JSON Parse Error Details:');
+        console.error('   - This usually means the server returned HTML instead of JSON');
+        console.error('   - Check if the API endpoint is correct and working');
+        Alert.alert('Connection Error', 'The server returned an invalid response. Please check your internet connection and try again.');
+      } else {
+        Alert.alert('Error', 'Something went wrong, please try again.');
+      }
+      setVerificationStatus('failed');
     } finally {
       setLoading(false);
+      console.log('🏁 Upload process finished (loading set to false)');
     }
-  }, [signupName, openCamera]);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -217,22 +202,22 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
             <>
               <View style={styles.lottieContainer}>
                 <LottieView
-                  source={require('../assets/animations/Scan.json')}
+                  source={require('../assets/animations/Selfie.json')}
                   autoPlay
                   loop
                   style={styles.lottie}
                 />
               </View>
-              <Text style={styles.title}>Verify your gender</Text>
+              <Text style={styles.title}>Take a Selfie</Text>
               <Text style={styles.subtitle}>
-                Take a clear photo of your ID. Make sure all text is readable.
+                Take a clear photo of your face for gender verification
               </Text>
-              <Text style={styles.tip}>Tip: Align the card edges with the frame and avoid glare.</Text>
+              <Text style={styles.tip}>Tip: Make sure your face is well-lit and centered in the frame.</Text>
 
               <TouchableOpacity style={[styles.primaryButton, loading && styles.primaryButtonDisabled]} onPress={openCamera} disabled={loading}>
                 <LinearGradient colors={["#3E5F44", "#4A7C59"]} style={styles.primaryButtonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
                   <Ionicons name="camera" size={20} color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={styles.primaryButtonText}>Take Picture</Text>
+                  <Text style={styles.primaryButtonText}>Take Selfie</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </>
@@ -255,17 +240,17 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={[styles.primaryButton, loading && styles.primaryButtonDisabled]} onPress={() => uploadLicense(photoUri)} disabled={loading}>
+              <TouchableOpacity style={[styles.primaryButton, loading && styles.primaryButtonDisabled]} onPress={() => uploadSelfie(photoUri)} disabled={loading}>
                 <LinearGradient colors={["#3E5F44", "#4A7C59"]} style={styles.primaryButtonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
                   {loading ? (
                     <>
                       <ActivityIndicator color="#fff" />
-                      <Text style={styles.primaryButtonText}> Verifying...</Text>
+                      <Text style={styles.primaryButtonText}> Analyzing...</Text>
                     </>
                   ) : (
                     <>
                       <Ionicons name="cloud-upload" size={20} color="#fff" style={{ marginRight: 8 }} />
-                      <Text style={styles.primaryButtonText}>Verify</Text>
+                      <Text style={styles.primaryButtonText}>Analyze</Text>
                     </>
                   )}
                 </LinearGradient>
@@ -273,53 +258,28 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
             </>
           )}
 
-          {!!signupName && (
-            <Text style={styles.verifyingFor}>Verifying for: {signupName}</Text>
-          )}
-
-          {result && (
+          {result && detectedGender && (
             <View style={styles.resultCard}>
               {verificationStatus && (
                 <View style={[styles.statusBanner, verificationStatus === 'success' ? styles.statusSuccess : styles.statusFailed]}>
                   <Ionicons name={verificationStatus === 'success' ? 'checkmark-circle' : 'close-circle'} size={18} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={styles.statusText}>{verificationStatus === 'success' ? 'Name verified successfully' : 'Name does not match'}</Text>
+                  <Text style={styles.statusText}>{verificationStatus === 'success' ? 'Gender detected successfully' : 'Unable to determine gender'}</Text>
                 </View>
-              )}
-              {!!signupName && (
-                <>
-                  <View style={styles.resultRow}>
-                    <Text style={styles.resultLabel}>Provided Name</Text>
-                    <Text style={styles.resultValue}>{signupName}</Text>
-                  </View>
-                  <View style={styles.divider} />
-                </>
               )}
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>Detected Gender</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name={result.gender?.toLowerCase() === 'male' ? 'male' : 'female'} size={16} color="#111827" style={{ marginRight: 6 }} />
-                  <Text style={styles.resultValue}>{result.gender || 'N/A'}</Text>
+                  <Ionicons name={detectedGender?.toLowerCase() === 'man' ? 'male' : 'female'} size={16} color="#111827" style={{ marginRight: 6 }} />
+                  <Text style={styles.resultValue}>{detectedGender || 'N/A'}</Text>
                 </View>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.resultRow}>
-                <Text style={styles.resultLabel}>Picture Quality</Text>
-                <View style={[styles.qualityChip, (result.picture_quality === 'clear' ? styles.qualityGood : styles.qualityBad)]}>
-                  <Text style={styles.qualityChipText}>{result.picture_quality || 'unknown'}</Text>
-                </View>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.resultColumn}>
-                <Text style={styles.resultLabel}>Extracted Text</Text>
-                <Text style={styles.extractedText}>{result.extracted_text || '—'}</Text>
               </View>
               <View style={{ height: 8 }} />
               <TouchableOpacity
-                style={[styles.primaryButton, (verificationStatus !== 'success' && !forceEnableFinish) && styles.primaryButtonDisabled]}
+                style={[styles.primaryButton, verificationStatus !== 'success' && styles.primaryButtonDisabled]}
                 onPress={() => {
                   navigation.navigate('Congrats');
                 }}
-                disabled={verificationStatus !== 'success' && !forceEnableFinish}
+                disabled={verificationStatus !== 'success'}
               >
                 <LinearGradient colors={["#3E5F44", "#4A7C59"]} style={styles.primaryButtonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
                   <Ionicons name="checkmark" size={20} color="#fff" style={{ marginRight: 8 }} />
@@ -330,7 +290,6 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
           )}
         </ScrollView>
       </LinearGradient>
-
       
     </View>
   );
@@ -359,9 +318,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#3E5F44',
   },
-  headerRightPlaceholder: {
-    width: 32,
-  },
   headerRightButton: {
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -375,17 +331,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingBottom: 120,
-  },
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#3E5F44',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#4A7C59',
-    marginTop: 8,
   },
   lottieContainer: {
     width: 240,
@@ -457,9 +402,24 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  verifyingFor: {
-    marginTop: 10,
-    color: '#6B7280',
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  secondaryButtonText: {
+    color: '#3E5F44',
+    fontSize: 14,
+    fontWeight: '600',
   },
   resultCard: {
     marginTop: 24,
@@ -479,9 +439,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 6,
   },
-  resultColumn: {
-    paddingVertical: 6,
-  },
   resultLabel: {
     color: '#6B7280',
     fontSize: 14,
@@ -490,23 +447,6 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontSize: 16,
     fontWeight: '600',
-  },
-  submittedThumb: {
-    width: '100%',
-    height: 180,
-    borderRadius: 10,
-    marginTop: 8,
-    backgroundColor: '#F3F4F6',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 8,
-  },
-  extractedText: {
-    color: '#111827',
-    fontSize: 14,
-    marginTop: 6,
   },
   statusBanner: {
     flexDirection: 'row',
@@ -526,30 +466,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-  qualityChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  qualityGood: {
-    backgroundColor: '#DCFCE7',
-  },
-  qualityBad: {
-    backgroundColor: '#FEE2E2',
-  },
-  qualityChipText: {
-    color: '#111827',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 20,
-  },
 });
 
 export default LicenseVerificationScreen;
-
-

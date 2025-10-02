@@ -20,8 +20,6 @@ const CreateAccountScreen = ({ navigation }) => {
   const { setIsOnboarded } = useOnboarding();
   const theme = useTheme();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -43,13 +41,6 @@ const CreateAccountScreen = ({ navigation }) => {
       newErrors.email = 'Please enter a valid email';
     }
 
-    // First/Last name validation
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
 
     // Password validation
     if (!formData.password) {
@@ -121,18 +112,16 @@ const CreateAccountScreen = ({ navigation }) => {
 
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
 
-      // After account creation, navigate to license verification
-      const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-      navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
+      // After account creation, navigate to gender verification
+      navigation.navigate('LicenseVerification', { signupName: formData.pseudonym });
       
       // Clear form after successful account creation
       setFormData({
-        firstName: '',
-        lastName: '',
         email: '',
         password: '',
         confirmPassword: '',
         pseudonym: '',
+        dateOfBirth: '',
       });
     } catch (error) {
       console.error('Error creating account:', error);
@@ -224,9 +213,8 @@ const CreateAccountScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.skipButton}
             onPress={() => {
-              // Skip account creation and go to license verification
-              const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-              navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
+              // Skip account creation and go to gender verification
+              navigation.navigate('LicenseVerification', { signupName: formData.pseudonym });
             }}
           >
             <Text style={styles.skipButtonText}>Skip</Text>
@@ -257,8 +245,6 @@ const CreateAccountScreen = ({ navigation }) => {
 
           {/* Form */}
           <View style={styles.formContainer}>
-            {renderInput('firstName', 'First Name', 'Enter your first name')}
-            {renderInput('lastName', 'Last Name', 'Enter your last name')}
             {renderInput('pseudonym', 'Pseudonym', 'Choose a unique username')}
             {renderInput('email', 'Email', 'Enter your email address')}
             {renderInput('dateOfBirth', 'Date of Birth', 'MM/DD/YYYY', { keyboardType: 'default' })}
