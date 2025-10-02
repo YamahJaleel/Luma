@@ -226,35 +226,33 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
       await AsyncStorage.setItem('userData', JSON.stringify(completeUserData));
 
       console.log('🎉 Account setup complete!');
-
-      Alert.alert(
-        '🎉 Account Created!',
-        `Welcome ${pendingUserData.pseudonym}! Your account has been created successfully.`,
-        [
-          {
-            text: 'Continue',
-            onPress: () => {
-              setIsOnboarded(true);
-              // navigation.navigate('Congrats') // Will happen automatically due to onboarding state change
-            }
-          }
-        ]
-      );
+      
+      // Set onboarded state and navigate to congrats screen
+      setIsOnboarded(true);
+      navigation.navigate('Congrats');
 
     } catch (error) {
       console.error('❌ Failed to create Firebase account:', error);
+      
+      // Determine the specific error message to show
+      let errorMessage = 'There was an error creating your account.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already registered. Please use a different email or sign in.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'The email address is not valid.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Account creation is currently disabled. Please try again later.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'The password is too weak. Please choose a stronger password.';
+      }
+
       Alert.alert(
         'Account Creation Failed',
-        'There was an error creating your account. Please try again.',
+        errorMessage,
         [
           {
             text: 'Retry',
             onPress: () => createFirebaseAccount()
-          },
-          {
-            text: 'Continue Anyway',
-            style: 'cancel',
-            onPress: () => navigation.navigate('Congrats')
           }
         ]
       );
