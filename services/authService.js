@@ -1,0 +1,122 @@
+import { 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
+
+// Authentication service
+export const authService = {
+  // Create user with email and password
+  createUser: async (email, password, displayName) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Update user profile
+      await updateProfile(user, {
+        displayName: displayName
+      });
+      
+      // Send email verification
+      await sendEmailVerification(user);
+      
+      return user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  },
+
+  // Sign in with email and password
+  signIn: async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      return userCredential.user;
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  },
+
+  // Sign in with Google
+  signInWithGoogle: async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      return result.user;
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  },
+
+  // Sign out
+  signOut: async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  },
+
+  // Reset password
+  resetPassword: async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      throw error;
+    }
+  },
+
+  // Get current user
+  getCurrentUser: () => {
+    return auth.currentUser;
+  },
+
+  // Listen to auth state changes
+  onAuthStateChanged: (callback) => {
+    return onAuthStateChanged(auth, callback);
+  },
+
+  // Update user profile
+  updateUserProfile: async (updates) => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await updateProfile(user, updates);
+        return user;
+      }
+      throw new Error('No user is currently signed in');
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  },
+
+  // Send email verification
+  sendEmailVerification: async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await sendEmailVerification(user);
+      }
+      throw new Error('No user is currently signed in');
+    } catch (error) {
+      console.error('Error sending email verification:', error);
+      throw error;
+    }
+  }
+};
+
+export default authService;
