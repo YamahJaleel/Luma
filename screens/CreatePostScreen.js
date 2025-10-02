@@ -21,7 +21,7 @@ const CreatePostScreen = ({ route, navigation }) => {
       score: 0,
       type: 'general',
       title: title.trim(),
-      author: 'u/You', // Match the format with u/ prefix
+      author: 'u/Luma User', // Match the format with u/ prefix
       category: communityId,
       text: content.trim(),
       comments: 0,

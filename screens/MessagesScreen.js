@@ -9,13 +9,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Mock user database for search
 const mockUsers = [
   { id: 'u1', name: 'Tyler Bradshaw', username: '@tylerb' },
-  { id: 'u2', name: 'Sarah Chen', username: '@sarahchen' },
+  { id: 'u2', name: 'Jake Thompson', username: '@jaket' },
   { id: 'u3', name: 'Mike Johnson', username: '@mikej' },
-  { id: 'u4', name: 'Emma Wilson', username: '@emmaw' },
+  { id: 'u4', name: 'Ryan Miller', username: '@ryanm' },
   { id: 'u5', name: 'David Kim', username: '@davidk' },
-  { id: 'u6', name: 'Lisa Park', username: '@lisap' },
+  { id: 'u6', name: 'Chris Park', username: '@chrisp' },
   { id: 'u7', name: 'Alex Rodriguez', username: '@alexr' },
-  { id: 'u8', name: 'Rachel Green', username: '@rachelg' },
+  { id: 'u8', name: 'Brandon Green', username: '@brandong' },
 ];
 
 const MessagesScreen = ({ navigation, route }) => {

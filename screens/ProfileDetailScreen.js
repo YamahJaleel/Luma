@@ -168,135 +168,284 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const makeMockComments = () => {
     const items = [];
     
-    // For new profiles (no existing comments), only show the owner note if there's a bio
-    if (profile?.bio && profile.bio.trim()) {
-      const ownerNote = profile.bio.trim();
-      items.push({
-        id: 'owner-note',
-        author: (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'Anonymous',
-        avatarColor: '#7C9AFF',
-        text: ownerNote,
-        timestamp: 'now',
-        replies: [],
-      });
-    }
-    
     // Only add mock community comments for established profiles (not new ones)
     // New profiles use Date.now() for ID, which will be much larger than mock profile IDs (1-30)
     if (profile?.id && profile.id > 10000) { 
+      // For new profiles, show owner note with bio or default message
+      if (profile?.bio && profile.bio.trim()) {
+        const ownerNote = profile.bio.trim();
+        items.push({
+          id: 'owner-note',
+          author: 'luma user',
+          avatarColor: '#7C9AFF',
+          text: ownerNote,
+          timestamp: 'now',
+          replies: [],
+        });
+      } else {
+        // For new profiles without bio, add a default owner note
+        items.push({
+          id: 'owner-note',
+          author: 'luma user',
+          avatarColor: '#7C9AFF',
+          text: 'This is a new profile. Share your experiences and help keep the community safe.',
+          timestamp: 'now',
+          replies: [],
+        });
+      }
       return items; // Return early for new profiles
     }
-    items.push(
-      {
-        id: 1,
-        author: 'Emma W.',
-        avatarColor: '#EF4444',
-        text: '🚩🚩🚩 Met him last week and he was extremely pushy about meeting at his place. When I said no, he got really aggressive and started calling me names. Stay away!',
-        timestamp: '2h ago',
-        replies: [
-          {
-            id: 11,
-            author: 'Jessica L.',
-            avatarColor: '#8B5CF6',
-            text: 'Oh my god, that\'s terrifying! Thank you for sharing this. Did you report him?',
-            timestamp: '1h ago',
-            replies: [],
+    
+    // For established profiles, add a profile-specific owner note with pseudonym
+    if (!profile?.bio || !profile.bio.trim()) {
+      const generateOwnerNote = (profileId) => {
+        const ownerNotes = {
+          1: { // Tyler Bradshaw
+            author: 'MysticWolf',
+            text: 'I created this profile to warn others about Tyler. He seemed charming at first but quickly became pushy and aggressive. Please be careful if you match with him.',
+            timestamp: '2h ago'
           },
+        2: { // Jake Thompson
+          author: 'Starlight',
+          text: 'I\'m sharing my experience with Jake here. He ghosted me after weeks of great conversation. I want to help others avoid the same disappointment.',
+          timestamp: '1d ago'
+        },
+          3: { // Mike Johnson
+            author: 'Phoenix',
+            text: 'I created this profile to share positive experiences with Mike. He\'s been respectful, reliable, and genuine. A rare find in the dating world!',
+            timestamp: '3h ago'
+          },
+        4: { // Ryan Miller
+          author: 'NeonStar',
+          text: 'I\'m warning others about Ryan. His photos are heavily edited and he looks completely different in person. Don\'t waste your time like I did.',
+          timestamp: '4h ago'
+        },
+          5: { // Alex Rodriguez
+            author: 'CyberPhoenix',
+            text: 'I created this profile to highlight Alex\'s helpfulness. He\'s given me great dating advice and is genuinely supportive. A trustworthy person!',
+            timestamp: '6h ago'
+          },
+        6: { // Chris Park
+          author: 'Crystal',
+          text: 'I\'m sharing my frustrating experience with Chris. He\'s cancelled on me multiple times and is completely unreliable. Save yourself the disappointment.',
+          timestamp: '1d ago'
+        }
+        };
+        
+        return ownerNotes[profileId] || {
+          author: 'MysticWolf',
+          text: 'I created this profile to share my experience. Please add your own experiences to help keep our community safe.',
+          timestamp: '2h ago'
+        };
+      };
+      
+      const ownerNote = generateOwnerNote(profile?.id);
+      items.push({
+        id: 'owner-note',
+        author: ownerNote.author,
+        avatarColor: '#7C9AFF',
+        text: ownerNote.text,
+        timestamp: ownerNote.timestamp,
+        replies: [],
+      });
+    }
+    // Generate unique comments based on profile
+    const generateProfileComments = (profileId) => {
+      const commentSets = {
+        1: [ // Tyler Bradshaw
           {
-            id: 12,
-            author: 'Emma W.',
+            id: 1,
+            author: 'MysticWolf',
             avatarColor: '#EF4444',
-            text: 'Yes, I reported him immediately. The way he switched from charming to aggressive was so scary.',
-            timestamp: '45m ago',
-            replies: [],
-          },
-        ],
-      },
-      {
-        id: 2,
-        author: 'Maya K.',
-        avatarColor: '#10B981',
-        text: 'I actually had a different experience. We met for coffee and he was really nice and respectful. But reading these comments is making me question everything...',
-        timestamp: '3h ago',
-        replies: [
-          {
-            id: 21,
-            author: 'Sophie T.',
-            avatarColor: '#F59E0B',
-            text: 'That\'s exactly how these guys work! They\'re nice at first to gain your trust. Please be careful.',
+            text: '🚩🚩🚩 Met Tyler last week and he was extremely pushy about meeting at his place. When I said no, he got really aggressive and started calling me names. Stay away!',
             timestamp: '2h ago',
-            replies: [],
+            replies: [
+              {
+                id: 11,
+                author: 'NeonStar',
+                avatarColor: '#8B5CF6',
+                text: 'Oh my god, that\'s terrifying! Thank you for sharing this. Did you report him?',
+                timestamp: '1h ago',
+                replies: [],
+              },
+              {
+                id: 12,
+                author: 'MysticWolf',
+                avatarColor: '#EF4444',
+                text: 'Yes, I reported him immediately. The way he switched from charming to aggressive was so scary.',
+                timestamp: '45m ago',
+                replies: [],
+              },
+            ],
           },
           {
-            id: 22,
-            author: 'Maya K.',
+            id: 2,
+            author: 'CyberPhoenix',
             avatarColor: '#10B981',
-            text: 'You\'re absolutely right. I\'m glad I found this community before things went further.',
-            timestamp: '1h ago',
-            replies: [],
-          },
-        ],
-      },
-      {
-        id: 3,
-        author: 'Rachel B.',
-        avatarColor: '#3B82F6',
-        text: 'He tried to pressure me into sending nudes on the first day of talking. When I refused, he said I was "prudish" and unmatched me. Bullet dodged!',
-        timestamp: '4h ago',
-        replies: [
-          {
-            id: 31,
-            author: 'Amanda P.',
-            avatarColor: '#EC4899',
-            text: 'Classic love bombing then manipulation tactic. Good for you for standing your ground!',
+            text: 'I actually had a different experience with Tyler. We met for coffee and he was really nice and respectful. But reading these comments is making me question everything...',
             timestamp: '3h ago',
-            replies: [],
+            replies: [
+              {
+                id: 21,
+                author: 'QuantumFlame',
+                avatarColor: '#F59E0B',
+                text: 'That\'s exactly how these guys work! They\'re nice at first to gain your trust. Please be careful.',
+                timestamp: '2h ago',
+                replies: [],
+              },
+            ],
           },
-        ],
-      },
-      {
-        id: 4,
-        author: 'Lisa M.',
-        avatarColor: '#8B5CF6',
-        text: '⚠️ He has multiple dating app profiles with slightly different names. I matched with "Tyler B" on Hinge and "Tyler Bradshaw" on Bumble. Same photos, different bios.',
-        timestamp: '5h ago',
-        replies: [
           {
-            id: 41,
-            author: 'Natalie R.',
-            avatarColor: '#F97316',
-            text: 'That\'s a huge red flag! Catfishing and multiple profiles are never good signs.',
+            id: 3,
+            author: 'ShadowRider',
+            avatarColor: '#3B82F6',
+            text: 'Tyler tried to pressure me into sending nudes on the first day of talking. When I refused, he said I was "prudish" and unmatched me. Bullet dodged!',
             timestamp: '4h ago',
             replies: [],
           },
+        ],
+        2: [ // Jake Thompson
           {
-            id: 42,
-            author: 'Lisa M.',
-            avatarColor: '#8B5CF6',
-            text: 'Exactly! I confronted him about it and he blocked me immediately. Sketchy behavior.',
+            id: 1,
+            author: 'Starlight',
+            avatarColor: '#EC4899',
+            text: 'Jake seemed nice at first but he\'s a total ghost. We had great conversations for a week, then he just disappeared mid-conversation. No explanation, nothing.',
+            timestamp: '1d ago',
+            replies: [
+              {
+                id: 11,
+                author: 'Moonbeam',
+                avatarColor: '#8B5CF6',
+                text: 'Same thing happened to me! We were supposed to meet for coffee and he just stopped responding the day before.',
+                timestamp: '20h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'Crystal',
+            avatarColor: '#F97316',
+            text: 'Jake is inconsistent with communication. Sometimes he\'s super responsive, other times he takes days to reply. It\'s confusing and frustrating.',
+            timestamp: '2d ago',
+            replies: [],
+          },
+        ],
+        3: [ // Mike Johnson
+          {
+            id: 1,
+            author: 'Phoenix',
+            avatarColor: '#059669',
+            text: 'Mike is genuinely a great guy! We\'ve been talking for a few weeks and he\'s been respectful, funny, and reliable. He always shows up when he says he will.',
             timestamp: '3h ago',
-            replies: [],
+            replies: [
+              {
+                id: 11,
+                author: 'Aurora',
+                avatarColor: '#DC2626',
+                text: 'That\'s so refreshing to hear! It\'s nice to see positive experiences shared here too.',
+                timestamp: '2h ago',
+                replies: [],
+              },
+            ],
           },
-        ],
-      },
-      {
-        id: 5,
-        author: 'Chloe S.',
-        avatarColor: '#059669',
-        text: 'He asked me to meet at a bar downtown, but when I got there, he was nowhere to be found. Texted him and he said he "forgot" and was actually at home. Wanted me to come over instead. Nope!',
-        timestamp: '6h ago',
-        replies: [
           {
-            id: 51,
-            author: 'Taylor H.',
-            avatarColor: '#DC2626',
-            text: 'That\'s so manipulative! He probably planned that from the start to get you alone at his place.',
-            timestamp: '5h ago',
+            id: 2,
+            author: 'MysticWolf',
+            avatarColor: '#EF4444',
+            text: 'Mike has been really good at communicating his intentions clearly. No games, no mixed signals. He\'s been a breath of fresh air.',
+            timestamp: '1d ago',
             replies: [],
           },
         ],
-      }
-    );
+        4: [ // Ryan Miller
+          {
+            id: 1,
+            author: 'NeonStar',
+            avatarColor: '#8B5CF6',
+            text: '⚠️ Ryan is NOT who he claims to be. His photos are heavily filtered/edited and he looks completely different in person. Total catfish situation.',
+            timestamp: '4h ago',
+            replies: [
+              {
+                id: 11,
+                author: 'ShadowRider',
+                avatarColor: '#3B82F6',
+                text: 'I had the same experience! The photos were from years ago and heavily edited. Very misleading.',
+                timestamp: '3h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'QuantumFlame',
+            avatarColor: '#F59E0B',
+            text: 'Ryan was very aggressive and inappropriate in his messages. He kept sending unsolicited photos and got angry when I didn\'t respond the way he wanted.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        5: [ // Alex Rodriguez
+          {
+            id: 1,
+            author: 'CyberPhoenix',
+            avatarColor: '#10B981',
+            text: 'Alex is super helpful and genuine! He gave me great advice about dating safety and was really supportive when I shared some concerns.',
+            timestamp: '6h ago',
+            replies: [
+              {
+                id: 11,
+                author: 'Starlight',
+                avatarColor: '#EC4899',
+                text: 'I\'ve had similar experiences with Alex. He\'s really knowledgeable and caring.',
+                timestamp: '5h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'Moonbeam',
+            avatarColor: '#8B5CF6',
+            text: 'Alex is verified and has been consistently helpful in the community. He\'s someone you can trust for good advice.',
+            timestamp: '2d ago',
+            replies: [],
+          },
+        ],
+        6: [ // Chris Park
+          {
+            id: 1,
+            author: 'Crystal',
+            avatarColor: '#F97316',
+            text: 'Chris is unreliable. He\'s cancelled on me three times at the last minute with weak excuses. I\'ve given up trying to make plans with him.',
+            timestamp: '1d ago',
+            replies: [
+              {
+                id: 11,
+                author: 'Phoenix',
+                avatarColor: '#059669',
+                text: 'Same here! He seems nice in messages but never follows through with plans.',
+                timestamp: '20h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'Aurora',
+            avatarColor: '#DC2626',
+            text: 'Chris has been reported for being unreliable by multiple people. He seems to have commitment issues with actually meeting up.',
+            timestamp: '3d ago',
+            replies: [],
+          },
+        ],
+      };
+      
+      return commentSets[profileId] || [];
+    };
+    
+    const profileComments = generateProfileComments(profile?.id);
+    items.push(...profileComments);
     return items;
   };
 
@@ -329,7 +478,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     try {
       // For new profiles, the current user is always the OP
       if (profile?.id && profile.id > 10000) {
-        return (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'Anonymous';
+        return 'luma user';
       }
       // For established profiles, find the owner note
       const owner = comments?.find?.((n) => n?.id === 'owner-note');
@@ -435,7 +584,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     if (!text) return;
     const newItem = {
       id: Date.now(),
-      author: (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'You',
+      author: 'luma user',
       avatarColor: '#7C9AFF',
       text,
       timestamp: 'now',
@@ -566,7 +715,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         recipientId: messageRecipient.id,
         text: messageText.trim(),
         timestamp: new Date().toISOString(),
-        sender: (profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'You',
+        sender: 'luma user',
         senderId: 'current_user',
       };
       
@@ -747,7 +896,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
                   {c.author}
                 </Text>
-                {originalPosterName && c.author === originalPosterName && (
+                {c.id === 'owner-note' && (
                   <View style={styles.opBadge}>
                     <Text style={styles.opBadgeText}>OP</Text>
                   </View>
@@ -830,7 +979,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 activeOpacity={1}
               />
               <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
-                {c.author === ((profile && profile.username) ? profile.username : (profile && profile.name) ? profile.name : 'You') ? (
+                {c.author === 'luma user' ? (
                   <TouchableOpacity 
                     style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
                     onPress={() => handleDeleteComment(c.id)}

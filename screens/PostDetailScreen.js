@@ -32,14 +32,14 @@ const getTypeMeta = (type) => {
 const makeMockComments = () => ([
   {
     id: 1,
-    author: 'Alex R.',
+    author: 'MysticWolf',
     avatarColor: '#3E5F44',
     text: 'Totally agree. Setting boundaries early really helps.',
     timestamp: '12m ago',
     replies: [
       {
         id: 11,
-        author: 'Sarah C.',
+        author: 'NeonStar',
         avatarColor: '#8B5CF6',
         text: 'Yes! And communicate them clearly.',
         timestamp: '8m ago',
@@ -49,21 +49,21 @@ const makeMockComments = () => ([
   },
   {
     id: 2,
-    author: 'Mike J.',
+    author: 'CyberPhoenix',
     avatarColor: '#10B981',
     text: 'Experienced something similar. Staying firm is key.',
     timestamp: '1h ago',
     replies: [
       {
         id: 21,
-        author: 'Emma W.',
+        author: 'QuantumFlame',
         avatarColor: '#F59E0B',
         text: 'Agree. Also keep friends in the loop for safety.',
         timestamp: '44m ago',
         replies: [
           {
             id: 211,
-            author: 'David K.',
+            author: 'ShadowRider',
             avatarColor: '#EF4444',
             text: 'This. A check-in plan helps.',
             timestamp: '30m ago',
@@ -323,7 +323,7 @@ const PostDetailScreen = ({ route, navigation }) => {
     if (!text) return;
     const newItem = {
       id: Date.now(),
-      author: 'You',
+      author: 'Luma User',
       avatarColor: '#7C9AFF',
       text,
       timestamp: 'now',
@@ -473,7 +473,7 @@ const PostDetailScreen = ({ route, navigation }) => {
         recipientId: messageRecipient.id,
         text: messageText.trim(),
         timestamp: new Date().toISOString(),
-        sender: 'You',
+        sender: 'Luma User',
         senderId: 'current_user',
       };
       
@@ -569,7 +569,7 @@ const PostDetailScreen = ({ route, navigation }) => {
     const isUpvoted = upvotedComments.has(c.id);
     const isDownvoted = downvotedComments.has(c.id);
     const showDropdown = dropdownVisible === c.id;
-    const isOwn = (c.author || '').replace(/^u\//i, '').toLowerCase() === 'you';
+    const isOwn = (c.author || '').replace(/^u\//i, '').toLowerCase() === 'luma user';
 
     return (
       <View

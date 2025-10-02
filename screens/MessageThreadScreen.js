@@ -102,7 +102,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
         ...newMessage,
         recipientId: conversation?.id || conversation?.name,
         recipient: conversation?.name,
-        sender: 'Test User',
+        sender: 'Crystal',
         timestamp: now.toISOString(),
       });
       await AsyncStorage.setItem('messages', JSON.stringify(messages));
@@ -147,7 +147,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
           
           return {
             id: message.id,
-            from: message.sender === 'You' ? 'me' : 'them',
+            from: message.sender === 'Luma User' ? 'me' : 'them',
             text: message.text,
             time: time
           };
@@ -207,7 +207,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
         recipientId: conversation.id,
         text: text,
         timestamp: now.toISOString(),
-        sender: 'You',
+        sender: 'Luma User',
         senderId: 'current_user',
       };
       

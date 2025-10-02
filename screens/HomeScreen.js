@@ -24,7 +24,7 @@ const MOCK_POSTS = [
     score: 45,
     type: 'experience',
     title: 'Red Flag Alert',
-    author: 'u/alex',
+    author: 'u/MysticWolf',
     category: 'red-flags',
     text:
       'Sharing an experience from last week: things moved way too fast, and compliments turned into pressure. It started with constant texting, then subtle guilt trips when I needed space. Please watch for sudden "you\'re my everything" talk paired with boundary pushing. If your gut tenses up, listen to it. You don\'t owe endless explanations for needing time, and respectful people won\'t keep testing limits. Stay safe and trust your pace.',
@@ -40,7 +40,7 @@ const MOCK_POSTS = [
     score: 23,
     type: 'question',
     title: 'Advice Needed',
-    author: 'u/sam',
+    author: 'u/NeonStar',
     category: 'dating-advice',
     text:
       'Is it normal for someone you just started chatting with to ask for your live location? I set a boundary and said I\'m not comfortable sharing that, but they keep asking for "just a quick ping." How would you respond or shut this down kindly but firmly? Any sample scripts that worked for you are appreciated.',
@@ -56,7 +56,7 @@ const MOCK_POSTS = [
     score: 67,
     type: 'positive',
     title: 'Success Story',
-    author: 'u/jane',
+    author: 'u/QuantumFlame',
     category: 'success-stories',
     text:
       'Wanted to share a bright spot: I slowed down, prioritized my comfort, and met someone who genuinely respected my pace. We planned daytime coffee first, had clear check-ins, and they consistently honored my boundaries. It felt calm and easy. If you\'re in a tough patch, there are kind people out there who will meet you where you are.',
@@ -72,7 +72,7 @@ const MOCK_POSTS = [
     score: 34,
     type: 'question',
     title: 'First Date Tips',
-    author: 'u/lily',
+    author: 'u/ShadowRider',
     category: 'dating-advice',
     text:
       'First date in a while and I\'m nervous. Any practical tips to keep conversation flowing without oversharing? I\'m thinking open-ended questions about hobbies, travel, and favorite local spots, plus a hard stop time so I can leave on a high note. What else helps you feel grounded and confident?',
@@ -88,7 +88,7 @@ const MOCK_POSTS = [
     score: 78,
     type: 'warning',
     title: 'Love Bombing Alert',
-    author: 'u/max',
+    author: 'u/Starlight',
     category: 'red-flags',
     text:
       'PSA: If someone you barely know is already future-planning intensely, flooding you with gifts, and getting upset when you need time alone—please pause. Love bombing can feel flattering at first, but it\'s often followed by control. Slow the pace, loop in a friend, and check how you feel after a little distance.',
