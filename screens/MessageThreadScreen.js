@@ -4,6 +4,8 @@ import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TypingIndicator from '../components/TypingIndicator';
+import { useAuth } from '../contexts/AuthContext';
+import { messageService, realtimeService, typingService } from '../services/firebaseService';
 
 const initialMessages = [
   { id: 'm1', from: 'them', text: 'Hey! How are you?', time: '2:15 PM' },
@@ -31,6 +33,7 @@ const MessageBubble = ({ message, theme }) => {
 
 const MessageThreadScreen = ({ route, navigation }) => {
   const theme = useTheme();
+  const { user } = useAuth();
   const { conversation } = route.params || {};
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
@@ -39,6 +42,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [autoReplyTimeout, setAutoReplyTimeout] = useState(null);
+  const [threadKey, setThreadKey] = useState(null);
 
 
   const sendAutoReply = async () => {
@@ -76,72 +80,54 @@ const MessageThreadScreen = ({ route, navigation }) => {
     
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
-
-  // Load messages from AsyncStorage for this conversation
-  const loadMessages = async () => {
-    try {
-      const messagesData = await AsyncStorage.getItem('messages');
-      if (messagesData) {
-        const allMessages = JSON.parse(messagesData);
-        
-        // Filter messages for this conversation
-        const conversationMessages = allMessages.filter(message => 
-          message.recipientId === conversation.id || 
-          message.recipient === conversation.name ||
-          message.senderId === conversation.id
-        );
-        
-        // Convert to the format expected by the UI
-        const formattedMessages = conversationMessages.map(message => {
-          let time = 'Now';
-          try {
-            if (message.timestamp) {
-              const date = new Date(message.timestamp);
-              if (!isNaN(date.getTime())) {
-                time = date.toLocaleTimeString('en-US', { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  hour12: true 
-                });
-              }
-            }
-          } catch (error) {
-            console.log('Error parsing timestamp:', error);
-          }
-          
-          return {
-            id: message.id,
-            from: message.sender === 'Luma User' ? 'me' : 'them',
-            text: message.text,
-            time: time
-          };
-        });
-        
-        setMessages(formattedMessages);
-      } else {
-        // If no messages, show empty array instead of mock data
-        setMessages([]);
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
-      setMessages([]);
-    }
-  };
-
+  // Subscribe to Firestore thread messages
   useEffect(() => {
-    loadMessages();
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-    
-    // Cleanup timeouts on unmount
+    if (!user?.uid || !conversation?.id) {
+      setMessages([]);
+      return;
+    }
+    const participantsSorted = [user.uid, conversation.id].sort();
+    const tk = `${participantsSorted[0]}_${participantsSorted[1]}`;
+    setThreadKey(tk);
+    const unsubscribe = realtimeService.listenToThreadMessages(tk, (docs) => {
+      const formatted = docs.map((m) => {
+        let time = '';
+        try {
+          if (m.createdAt?.toDate) {
+            const date = m.createdAt.toDate();
+            time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+          }
+        } catch {}
+        return {
+          id: m.id,
+          from: m.senderId === user.uid ? 'me' : 'them',
+          text: m.text || '',
+          time
+        };
+      });
+      setMessages(formatted);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+    });
+
+    // mark all as read when opening
+    messageService.markThreadRead(tk, user.uid);
+
     return () => {
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-      if (autoReplyTimeout) {
-        clearTimeout(autoReplyTimeout);
-      }
+      unsubscribe && unsubscribe();
+      if (typingTimeout) clearTimeout(typingTimeout);
+      if (autoReplyTimeout) clearTimeout(autoReplyTimeout);
     };
-  }, [conversation]);
+  }, [user?.uid, conversation?.id]);
+
+  // Listen to typing indicator from other user
+  useEffect(() => {
+    if (!threadKey || !user?.uid) return;
+    const unsubTyping = realtimeService.listenToTyping(threadKey, (data) => {
+      const otherTyping = Object.keys(data || {}).some(uid => uid !== user.uid && data[uid] === true);
+      setIsTyping(otherTyping);
+    });
+    return () => unsubTyping && unsubTyping();
+  }, [threadKey, user?.uid]);
 
   const send = async () => {
     const text = draft.trim();
@@ -160,38 +146,41 @@ const MessageThreadScreen = ({ route, navigation }) => {
     setDraft('');
     inputRef.current?.clear();
     
-    // Save to AsyncStorage
+    // Persist to Firestore
     try {
-      const existingMessages = await AsyncStorage.getItem('messages');
-      const messages = existingMessages ? JSON.parse(existingMessages) : [];
-      
-      const messageToSave = {
-        id: newMessage.id,
-        recipient: conversation.name,
+      if (!user?.uid || !conversation?.id) return;
+      const participantsSorted = [user.uid, conversation.id].sort();
+      const tk = `${participantsSorted[0]}_${participantsSorted[1]}`;
+      await messageService.createMessage({
+        text,
+        senderId: user.uid,
+        sender: user.displayName || 'Anonymous',
         recipientId: conversation.id,
-        text: text,
-        timestamp: now.toISOString(),
-        sender: 'Luma User',
-        senderId: 'current_user',
-      };
-      
-      messages.push(messageToSave);
-      await AsyncStorage.setItem('messages', JSON.stringify(messages));
+        recipient: conversation.name,
+        participants: [user.uid, conversation.id],
+        threadKey: tk
+      });
+      // mark read immediately for sent messages (clear own unread if any lingering)
+      await messageService.markThreadRead(tk, user.uid);
     } catch (error) {
-      console.error('Error saving message:', error);
+      console.error('Error sending message:', error);
     }
     
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 0);
     
-    // Auto-reply for Test chat
-    if (conversation?.name === 'Test') {
-      setTimeout(() => {
-        simulateOtherPersonTyping();
-        setTimeout(() => {
-          sendAutoReply();
-        }, 3000);
-      }, 1000);
-    }
+    // Optional: remove auto-reply simulation when using Firestore
+  };
+
+  // Publish typing status when user types
+  const onChangeDraft = (text) => {
+    setDraft(text);
+    if (!threadKey || !user?.uid) return;
+    typingService.setTyping(threadKey, user.uid, true);
+    if (typingTimeout) clearTimeout(typingTimeout);
+    const t = setTimeout(() => {
+      typingService.setTyping(threadKey, user.uid, false);
+    }, 1200);
+    setTypingTimeout(t);
   };
 
   return (
@@ -231,7 +220,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
           placeholder="Message..."
           placeholderTextColor={theme.colors.placeholder}
           value={draft}
-          onChangeText={setDraft}
+          onChangeText={onChangeDraft}
           multiline
           maxLength={500}
         />

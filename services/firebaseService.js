@@ -11,7 +11,10 @@ import {
   orderBy, 
   limit,
   onSnapshot,
-  serverTimestamp 
+  serverTimestamp,
+  setDoc,
+  arrayUnion,
+  arrayRemove 
 } from 'firebase/firestore';
 import { 
   ref, 
@@ -349,12 +352,31 @@ export const messageService = {
     try {
       const docRef = await addDoc(collection(db, COLLECTIONS.MESSAGES), {
         ...messageData,
+        unreadBy: arrayUnion(messageData.recipientId),
         createdAt: serverTimestamp()
       });
       return docRef.id;
     } catch (error) {
       console.error('Error creating message:', error);
       throw error;
+    }
+  },
+
+  // Mark all messages in a thread as read for a user
+  markThreadRead: async (threadKey, userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.MESSAGES),
+        where('threadKey', '==', threadKey),
+        where('unreadBy', 'array-contains', userId)
+      );
+      const snapshot = await getDocs(q);
+      const updates = snapshot.docs.map(d => updateDoc(doc(db, COLLECTIONS.MESSAGES, d.id), {
+        unreadBy: arrayRemove(userId)
+      }));
+      await Promise.all(updates);
+    } catch (error) {
+      console.error('Error marking thread read:', error);
     }
   },
 
@@ -487,6 +509,89 @@ export const realtimeService = {
       }));
       callback(comments);
     });
+  },
+
+  // Listen to user's conversations (aggregated from latest messages)
+  listenToConversations: (userId, callback) => {
+    const q = query(
+      collection(db, COLLECTIONS.MESSAGES),
+      where('participants', 'array-contains', userId),
+      orderBy('createdAt', 'desc')
+    );
+
+    return onSnapshot(q, (querySnapshot) => {
+      const messages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Aggregate latest message and unread count per other participant
+      const conversationMap = {};
+      for (const message of messages) {
+        const otherUserId = message.senderId === userId ? message.recipientId : message.senderId;
+        if (!otherUserId) continue;
+
+        const otherUserName = message.senderId === userId ? (message.recipient || 'Unknown User') : (message.sender || 'Unknown User');
+        let time = '';
+        try {
+          if (message.createdAt?.toDate) {
+            const date = message.createdAt.toDate();
+            time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+          }
+        } catch (e) {
+          // no-op
+        }
+
+        // Initialize conversation if not existing or keep existing latest
+        if (!conversationMap[otherUserId]) {
+          conversationMap[otherUserId] = {
+            id: otherUserId,
+            name: otherUserName,
+            lastMessage: message.text || '',
+            time,
+            unread: 0
+          };
+        }
+
+        // Increment unread if message not from current user and marked unread for user
+        if (message.senderId !== userId && Array.isArray(message.unreadBy) && message.unreadBy.includes(userId)) {
+          conversationMap[otherUserId].unread += 1;
+        }
+      }
+
+      callback(Object.values(conversationMap));
+    });
+  },
+
+  // Listen to messages within a thread by threadKey (sorted uid1_uid2)
+  listenToThreadMessages: (threadKey, callback) => {
+    const q = query(
+      collection(db, COLLECTIONS.MESSAGES),
+      where('threadKey', '==', threadKey),
+      orderBy('createdAt', 'asc')
+    );
+
+    return onSnapshot(q, (querySnapshot) => {
+      const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(items);
+    });
+  },
+
+  // Typing indicator: listen to typing doc for thread
+  listenToTyping: (threadKey, callback) => {
+    const typingDocRef = doc(db, 'typing', threadKey);
+    return onSnapshot(typingDocRef, (snap) => {
+      callback(snap.exists() ? snap.data() : {});
+    });
+  }
+};
+
+// Typing API
+export const typingService = {
+  setTyping: async (threadKey, userId, isTyping) => {
+    try {
+      const typingDocRef = doc(db, 'typing', threadKey);
+      await setDoc(typingDocRef, { [userId]: isTyping, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (error) {
+      console.error('Error setting typing status:', error);
+    }
   }
 };
 
@@ -496,5 +601,6 @@ export default {
   commentService,
   messageService,
   storageService,
-  realtimeService
+  realtimeService,
+  typingService
 };

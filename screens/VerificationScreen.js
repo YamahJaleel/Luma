@@ -10,6 +10,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
 import { authService } from '../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { db } from '../config/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import LottieView from 'lottie-react-native';
 
 const LicenseVerificationScreen = ({ route, navigation }) => {
@@ -209,6 +211,25 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
       );
 
       console.log('✅ Firebase account created successfully:', user.uid);
+
+      // Create user profile in Firestore for messaging
+      try {
+        const userProfileData = {
+          userId: user.uid,
+          username: pendingUserData.pseudonym.toLowerCase().replace(/\s+/g, ''),
+          displayName: pendingUserData.pseudonym,
+          email: pendingUserData.email,
+          dateOfBirth: pendingUserData.dateOfBirth,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        };
+
+        await setDoc(doc(db, 'userProfiles', user.uid), userProfileData);
+        console.log('✅ User profile created in Firestore');
+      } catch (profileError) {
+        console.error('❌ Failed to create user profile:', profileError);
+        // Don't fail the entire signup for profile creation error
+      }
 
       // Save additional user data to Firestore (optional)
       const completeUserData = {

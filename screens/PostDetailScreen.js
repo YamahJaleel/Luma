@@ -17,7 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { commentService, postService } from '../services/firebaseService';
+import { commentService, postService, messageService } from '../services/firebaseService';
 import { auth } from '../config/firebase';
 import { db } from '../config/firebase';
 import { collection, query as fsQuery, where, orderBy, onSnapshot, getDocs, writeBatch, doc } from 'firebase/firestore';
@@ -211,6 +211,8 @@ const PostDetailScreen = ({ route, navigation }) => {
   ];
   const mockPostIds = new Set(MOCK_POSTS.map(p => p.id));
   const isUserPost = post?.id && !mockPostIds.has(post.id);
+  const isOwnPost = !!(auth.currentUser && post?.authorId && auth.currentUser.uid === post.authorId);
+  const canMessagePostAuthor = !isOwnPost && !!post?.authorId;
 
   // Load like status from AsyncStorage on mount
   React.useEffect(() => {
@@ -630,26 +632,32 @@ const PostDetailScreen = ({ route, navigation }) => {
     if (!messageText.trim() || !messageRecipient) return;
     
     try {
-      const newMessage = {
-        id: Date.now().toString(),
-        recipient: messageRecipient.author,
-        recipientId: messageRecipient.id,
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert('Error', 'You must be signed in to send messages.');
+        return;
+      }
+
+      const recipientId = messageRecipient.userId || messageRecipient.id;
+      const recipientName = messageRecipient.author || 'User';
+      if (!recipientId) {
+        Alert.alert('Error', 'Cannot determine recipient.');
+        return;
+      }
+
+      const participantsSorted = [user.uid, recipientId].sort();
+      const threadKey = `${participantsSorted[0]}_${participantsSorted[1]}`;
+
+      await messageService.createMessage({
         text: messageText.trim(),
-        timestamp: new Date().toISOString(),
-        sender: 'Luma User',
-        senderId: 'current_user',
-      };
-      
-      // Get existing messages
-      const existingMessages = await AsyncStorage.getItem('messages');
-      const messages = existingMessages ? JSON.parse(existingMessages) : [];
-      
-      // Add new message
-      messages.push(newMessage);
-      
-      // Save back to AsyncStorage
-      await AsyncStorage.setItem('messages', JSON.stringify(messages));
-      
+        senderId: user.uid,
+        sender: user.displayName || 'Anonymous',
+        recipientId,
+        recipient: recipientName,
+        participants: [user.uid, recipientId],
+        threadKey
+      });
+
       // Close modal and reset
       setShowMessageModal(false);
       setMessageText('');
@@ -901,29 +909,48 @@ const PostDetailScreen = ({ route, navigation }) => {
               <Text style={styles.authorAvatarText}>{(displayAuthor || 'A').charAt(0).toUpperCase()}</Text>
             </View>
             <Text style={[styles.authorName, { color: theme.colors.text }]}>{displayAuthor}</Text>
-            {isUserPost && (
-              <TouchableOpacity 
-                style={styles.postThreeDotsButton}
-                onPress={() => setShowPostDropdown(!showPostDropdown)}
-              >
-                <Ionicons name="ellipsis-vertical" size={20} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity 
+              style={styles.postThreeDotsButton}
+              onPress={() => setShowPostDropdown(!showPostDropdown)}
+            >
+              <Ionicons name="ellipsis-vertical" size={20} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
+            </TouchableOpacity>
           </View>
           
-          {showPostDropdown && isUserPost && (
-            <View style={[styles.postDropdownMenu, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB' }]}>
+          {showPostDropdown && (
+            <>
               <TouchableOpacity 
-                style={styles.postDropdownItem}
-                onPress={() => {
-                  setShowPostDropdown(false);
-                  handleDeletePost();
-                }}
-              >
-                <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                <Text style={[styles.postDropdownText, { color: '#EF4444' }]}>Delete Post</Text>
-              </TouchableOpacity>
-            </View>
+                style={styles.dropdownOverlay}
+                onPress={() => setShowPostDropdown(false)}
+                activeOpacity={1}
+              />
+              <View style={[styles.postDropdownMenu, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB' }]}>
+              {isOwnPost ? (
+                <TouchableOpacity 
+                  style={styles.postDropdownItem}
+                  onPress={() => {
+                    setShowPostDropdown(false);
+                    handleDeletePost();
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                  <Text style={[styles.postDropdownText, { color: '#EF4444' }]}>Delete Post</Text>
+                </TouchableOpacity>
+              ) : canMessagePostAuthor ? (
+                <TouchableOpacity 
+                  style={styles.postDropdownItem}
+                  onPress={() => {
+                    setShowPostDropdown(false);
+                    setMessageRecipient({ id: post.authorId, author: post.authorName || displayAuthor, userId: post.authorId });
+                    setShowMessageModal(true);
+                  }}
+                >
+                  <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
+                  <Text style={[styles.postDropdownText, { color: theme.colors.text }]}>Message</Text>
+                </TouchableOpacity>
+              ) : null}
+              </View>
+            </>
           )}
 
           <Text style={[styles.title, { color: theme.colors.text }]}>{post.title}</Text>
@@ -1087,7 +1114,7 @@ const styles = StyleSheet.create({
   },
   postDropdownMenu: {
     position: 'absolute',
-    top: 35,
+    top: 30,
     right: 0,
     borderRadius: 8,
     borderWidth: 1,

@@ -24,6 +24,9 @@ const SignInScreen = ({ navigation, route }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { setIsOnboarded } = useOnboarding();
+  
+  // Check if we're coming from onboarding (show back button) or returning user (hide back button)
+  const isFromOnboarding = route?.params?.fromOnboarding || false;
 
   const validateForm = () => {
     const newErrors = {};
@@ -142,12 +145,16 @@ const SignInScreen = ({ navigation, route }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#3E5F44" />
-          </TouchableOpacity>
+          {isFromOnboarding ? (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#3E5F44" />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.placeholder} />
+          )}
           <Text style={styles.headerTitle}>Sign In</Text>
           <View style={styles.placeholder} />
         </View>
@@ -211,7 +218,7 @@ const SignInScreen = ({ navigation, route }) => {
           {/* Create Account Link */}
           <View style={styles.createAccountContainer}>
             <Text style={styles.createAccountText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            <TouchableOpacity onPress={() => navigation.navigate('CreateAccount')}>
               <Text style={styles.createAccountLink}>Create Account</Text>
             </TouchableOpacity>
           </View>

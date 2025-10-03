@@ -5,87 +5,35 @@ import { Ionicons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
+import { realtimeService } from '../services/firebaseService';
+import { db } from '../config/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
-// Mock user database for search
-const mockUsers = [
-  { id: 'u1', name: 'Tyler Bradshaw', username: '@tylerb' },
-  { id: 'u2', name: 'Jake Thompson', username: '@jaket' },
-  { id: 'u3', name: 'Mike Johnson', username: '@mikej' },
-  { id: 'u4', name: 'Ryan Miller', username: '@ryanm' },
-  { id: 'u5', name: 'David Kim', username: '@davidk' },
-  { id: 'u6', name: 'Chris Park', username: '@chrisp' },
-  { id: 'u7', name: 'Alex Rodriguez', username: '@alexr' },
-  { id: 'u8', name: 'Brandon Green', username: '@brandong' },
-];
+// Note: Search only real users from Firestore (no mock users)
 
 const MessagesScreen = ({ navigation, route }) => {
   const theme = useTheme();
+  const { user } = useAuth();
   const [conversations, setConversations] = useState([]); // Start with empty array instead of mock data
   const [newChatRecipient, setNewChatRecipient] = useState(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
 
-  // Load messages from AsyncStorage and create conversations
-  const loadMessages = async () => {
-    try {
-      const messagesData = await AsyncStorage.getItem('messages');
-      if (messagesData) {
-        const messages = JSON.parse(messagesData);
-        
-        // Group messages by recipient and get the most recent message for each
-        const conversationMap = {};
-        messages.forEach(message => {
-          const recipientKey = message.recipientId || message.recipient;
-          
-          // Format timestamp to show real time
-          let time = 'Now';
-          try {
-            if (message.timestamp) {
-              const date = new Date(message.timestamp);
-              if (!isNaN(date.getTime())) {
-                time = date.toLocaleTimeString('en-US', { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  hour12: true 
-                });
-              }
-            }
-          } catch (error) {
-            console.log('Error parsing timestamp:', error);
-          }
-          
-          // Always update with the most recent message (last one wins)
-          conversationMap[recipientKey] = {
-            id: recipientKey,
-            name: message.recipient?.replace(/^u\//i, '') || 'Unknown User',
-            lastMessage: message.text,
-            time: time,
-            unread: 0,
-          };
-        });
-        
-        // Convert to array and set as conversations (replace instead of merge)
-        const messageConversations = Object.values(conversationMap);
-        
-        // Always add Test conversation at the top (only if it doesn't already exist)
-        setConversations(messageConversations);
-      } else {
-        // No messages yet
-        setConversations([]);
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
+  // Real-time conversations from Firestore
+  useEffect(() => {
+    if (!user?.uid) {
+      setConversations([]);
+      return;
     }
-  };
+    const unsubscribe = realtimeService.listenToConversations(user.uid, setConversations);
+    return unsubscribe;
+  }, [user?.uid]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchTimer, setSearchTimer] = useState(null);
 
-  // Load messages when screen focuses
-  useFocusEffect(
-    React.useCallback(() => {
-      loadMessages();
-    }, [])
-  );
+  // Keep new chat banner behavior when arriving from other screens
 
   // Handle new chat creation from comment long-press
   useFocusEffect(
@@ -111,15 +59,56 @@ const MessagesScreen = ({ navigation, route }) => {
     }
 
     setIsSearching(true);
-    // Simulate search delay
-    setTimeout(() => {
-      const filtered = mockUsers.filter(user => 
-        user.name.toLowerCase().startsWith(query.toLowerCase()) ||
-        user.username.toLowerCase().startsWith(query.toLowerCase())
-      );
-      setSearchResults(filtered);
-      setIsSearching(false);
+    if (searchTimer) clearTimeout(searchTimer);
+    const timer = setTimeout(async () => {
+      try {
+        // Only search userProfiles (users), not profiles
+        let merged = [];
+        try {
+          const upSnap = await getDocs(collection(db, 'userProfiles'));
+          merged = upSnap.docs.map(d => {
+            const data = d.data();
+            return {
+              id: d.id || data?.userId,
+              name: data?.displayName || data?.name || data?.username || data?.email || 'User',
+              username: data?.username || '',
+              email: data?.email || ''
+            };
+          });
+        } catch (e) {
+          console.log('❌ Error fetching userProfiles:', e);
+          merged = [];
+        }
+
+        // Deduplicate and exclude current user
+        const seen = new Set();
+        const qLower = query.toLowerCase();
+        const filtered = merged
+          .filter(u => {
+            if (!u?.id) return false;
+            if (user?.uid && u.id === user.uid) return false;
+            const key = u.id;
+            if (seen.has(key)) return false;
+            
+            // Search both username and displayName
+            const uname = (u.username || '').toLowerCase();
+            const dname = (u.displayName || '').toLowerCase();
+            const match = uname.startsWith(qLower) || dname.startsWith(qLower);
+            
+            if (match) seen.add(key);
+            return match;
+          })
+          .slice(0, 25);
+
+        setSearchResults(filtered);
+      } catch (e) {
+        console.log('User search failed:', e);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
     }, 300);
+    setSearchTimer(timer);
   };
 
   const handleUserSelect = (user) => {
@@ -129,7 +118,7 @@ const MessagesScreen = ({ navigation, route }) => {
     
     // Create a new conversation
     const newConversation = {
-      id: `new-${Date.now()}`,
+      id: user.id,
       name: user.name,
       lastMessage: 'Start a conversation...',
       time: new Date().toLocaleTimeString('en-US', { 
@@ -150,7 +139,7 @@ const MessagesScreen = ({ navigation, route }) => {
     if (newChatRecipient) {
       // Create a new conversation
       const newConversation = {
-        id: `new-${Date.now()}`,
+        id: newChatRecipient.id,
         name: newChatRecipient.name,
         lastMessage: 'Start a conversation...',
         time: 'now',
