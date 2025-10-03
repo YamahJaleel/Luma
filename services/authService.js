@@ -30,6 +30,7 @@ export const authService = {
       
       // Send email verification
       await sendEmailVerification(user);
+      console.log("✅ Verification email sent to:", user.email);
       
       return user;
     } catch (error) {

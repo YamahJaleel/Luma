@@ -40,42 +40,6 @@ const MessageThreadScreen = ({ route, navigation }) => {
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [autoReplyTimeout, setAutoReplyTimeout] = useState(null);
 
-  // Simulate other person typing for Test chat
-  const simulateOtherPersonTyping = () => {
-    if (conversation?.name === 'Test') {
-      setIsTyping(true);
-      
-      // Clear any existing timeout
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-      
-      // Set timeout to stop typing after 3 seconds
-      const timeout = setTimeout(() => {
-        setIsTyping(false);
-      }, 3000);
-      setTypingTimeout(timeout);
-    }
-  };
-
-  const clearTestChat = async () => {
-    try {
-      // Clear messages from AsyncStorage
-      const messagesData = await AsyncStorage.getItem('messages');
-      if (messagesData) {
-        const messages = JSON.parse(messagesData);
-        const filteredMessages = messages.filter(message => 
-          message.recipientId !== 'test' && message.recipient !== 'Test'
-        );
-        await AsyncStorage.setItem('messages', JSON.stringify(filteredMessages));
-      }
-      
-      // Clear local state
-      setMessages([]);
-    } catch (error) {
-      console.error('Error clearing test chat:', error);
-    }
-  };
 
   const sendAutoReply = async () => {
     const now = new Date();
@@ -237,16 +201,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{conversation?.name || 'Chat'}</Text>
-        {conversation?.name === 'Test' ? (
-          <TouchableOpacity 
-            style={[styles.clearButton, { backgroundColor: theme.colors.surface }]} 
-            onPress={clearTestChat}
-          >
-            <Ionicons name="trash-outline" size={20} color="#EF4444" />
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
+        <View style={{ width: 40 }} />
       </View>
 
       <FlatList

@@ -9,6 +9,7 @@ import { SettingsProvider, useSettings } from './components/SettingsContext';
 import { TabProvider } from './components/TabContext';
 import { OnboardingProvider, useOnboarding } from './components/OnboardingContext';
 import { FirebaseProvider } from './contexts/FirebaseContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import TabNavigator from './components/MainStackNavigator';
 
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -101,6 +102,7 @@ const AppContent = () => {
   const { darkModeEnabled, notificationsEnabled } = useSettings();
   const theme = darkModeEnabled ? darkTheme : lightTheme;
   const { isOnboarded } = useOnboarding();
+  const { user } = useAuth();
 
   React.useEffect(() => {
     const ensurePermissions = async () => {
@@ -173,6 +175,32 @@ const AppContent = () => {
                   component={PrivacyPolicyScreen}
                 />
               </Stack.Navigator>
+            ) : !user ? (
+              <Stack.Navigator 
+                screenOptions={{ headerShown: false }}
+                initialRouteName="SignIn"
+              >
+                <Stack.Screen 
+                  name="SignIn" 
+                  component={SignInScreen}
+                />
+                <Stack.Screen 
+                  name="CreateAccount" 
+                  component={CreateAccountScreen}
+                />
+                <Stack.Screen 
+                  name="LicenseVerification" 
+                  component={LicenseVerificationScreen}
+                />
+                <Stack.Screen 
+                  name="TermsOfService"
+                  component={TermsOfServiceScreen}
+                />
+                <Stack.Screen 
+                  name="PrivacyPolicy" 
+                  component={PrivacyPolicyScreen}
+                />
+              </Stack.Navigator>
             ) : (
               <Stack.Navigator 
                 screenOptions={{ 
@@ -205,13 +233,15 @@ const AppContent = () => {
 export default function App() {
   return (
     <FirebaseProvider>
-      <OnboardingProvider>
-        <SettingsProvider>
-          <TabProvider>
-            <AppContent />
-          </TabProvider>
-        </SettingsProvider>
-      </OnboardingProvider>
+      <AuthProvider>
+        <OnboardingProvider>
+          <SettingsProvider>
+            <TabProvider>
+              <AppContent />
+            </TabProvider>
+          </SettingsProvider>
+        </OnboardingProvider>
+      </AuthProvider>
     </FirebaseProvider>
   );
 }

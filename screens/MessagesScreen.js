@@ -67,36 +67,10 @@ const MessagesScreen = ({ navigation, route }) => {
         const messageConversations = Object.values(conversationMap);
         
         // Always add Test conversation at the top (only if it doesn't already exist)
-        const hasTestConversation = messageConversations.some(conv => conv.id === 'test');
-        if (!hasTestConversation) {
-          const testConversation = {
-            id: 'test',
-            name: 'Test',
-            lastMessage: 'Sounds great!',
-            time: new Date().toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: true 
-            }),
-            unread: 0,
-          };
-          setConversations([testConversation, ...messageConversations]);
-        } else {
-          // Ensure Test conversation is always at the top
-          const testConv = messageConversations.find(conv => conv.id === 'test');
-          const otherConvs = messageConversations.filter(conv => conv.id !== 'test');
-          setConversations([testConv, ...otherConvs]);
-        }
+        setConversations(messageConversations);
       } else {
-        // If no messages, still show Test conversation
-        const testConversation = {
-          id: 'test',
-          name: 'Test',
-          lastMessage: 'Sounds great!',
-          time: 'now',
-          unread: 0,
-        };
-        setConversations([testConversation]);
+        // No messages yet
+        setConversations([]);
       }
     } catch (error) {
       console.error('Error loading messages:', error);

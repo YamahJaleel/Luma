@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { commentService, postService } from '../services/firebaseService';
+import { auth } from '../config/firebase';
 
 const getTypeMeta = (type) => {
   const types = {
@@ -74,6 +76,22 @@ const makeMockComments = () => ([
     ],
   },
 ]);
+
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'just now';
+  
+  const now = new Date();
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const diff = now - date;
+  const minutes = Math.floor(diff / 60000);
+  
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
 
 const flattenComments = (nodes, depth = 0) => {
   const out = [];
@@ -134,14 +152,17 @@ const saveCommentsForPost = async (postId, list) => {
 
 const PostDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
-  const { post, comments: passedComments } = route.params || {};
-  const typeMeta = getTypeMeta(post?.type);
+  const params = route.params || {};
+  const post = params.post || {};
+  const passedComments = params.comments;
+  const typeMeta = getTypeMeta(post.type);
 
-  const [comments, setComments] = useState(Array.isArray(passedComments) ? passedComments : makeMockComments());
+  const [comments, setComments] = useState([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(true);
   const displayAuthor = React.useMemo(() => {
-    const raw = post?.author || 'Anonymous';
+    const raw = post.author || 'Anonymous';
     return raw.replace(/^u\//i, '');
-  }, [post?.author]);
+  }, [post.author]);
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for post, {id, author} for comment
   const [upvotedComments, setUpvotedComments] = useState(new Set()); // Track upvoted comments
@@ -150,8 +171,8 @@ const PostDetailScreen = ({ route, navigation }) => {
   const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
   const [showPostDropdown, setShowPostDropdown] = useState(false); // Track post dropdown visibility
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // Track expanded threads
-  const [liked, setLiked] = useState(!!post?.liked);
-  const [likeCount, setLikeCount] = useState(post?.likes || 0);
+  const [liked, setLiked] = useState(!!post.liked);
+  const [likeCount, setLikeCount] = useState(post.likes || 0);
 
   // Check if this is a user-created post (not in MOCK_POSTS)
   const MOCK_POSTS = [
@@ -165,6 +186,8 @@ const PostDetailScreen = ({ route, navigation }) => {
   // Load like status from AsyncStorage on mount
   React.useEffect(() => {
     const loadLikeStatus = async () => {
+      if (!post.id) return;
+      
       try {
         const likedPostsData = await AsyncStorage.getItem('likedPosts');
         const likedPosts = likedPostsData ? JSON.parse(likedPostsData) : [];
@@ -172,7 +195,7 @@ const PostDetailScreen = ({ route, navigation }) => {
         setLiked(isLiked);
         
         // Update like count based on current status
-        const baseLikes = post?.likes || 0;
+        const baseLikes = post.likes || 0;
         setLikeCount(baseLikes + (isLiked ? 1 : 0));
       } catch (error) {
         console.error('Error loading like status:', error);
@@ -205,15 +228,53 @@ const PostDetailScreen = ({ route, navigation }) => {
     loadCommentVotes();
   }, []);
 
-  // Load saved comments for the post on mount
+  // Load comments from Firebase
+  useEffect(() => {
+    const loadComments = async () => {
+      if (!post.id) return;
+      
+      setIsLoadingComments(true);
+      try {
+        const firebaseComments = await commentService.getPostComments(post.id);
+        console.log('📝 Loaded comments from Firebase:', firebaseComments);
+        
+        // Transform Firebase comments to match the expected format
+        const transformedComments = firebaseComments.map(comment => ({
+          id: comment.id,
+          author: comment.authorName || comment.author || 'Anonymous',
+          avatarColor: '#3E5F44', // Default color, could be stored in user profile
+          text: comment.text || comment.content,
+          timestamp: formatTimestamp(comment.createdAt),
+          replies: comment.replies || [],
+          userId: comment.userId || comment.authorId,
+          createdAt: comment.createdAt
+        }));
+        
+        setComments(transformedComments);
+      } catch (error) {
+        console.error('Error loading comments:', error);
+        // Fall back to empty array if there's an error
+        setComments([]);
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
+    
+    loadComments();
+  }, [post.id]);
+
+  // Load saved comments for the post on mount (fallback)
   React.useEffect(() => {
     (async () => {
-      const saved = await loadSavedComments(post?.id);
-      if (Array.isArray(saved)) {
-        setComments(saved);
+      // Only use saved comments if we haven't loaded from Firebase yet
+      if (comments.length === 0 && !isLoadingComments) {
+        const saved = await loadSavedComments(post?.id);
+        if (Array.isArray(saved) && saved.length > 0) {
+          setComments(saved);
+        }
       }
     })();
-  }, [post?.id]);
+  }, [post?.id, comments.length, isLoadingComments]);
 
   // Save comment votes to AsyncStorage
   const saveCommentVotes = async (upvoted, downvoted, voteCounts) => {
@@ -321,72 +382,98 @@ const PostDetailScreen = ({ route, navigation }) => {
   const handleSend = async () => {
     const text = replyText.trim();
     if (!text) return;
-    const newItem = {
-      id: Date.now(),
-      author: 'Luma User',
-      avatarColor: '#7C9AFF',
-      text,
-      timestamp: 'now',
-      replies: [],
-    };
-
-    // Save user's comment to AsyncStorage for My Comments screen (community posts only)
-    const persistUserComment = async () => {
-      try {
-        const raw = await AsyncStorage.getItem('userCommunityComments');
-        const list = raw ? JSON.parse(raw) : [];
-        const entry = {
-          id: newItem.id,
-          text: newItem.text,
-          timestamp: newItem.timestamp,
-          post: {
-            id: post?.id,
-            title: post?.title,
-            text: post?.text,
-            community: post?.community,
-            comments: post?.comments,
-          },
-          passedComments: comments,
-        };
-        list.unshift(entry);
-        await AsyncStorage.setItem('userCommunityComments', JSON.stringify(list));
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    if (replyTarget && replyTarget.id) {
-      // Auto-expand the top-level thread that contains the target
-      const findRootId = (nodes, targetId) => {
-        for (const n of nodes) {
-          if (n.id === targetId) return n.id;
-          const stack = [...(n.replies || [])];
-          while (stack.length) {
-            const cur = stack.pop();
-            if (cur.id === targetId) return n.id;
-            if (cur.replies && cur.replies.length) stack.push(...cur.replies);
-          }
-        }
-        return null;
-      };
-      const rootId = findRootId(comments, replyTarget.id) || replyTarget.id;
-      setExpandedThreads((prev) => {
-        const next = new Set(prev);
-        next.add(rootId);
-        return next;
-      });
-      const nextComments = addReplyById(comments, replyTarget.id, newItem);
-      setComments(nextComments);
-      await saveCommentsForPost(post?.id, nextComments);
-      await persistUserComment();
-    } else {
-      const nextComments = [...comments, newItem];
-      setComments(nextComments);
-      await saveCommentsForPost(post?.id, nextComments);
-      await persistUserComment();
+    
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Error', 'You must be signed in to comment.');
+      return;
     }
-    setReplyText('');
-    setReplyTarget(null);
+
+    try {
+      const commentData = {
+        postId: post.id,
+        text: text,
+        authorId: user.uid,
+        authorName: user.displayName || 'Anonymous',
+        parentCommentId: replyTarget?.id || null, // null for top-level comment
+      };
+
+      console.log('📝 Creating comment:', commentData);
+      const commentId = await commentService.createComment(commentData);
+      console.log('✅ Comment created with ID:', commentId);
+
+      // Add the new comment to the local state
+      const newItem = {
+        id: commentId,
+        author: user.displayName || 'Anonymous',
+        avatarColor: '#7C9AFF',
+        text,
+        timestamp: 'now',
+        replies: [],
+        userId: user.uid,
+      };
+
+      // Save user's comment to AsyncStorage for My Comments screen (community posts only)
+      const persistUserComment = async () => {
+        try {
+          const raw = await AsyncStorage.getItem('userCommunityComments');
+          const list = raw ? JSON.parse(raw) : [];
+          const entry = {
+            id: newItem.id,
+            text: newItem.text,
+            timestamp: newItem.timestamp,
+            post: {
+              id: post?.id,
+              title: post?.title,
+              text: post?.text,
+              community: post?.community,
+              comments: post?.comments,
+            },
+            passedComments: comments,
+          };
+          list.unshift(entry);
+          await AsyncStorage.setItem('userCommunityComments', JSON.stringify(list));
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      if (replyTarget && replyTarget.id) {
+        // Auto-expand the top-level thread that contains the target
+        const findRootId = (nodes, targetId) => {
+          for (const n of nodes) {
+            if (n.id === targetId) return n.id;
+            const stack = [...(n.replies || [])];
+            while (stack.length) {
+              const cur = stack.pop();
+              if (cur.id === targetId) return n.id;
+              if (cur.replies && cur.replies.length) stack.push(...cur.replies);
+            }
+          }
+          return null;
+        };
+        const rootId = findRootId(comments, replyTarget.id) || replyTarget.id;
+        setExpandedThreads((prev) => {
+          const next = new Set(prev);
+          next.add(rootId);
+          return next;
+        });
+        const nextComments = addReplyById(comments, replyTarget.id, newItem);
+        setComments(nextComments);
+        await saveCommentsForPost(post?.id, nextComments);
+        await persistUserComment();
+      } else {
+        const nextComments = [...comments, newItem];
+        setComments(nextComments);
+        await saveCommentsForPost(post?.id, nextComments);
+        await persistUserComment();
+      }
+      setReplyText('');
+      setReplyTarget(null);
+    } catch (error) {
+      console.error('Error creating comment:', error);
+      Alert.alert('Error', 'Failed to post comment. Please try again.');
+    }
   };
 
   const handleUpvote = async (commentId) => {
@@ -500,6 +587,18 @@ const PostDetailScreen = ({ route, navigation }) => {
   };
 
   const handleDeletePost = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Error', 'You must be signed in to delete posts.');
+      return;
+    }
+
+    // Check if user is the author of the post
+    if (post.authorId !== user.uid) {
+      Alert.alert('Error', 'You can only delete your own posts.');
+      return;
+    }
+
     Alert.alert(
       'Delete Post',
       'Are you sure you want to delete this post? This action cannot be undone.',
@@ -513,6 +612,11 @@ const PostDetailScreen = ({ route, navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Hard delete from Firebase (permanently removes the document)
+              console.log('🗑️ Hard deleting post from Firebase:', post.id);
+              await postService.deletePost(post.id);
+              console.log('✅ Post permanently deleted from Firebase');
+
               // Remove from liked posts if it was liked
               const likedPostsData = await AsyncStorage.getItem('likedPosts');
               if (likedPostsData) {
@@ -735,8 +839,8 @@ const PostDetailScreen = ({ route, navigation }) => {
             </View>
           )}
 
-          <Text style={[styles.title, { color: theme.colors.text }]}>{post?.title}</Text>
-          <Text style={[styles.contentText, { color: theme.colors.text }]}>{post?.content ?? post?.text}</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{post.title}</Text>
+          <Text style={[styles.contentText, { color: theme.colors.text }]}>{post.text}</Text>
           <View style={styles.detailActions}>
             <TouchableOpacity style={styles.postActionBtn} onPress={handleLikeToggle}>
               <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? '#EF4444' : (theme.dark ? '#9CA3AF' : '#6B7280')} />
@@ -751,12 +855,25 @@ const PostDetailScreen = ({ route, navigation }) => {
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}> 
           <View style={styles.commentsHeader}>
           </View>
-          <FlatList
-            data={flatComments}
-            renderItem={renderComment}
-            keyExtractor={(item, index) => `${item.node?.id || index}`}
-            scrollEnabled={false}
-          />
+          {isLoadingComments ? (
+            <View style={styles.loadingContainer}>
+              <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading comments...</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={flatComments}
+              renderItem={renderComment}
+              keyExtractor={(item, index) => `${item.node?.id || index}`}
+              scrollEnabled={false}
+              ListEmptyComponent={
+                <View style={styles.emptyCommentsContainer}>
+                  <Text style={[styles.emptyCommentsText, { color: theme.colors.text }]}>
+                    No comments yet. Be the first to comment!
+                  </Text>
+                </View>
+              }
+            />
+          )}
         </View>
       </ScrollView>
 
@@ -938,6 +1055,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   replyText: { fontSize: 13, fontWeight: '600' },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  emptyCommentsContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyCommentsText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
   inputBar: { 
     flexDirection: 'row', 
     alignItems: 'flex-end', 
