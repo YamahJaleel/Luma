@@ -13,9 +13,22 @@ const CreatePostScreen = ({ route, navigation }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
+  const MAX_TITLE_LEN = 300;
+  const MAX_CONTENT_LEN = 6000;
+
   const handlePublish = async () => {
     if (!title.trim() || !content.trim()) {
       Alert.alert('Missing info', 'Please add a title and content.');
+      return;
+    }
+
+    if (title.length > MAX_TITLE_LEN) {
+      Alert.alert('Title too long', `Titles are limited to ${MAX_TITLE_LEN} characters.`);
+      return;
+    }
+
+    if (content.length > MAX_CONTENT_LEN) {
+      Alert.alert('Content too long', `Posts are limited to ${MAX_CONTENT_LEN} characters.`);
       return;
     }
 
@@ -27,12 +40,18 @@ const CreatePostScreen = ({ route, navigation }) => {
         return;
       }
 
+      // Derive a friendly author name
+      const derivedAuthorName =
+        user.displayName && user.displayName.trim()
+          ? user.displayName.trim()
+          : (user.email ? user.email.split('@')[0] : 'User');
+
       const postData = {
         title: title.trim(),
         text: content.trim(),
         category: communityId,
         authorId: user.uid,
-        authorName: user.displayName || 'Anonymous',
+        authorName: derivedAuthorName,
         type: 'general'
       };
 
@@ -97,6 +116,7 @@ const CreatePostScreen = ({ route, navigation }) => {
               placeholder="Give your post a clear title"
               placeholderTextColor={theme.colors.placeholder}
               style={[styles.input, { color: theme.colors.text }]}
+              maxLength={MAX_TITLE_LEN}
               editable={!isLoading}
             />
           </View>
@@ -112,6 +132,7 @@ const CreatePostScreen = ({ route, navigation }) => {
               multiline
               numberOfLines={6}
               textAlignVertical="top"
+              maxLength={MAX_CONTENT_LEN}
               editable={!isLoading}
             />
           </View>

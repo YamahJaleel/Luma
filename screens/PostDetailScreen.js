@@ -19,6 +19,8 @@ import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { commentService, postService } from '../services/firebaseService';
 import { auth } from '../config/firebase';
+import { db } from '../config/firebase';
+import { collection, query as fsQuery, where, orderBy, onSnapshot, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 const getTypeMeta = (type) => {
   const types = {
@@ -93,6 +95,28 @@ const formatTimestamp = (timestamp) => {
   return `${days}d ago`;
 };
 
+// Build a threaded comment tree from flat comments using parentCommentId
+const buildThreadedComments = (flat) => {
+  const byId = new Map();
+  const roots = [];
+
+  flat.forEach((c) => {
+    byId.set(c.id, { ...c, replies: [] });
+  });
+
+  flat.forEach((c) => {
+    const node = byId.get(c.id);
+    const parentId = c.parentCommentId || null;
+    if (parentId && byId.has(parentId)) {
+      byId.get(parentId).replies.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots;
+};
+
 const flattenComments = (nodes, depth = 0) => {
   const out = [];
   nodes.forEach((n) => {
@@ -160,9 +184,14 @@ const PostDetailScreen = ({ route, navigation }) => {
   const [comments, setComments] = useState([]);
   const [isLoadingComments, setIsLoadingComments] = useState(true);
   const displayAuthor = React.useMemo(() => {
-    const raw = post.author || 'Anonymous';
-    return raw.replace(/^u\//i, '');
-  }, [post.author]);
+    const raw = (post.authorName || post.author || '').trim();
+    if (raw.length > 0) return raw.replace(/^u\//i, '');
+    // Fallback from auth if needed
+    const user = auth.currentUser;
+    if (user?.displayName && user.displayName.trim()) return user.displayName.trim();
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  }, [post.authorName, post.author]);
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for post, {id, author} for comment
   const [upvotedComments, setUpvotedComments] = useState(new Set()); // Track upvoted comments
@@ -228,39 +257,49 @@ const PostDetailScreen = ({ route, navigation }) => {
     loadCommentVotes();
   }, []);
 
-  // Load comments from Firebase
+  // Real-time comments listener from Firebase
   useEffect(() => {
-    const loadComments = async () => {
-      if (!post.id) return;
-      
-      setIsLoadingComments(true);
-      try {
-        const firebaseComments = await commentService.getPostComments(post.id);
-        console.log('📝 Loaded comments from Firebase:', firebaseComments);
-        
-        // Transform Firebase comments to match the expected format
-        const transformedComments = firebaseComments.map(comment => ({
-          id: comment.id,
-          author: comment.authorName || comment.author || 'Anonymous',
-          avatarColor: '#3E5F44', // Default color, could be stored in user profile
-          text: comment.text || comment.content,
-          timestamp: formatTimestamp(comment.createdAt),
-          replies: comment.replies || [],
-          userId: comment.userId || comment.authorId,
-          createdAt: comment.createdAt
-        }));
-        
-        setComments(transformedComments);
-      } catch (error) {
-        console.error('Error loading comments:', error);
-        // Fall back to empty array if there's an error
-        setComments([]);
-      } finally {
+    if (!post.id) return;
+
+    setIsLoadingComments(true);
+    const q = fsQuery(
+      collection(db, 'comments'),
+      where('postId', '==', post.id),
+      orderBy('createdAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        try {
+          const firebaseComments = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          // Normalize
+          const normalized = firebaseComments.map((comment) => ({
+            id: comment.id,
+            author: comment.authorName || comment.author || 'Anonymous',
+            avatarColor: '#3E5F44',
+            text: comment.text || comment.content,
+            timestamp: formatTimestamp(comment.createdAt),
+            userId: comment.userId || comment.authorId,
+            createdAt: comment.createdAt,
+            parentCommentId: comment.parentCommentId || null,
+          }));
+
+          const threaded = buildThreadedComments(normalized);
+          setComments(threaded);
+        } catch (e) {
+          console.error('Error processing comments snapshot:', e);
+        } finally {
+          setIsLoadingComments(false);
+        }
+      },
+      (error) => {
+        console.error('Error listening to comments:', error);
         setIsLoadingComments(false);
       }
-    };
-    
-    loadComments();
+    );
+
+    return () => unsubscribe();
   }, [post.id]);
 
   // Load saved comments for the post on mount (fallback)
@@ -329,31 +368,68 @@ const PostDetailScreen = ({ route, navigation }) => {
   const [messageText, setMessageText] = useState('');
   const [messageRecipient, setMessageRecipient] = useState(null);
 
-  const handleDeleteComment = (commentId) => {
+  // Delete a comment and all its descendants in Firestore
+  const deleteCommentThread = async (rootCommentId) => {
+    // Load all comments for this post to compute descendants
+    const commentsQ = fsQuery(collection(db, 'comments'), where('postId', '==', post.id));
+    const snap = await getDocs(commentsQ);
+    const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    // Build adjacency by parentCommentId
+    const childrenByParent = new Map();
+    for (const c of all) {
+      const parentId = c.parentCommentId || null;
+      if (!childrenByParent.has(parentId)) childrenByParent.set(parentId, []);
+      childrenByParent.get(parentId).push(c.id);
+    }
+
+    // Collect all descendant ids (including root)
+    const toDelete = [];
+    const stack = [rootCommentId];
+    while (stack.length) {
+      const cur = stack.pop();
+      toDelete.push(cur);
+      const kids = childrenByParent.get(cur) || [];
+      for (const k of kids) stack.push(k);
+    }
+
+    // Batch delete
+    const batch = writeBatch(db);
+    for (const id of toDelete) {
+      batch.delete(doc(db, 'comments', id));
+    }
+    await batch.commit();
+  };
+
+  const handleDeleteComment = (commentId, commentUserId) => {
+    const user = auth.currentUser;
+    if (!user || user.uid !== commentUserId) {
+      Alert.alert('Not allowed', 'You can only delete your own comments.');
+      setDropdownVisible(null);
+      return;
+    }
+
     Alert.alert('Delete comment?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Cancel', style: 'cancel', onPress: () => setDropdownVisible(null) },
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => {
-          const nextComments = deleteCommentById(comments, commentId);
-          setComments(nextComments);
-          setDropdownVisible(null);
-          // Persist updated post comments
-          (async () => {
-            await saveCommentsForPost(post?.id, nextComments);
-          })();
-          // Remove from stored 'userCommunityComments' if it exists
-          (async () => {
+        onPress: async () => {
+          try {
+            // Hard delete this comment and all of its replies
+            await deleteCommentThread(commentId);
+            setDropdownVisible(null);
+            // Real-time listener will update UI; also cleanup local cache list
             try {
               const raw = await AsyncStorage.getItem('userCommunityComments');
               const list = raw ? JSON.parse(raw) : [];
               const filtered = list.filter((c) => String(c.id) !== String(commentId));
               await AsyncStorage.setItem('userCommunityComments', JSON.stringify(filtered));
-            } catch (e) {
-              // ignore
-            }
-          })();
+            } catch (_) {}
+          } catch (e) {
+            console.error('Error deleting comment:', e);
+            Alert.alert('Error', 'Failed to delete comment.');
+          }
         },
       },
     ]);
@@ -612,10 +688,21 @@ const PostDetailScreen = ({ route, navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Hard delete from Firebase (permanently removes the document)
-              console.log('🗑️ Hard deleting post from Firebase:', post.id);
-              await postService.deletePost(post.id);
-              console.log('✅ Post permanently deleted from Firebase');
+              // Hard delete post and all related comments in a batch
+              console.log('🗑️ Hard deleting post and all comments:', post.id);
+
+              const batch = writeBatch(db);
+
+              // Queue delete for all comments with this postId
+              const commentsQ = fsQuery(collection(db, 'comments'), where('postId', '==', post.id));
+              const commentsSnap = await getDocs(commentsQ);
+              commentsSnap.forEach((d) => batch.delete(d.ref));
+
+              // Queue delete for the post itself
+              batch.delete(doc(db, 'posts', post.id));
+
+              await batch.commit();
+              console.log('✅ Post and all comments permanently deleted');
 
               // Remove from liked posts if it was liked
               const likedPostsData = await AsyncStorage.getItem('likedPosts');
@@ -673,7 +760,7 @@ const PostDetailScreen = ({ route, navigation }) => {
     const isUpvoted = upvotedComments.has(c.id);
     const isDownvoted = downvotedComments.has(c.id);
     const showDropdown = dropdownVisible === c.id;
-    const isOwn = (c.author || '').replace(/^u\//i, '').toLowerCase() === 'luma user';
+    const isOwn = !!(auth.currentUser && c.userId && c.userId === auth.currentUser.uid);
 
     return (
       <View
@@ -771,7 +858,7 @@ const PostDetailScreen = ({ route, navigation }) => {
                 {isOwn ? (
                   <TouchableOpacity 
                     style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
-                    onPress={() => handleDeleteComment(c.id)}
+                    onPress={() => handleDeleteComment(c.id, c.userId)}
                   >
                     <Ionicons name="trash" size={16} color="#EF4444" />
                     <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Delete</Text>
