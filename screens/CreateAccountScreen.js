@@ -165,7 +165,7 @@ const CreateAccountScreen = ({ navigation }) => {
     } = options;
 
     // Add example text for pseudonym field
-    const displayLabel = field === 'pseudonym' ? `${label} (e.g., ScarlettX92)` : label;
+    const displayLabel = field === 'pseudonym' ? `${label} (e.g., RavenX92)` : label;
 
     return (
       <View style={styles.inputContainer}>
