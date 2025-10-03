@@ -1,6 +1,6 @@
 # Firebase Integration Guide
 
-This guide explains how to integrate Firebase into your Luma app for backend functionality.
+This guide explains how to integrate Firebase for backend functionality.
 
 ## Installation
 
