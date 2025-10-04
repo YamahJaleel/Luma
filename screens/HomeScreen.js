@@ -10,7 +10,6 @@ import { auth } from '../config/firebase';
 
 // Categories data (could be moved to Firestore later)
 const CATEGORIES = [
-  { id: 'all', label: 'All' },
   { id: 'dating-advice', label: 'Dating' },
   { id: 'red-flags', label: 'Red Flags' },
   { id: 'success-stories', label: 'Green Flags' },
@@ -20,7 +19,6 @@ const CATEGORIES = [
 
 // Category metadata
 const CATEGORY_META = {
-  'all': { icon: 'grid', color: '#0D9488' },
   'dating-advice': { icon: 'heart', color: '#EC4899' },
   'red-flags': { icon: 'warning', color: '#EF4444' },
   'success-stories': { icon: 'checkmark-circle', color: '#10B981' },
@@ -29,14 +27,13 @@ const CATEGORY_META = {
 };
 
 // CategoryPicker component
-const CategoryPicker = ({ selectedCategory, onClick, addAll = true }) => {
+const CategoryPicker = ({ selectedCategory, onClick }) => {
   const theme = useTheme();
-  const items = addAll ? CATEGORIES : CATEGORIES.filter((c) => c.id !== 'all');
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catList}>
-      {items.map((c) => {
-        const isActive = (selectedCategory || 'all') === c.id;
-        const meta = CATEGORY_META[c.id] || CATEGORY_META['all'];
+      {CATEGORIES.map((c) => {
+        const isActive = selectedCategory === c.id;
+        const meta = CATEGORY_META[c.id];
         const bgColor = isActive ? theme.colors.primary : `${meta.color}25`;
         const borderColor = isActive ? theme.colors.primary : `${meta.color}40`;
         const iconColor = isActive ? '#FFFFFF' : meta.color;
@@ -120,7 +117,7 @@ const HomeScreen = () => {
   const scrollYRef = useRef(0);
 
   const [posts, setPosts] = useState(null);
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState('dating-advice');
   const [isLoading, setIsLoading] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState('recent');
@@ -131,7 +128,7 @@ const HomeScreen = () => {
     setIsLoading(true);
     try {
       const fetchedPosts = await postService.getPosts(
-        category === 'all' ? null : category,
+        category,
         selectedSort
       );
 
@@ -231,7 +228,7 @@ const HomeScreen = () => {
     { id: 'comments', name: 'Most Comments', icon: 'chatbubble' },
   ];
 
-  const canCreate = category !== 'all';
+  const canCreate = true;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -265,7 +262,7 @@ const HomeScreen = () => {
                   </View>
                 </View>
               </View>
-              <CategoryPicker selectedCategory={category} onClick={setCategory} addAll />
+              <CategoryPicker selectedCategory={category} onClick={setCategory} />
               <View style={styles.actionsUnderCats}>
                 <View style={[styles.searchPill, { backgroundColor: colors.surface }]}>
                   <Ionicons name="search" size={16} color={colors.primary} />
