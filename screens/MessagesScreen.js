@@ -238,13 +238,21 @@ const MessagesScreen = ({ navigation, route }) => {
         visible={showSearchModal} 
         transparent 
         animationType="slide"
-        onRequestClose={() => setShowSearchModal(false)}
+        onRequestClose={() => {
+          setShowSearchModal(false);
+          setSearchQuery('');
+          setSearchResults([]);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.searchModal, { backgroundColor: theme.colors.background }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.colors.text }]}>New Message</Text>
-              <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+              <TouchableOpacity onPress={() => {
+                setShowSearchModal(false);
+                setSearchQuery('');
+                setSearchResults([]);
+              }}>
                 <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>

@@ -264,6 +264,7 @@ const PostDetailScreen = ({ route, navigation }) => {
     if (!post.id) return;
 
     setIsLoadingComments(true);
+    setFirebaseLoaded(false); // Reset Firebase loaded flag for new post
     const q = fsQuery(
       collection(db, 'comments'),
       where('postId', '==', post.id),
@@ -274,7 +275,10 @@ const PostDetailScreen = ({ route, navigation }) => {
       q,
       (snapshot) => {
         try {
+          console.log('📡 Comments snapshot received:', snapshot.docs.length, 'comments');
           const firebaseComments = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          console.log('📝 Firebase comments:', firebaseComments.map(c => ({ id: c.id, text: c.text?.substring(0, 20) + '...' })));
+          
           // Normalize
           const normalized = firebaseComments.map((comment) => ({
             id: comment.id,
@@ -288,7 +292,9 @@ const PostDetailScreen = ({ route, navigation }) => {
           }));
 
           const threaded = buildThreadedComments(normalized);
+          console.log('🧵 Threaded comments:', threaded.length, 'top-level comments');
           setComments(threaded);
+          setFirebaseLoaded(true); // Mark Firebase as loaded
         } catch (e) {
           console.error('Error processing comments snapshot:', e);
         } finally {
@@ -304,18 +310,21 @@ const PostDetailScreen = ({ route, navigation }) => {
     return () => unsubscribe();
   }, [post.id]);
 
+  // Track if Firebase has been loaded at least once
+  const [firebaseLoaded, setFirebaseLoaded] = useState(false);
+
   // Load saved comments for the post on mount (fallback)
   React.useEffect(() => {
     (async () => {
-      // Only use saved comments if we haven't loaded from Firebase yet
-      if (comments.length === 0 && !isLoadingComments) {
+      // Only use saved comments if Firebase hasn't loaded yet
+      if (comments.length === 0 && !isLoadingComments && !firebaseLoaded) {
         const saved = await loadSavedComments(post?.id);
         if (Array.isArray(saved) && saved.length > 0) {
           setComments(saved);
         }
       }
     })();
-  }, [post?.id, comments.length, isLoadingComments]);
+  }, [post?.id, comments.length, isLoadingComments, firebaseLoaded]);
 
   // Save comment votes to AsyncStorage
   const saveCommentVotes = async (upvoted, downvoted, voteCounts) => {
@@ -405,21 +414,46 @@ const PostDetailScreen = ({ route, navigation }) => {
 
   const handleDeleteComment = (commentId, commentUserId) => {
     const user = auth.currentUser;
-    if (!user || user.uid !== commentUserId) {
+    const isPostOwner = !!(user && post?.authorId && user.uid === post.authorId);
+    const isCommentOwner = !!(user && user.uid === (commentUserId || user?.uid));
+
+    if (!isPostOwner && !isCommentOwner) {
       Alert.alert('Not allowed', 'You can only delete your own comments.');
       setDropdownVisible(null);
       return;
     }
 
-    Alert.alert('Delete comment?', 'This cannot be undone.', [
+    const title = isPostOwner && !isCommentOwner
+      ? 'Delete thread?'
+      : 'Delete comment?';
+    const message = isPostOwner && !isCommentOwner
+      ? 'This will delete this comment and all of its replies. This cannot be undone.'
+      : 'This will delete your comment. This cannot be undone.';
+
+    Alert.alert(title, message, [
       { text: 'Cancel', style: 'cancel', onPress: () => setDropdownVisible(null) },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           try {
-            // Hard delete this comment and all of its replies
-            await deleteCommentThread(commentId);
+            console.log('🗑️ Attempting to delete comment:', commentId);
+            console.log('👤 Current user:', auth.currentUser?.uid);
+            console.log('📝 Comment user ID:', commentUserId);
+            console.log('🏠 Is post owner:', isPostOwner);
+            console.log('💬 Is comment owner:', isCommentOwner);
+            
+            if (isPostOwner && !isCommentOwner) {
+              // Post author can remove the entire thread
+              console.log('🧵 Deleting entire thread...');
+              await deleteCommentThread(commentId);
+              console.log('✅ Thread deleted successfully');
+            } else {
+              // Comment author removes only their comment
+              console.log('💬 Deleting single comment...');
+              await commentService.deleteComment(commentId);
+              console.log('✅ Comment deleted successfully');
+            }
             setDropdownVisible(null);
             // Real-time listener will update UI; also cleanup local cache list
             try {
@@ -429,7 +463,7 @@ const PostDetailScreen = ({ route, navigation }) => {
               await AsyncStorage.setItem('userCommunityComments', JSON.stringify(filtered));
             } catch (_) {}
           } catch (e) {
-            console.error('Error deleting comment:', e);
+            console.error('❌ Error deleting comment:', e);
             Alert.alert('Error', 'Failed to delete comment.');
           }
         },
@@ -472,6 +506,7 @@ const PostDetailScreen = ({ route, navigation }) => {
         postId: post.id,
         text: text,
         authorId: user.uid,
+        userId: user.uid,
         authorName: user.displayName || 'Anonymous',
         parentCommentId: replyTarget?.id || null, // null for top-level comment
       };
@@ -768,7 +803,8 @@ const PostDetailScreen = ({ route, navigation }) => {
     const isUpvoted = upvotedComments.has(c.id);
     const isDownvoted = downvotedComments.has(c.id);
     const showDropdown = dropdownVisible === c.id;
-    const isOwn = !!(auth.currentUser && c.userId && c.userId === auth.currentUser.uid);
+    const isOwn = !!(auth.currentUser && (c.userId || c.authorId) && (c.userId || c.authorId) === auth.currentUser.uid);
+    const canDelete = isOwn || isOwnPost;
 
     return (
       <View
@@ -850,34 +886,40 @@ const PostDetailScreen = ({ route, navigation }) => {
         {/* 3-dots menu button with dropdown */}
         <View style={styles.menuContainer}>
           <TouchableOpacity 
-            style={styles.menuButton}
+            style={styles.postThreeDotsButton}
             onPress={() => toggleDropdown(c.id)}
           >
-            <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
+            <Ionicons name="ellipsis-vertical" size={20} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
           </TouchableOpacity>
           {showDropdown && (
             <>
               <TouchableOpacity 
-                style={styles.dropdownOverlay}
+                style={styles.fullScreenOverlay}
                 onPress={closeDropdown}
                 activeOpacity={1}
               />
-              <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}>
-                {isOwn ? (
+              <View style={[styles.postDropdownMenu, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB', width: 120, top: -5, right: -5 }]}>
+                {canDelete ? (
                   <TouchableOpacity 
-                    style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
-                    onPress={() => handleDeleteComment(c.id, c.userId)}
+                    style={styles.postDropdownItem}
+                    onPress={() => {
+                      closeDropdown();
+                      handleDeleteComment(c.id, c.userId);
+                    }}
                   >
-                    <Ionicons name="trash" size={16} color="#EF4444" />
-                    <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Delete</Text>
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                    <Text style={[styles.postDropdownText, { color: '#EF4444', marginLeft: 8 }]}>Delete</Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity 
-                    style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
-                    onPress={() => handleDirectMessage(c)}
+                    style={styles.postDropdownItem}
+                    onPress={() => {
+                      closeDropdown();
+                      handleDirectMessage(c);
+                    }}
                   >
                     <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
-                    <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Message</Text>
+                    <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Message</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -934,7 +976,7 @@ const PostDetailScreen = ({ route, navigation }) => {
                   }}
                 >
                   <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                  <Text style={[styles.postDropdownText, { color: '#EF4444' }]}>Delete Post</Text>
+                  <Text style={[styles.postDropdownText, { color: '#EF4444', marginLeft: 8 }]}>Delete Post</Text>
                 </TouchableOpacity>
               ) : canMessagePostAuthor ? (
                 <TouchableOpacity 
@@ -946,7 +988,7 @@ const PostDetailScreen = ({ route, navigation }) => {
                   }}
                 >
                   <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
-                  <Text style={[styles.postDropdownText, { color: theme.colors.text }]}>Message</Text>
+                  <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Message</Text>
                 </TouchableOpacity>
               ) : null}
               </View>
@@ -1092,8 +1134,8 @@ const styles = StyleSheet.create({
   community: { fontSize: 13, fontWeight: '600' },
   timestamp: { fontSize: 13, fontWeight: '600' },
   title: { fontSize: 21, fontWeight: 'bold', marginBottom: 10 },
-  detailActions: { flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 8 },
-  postActionBtn: { flexDirection: 'row', alignItems: 'center', marginRight: 14, paddingVertical: 2 },
+  detailActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 12, marginBottom: 8, paddingRight: 20 },
+  postActionBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 2 },
   actionText: { fontSize: 13, color: '#6B7280', marginLeft: 6, fontWeight: '600' },
   contentText: { fontSize: 14, lineHeight: 22 },
   authorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, justifyContent: 'space-between' },
@@ -1129,7 +1171,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    gap: 8,
   },
   postDropdownText: {
     fontSize: 14,
@@ -1164,6 +1205,7 @@ const styles = StyleSheet.create({
   linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 6 },
   leftActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   votingButtons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  voteButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 2 },
   voteCount: {
     fontSize: 12,
     fontWeight: '600',
@@ -1223,53 +1265,28 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     justifyContent: 'center',
   },
-  menuButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
   menuContainer: {
     position: 'relative',
-    marginLeft: 8,
-  },
-  dropdown: {
-    position: 'absolute',
-    top: 40,
-    right: 0,
-    width: 140,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 1000,
-    backgroundColor: '#FFFFFF',
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  dropdownText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 12,
   },
   dropdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 999,
+    backgroundColor: 'transparent',
+  },
+  fullScreenOverlay: {
     position: 'absolute',
     top: -1000,
     left: -1000,
     right: -1000,
     bottom: -1000,
-    zIndex: 999,
+    zIndex: 1000,
+    backgroundColor: 'transparent',
   },
   section: {
     marginHorizontal: 0,
