@@ -340,7 +340,7 @@ const NotificationsScreen = ({ navigation }) => {
                 }
               }}
             >
-              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              <Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />
             </TouchableOpacity>
           </View>
         </View>

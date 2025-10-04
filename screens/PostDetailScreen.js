@@ -756,9 +756,9 @@ const PostDetailScreen = ({ route, navigation }) => {
     const depth = item.depth;
     const isUpvoted = upvotedComments.has(c.id);
     const isDownvoted = downvotedComments.has(c.id);
-    const showDropdown = dropdownVisible === c.id;
-    const isOwn = !!(auth.currentUser && (c.userId || c.authorId) && (c.userId || c.authorId) === auth.currentUser.uid);
-    const canDelete = isOwn || isOwnPost;
+      const showDropdown = dropdownVisible === c.id;
+      const isOwn = !!(auth.currentUser && (c.userId || c.authorId) && (c.userId || c.authorId) === auth.currentUser.uid);
+      const canDelete = isOwn; // Only the comment author can delete their own comment
 
     return (
       <View
@@ -1015,51 +1015,86 @@ const PostDetailScreen = ({ route, navigation }) => {
       <Modal
         visible={showMessageModal}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowMessageModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.messageModal, { backgroundColor: theme.colors.surface }]}>
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMessageModal(false)}
+        >
+          <TouchableOpacity 
+            style={[styles.messageModal, { backgroundColor: theme.colors.surface }]}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.messageModalHeader}>
-              <Text style={[styles.messageModalTitle, { color: theme.colors.text }]}>
-                Send Message to {messageRecipient?.author?.replace(/^u\//i, '') || 'User'}
-              </Text>
-              <TouchableOpacity onPress={() => setShowMessageModal(false)}>
-                <Ionicons name="close" size={24} color={theme.colors.text} />
+              <View style={styles.messageModalTitleContainer}>
+                <Ionicons name="chatbubble-outline" size={20} color={theme.colors.primary} />
+                <Text style={[styles.messageModalTitle, { color: theme.colors.text }]}>
+                  Send Message
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.messageModalCloseBtn}
+                onPress={() => setShowMessageModal(false)}
+              >
+                <Ionicons name="close" size={20} color={theme.colors.text} />
               </TouchableOpacity>
+            </View>
+            
+            <View style={styles.messageRecipientInfo}>
+              <View style={[styles.messageRecipientAvatar, { backgroundColor: '#ECFDF5' }]}>
+                <Text style={[styles.messageRecipientInitials, { color: '#3E5F44' }]}>
+                  {(messageRecipient?.author?.replace(/^u\//i, '') || 'U').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <Text style={[styles.messageRecipientName, { color: theme.colors.text }]}>
+                {messageRecipient?.author?.replace(/^u\//i, '') || 'User'}
+              </Text>
             </View>
             
             <View style={styles.messageInputContainer}>
               <TextInput
-                style={[styles.messageInput, { color: theme.colors.text }]}
+                style={[styles.messageInput, { 
+                  color: theme.colors.text,
+                  borderColor: theme.dark ? '#374151' : '#E5E7EB',
+                  backgroundColor: theme.dark ? '#1F2937' : '#F9FAFB'
+                }]}
                 placeholder="Type your message..."
                 placeholderTextColor={theme.colors.placeholder}
                 value={messageText}
                 onChangeText={setMessageText}
                 multiline
                 maxLength={500}
+                textAlignVertical="top"
               />
               <TouchableOpacity
-                style={[styles.messageSendBtn, { backgroundColor: theme.colors.primary }]}
+                style={[
+                  styles.messageSendBtn, 
+                  { 
+                    backgroundColor: messageText.trim() ? theme.colors.primary : (theme.dark ? '#374151' : '#E5E7EB'),
+                    opacity: messageText.trim() ? 1 : 0.6
+                  }
+                ]}
                 onPress={handleSendMessage}
                 disabled={!messageText.trim()}
               >
                 <Ionicons 
                   name="send" 
-                  size={20} 
-                  color={messageText.trim() ? '#FFFFFF' : theme.colors.placeholder} 
+                  size={18} 
+                  color={messageText.trim() ? '#FFFFFF' : (theme.dark ? '#9CA3AF' : '#6B7280')} 
                 />
               </TouchableOpacity>
             </View>
             
-            <TouchableOpacity
-              style={[styles.messageCancelBtn, { borderColor: theme.colors.outline }]}
-              onPress={() => setShowMessageModal(false)}
-            >
-              <Text style={[styles.messageCancelText, { color: theme.colors.text }]}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+            <View style={styles.messageCharCount}>
+              <Text style={[styles.messageCharCountText, { color: theme.colors.placeholder }]}>
+                {messageText.length}/500
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </KeyboardAvoidingView>
   );
@@ -1258,75 +1293,104 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 150,
   },
   messageModal: {
-    width: '100%',
-    borderRadius: 16,
-    padding: 20,
-    elevation: 5,
+    width: '90%',
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
   },
   messageModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  messageModalTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   messageModalTitle: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  messageModalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  messageRecipientInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+  },
+  messageRecipientAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  messageRecipientInitials: {
+    fontSize: 16,
     fontWeight: 'bold',
-    flex: 1,
-    marginRight: 10,
+  },
+  messageRecipientName: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   messageInputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   messageInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.2)',
-    borderRadius: 20,
+    borderWidth: 1.5,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     marginRight: 12,
     fontSize: 16,
-    maxHeight: 100,
-  },
-  messageModalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  messageCancelBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  messageCancelText: {
-    fontSize: 16,
-    fontWeight: '600',
+    maxHeight: 120,
+    minHeight: 50,
   },
   messageSendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  messageSendText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  messageCharCount: {
+    alignItems: 'flex-end',
+  },
+  messageCharCountText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 

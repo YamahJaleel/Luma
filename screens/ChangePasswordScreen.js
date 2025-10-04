@@ -14,11 +14,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChangePasswordScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     oldPassword: '',
     newPassword: '',
@@ -30,7 +34,13 @@ const ChangePasswordScreen = ({ navigation }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Keep tab bar behavior consistent with other settings pages (no hide on push)
+  // Hide tab bar when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [setTabHidden])
+  );
 
   const validateForm = () => {
     const newErrors = {};
@@ -74,6 +84,11 @@ const ChangePasswordScreen = ({ navigation }) => {
   };
 
   const handleChangePassword = async () => {
+    if (!user?.uid) {
+      Alert.alert('Error', 'You must be logged in to change your password');
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -81,38 +96,26 @@ const ChangePasswordScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Check if old password is correct
-      const userData = await AsyncStorage.getItem('userData');
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        
-        // Simple validation (in a real app, you'd hash passwords and verify properly)
-        if (parsed.password !== formData.oldPassword) {
-          Alert.alert('Error', 'Current password is incorrect.');
-          setIsLoading(false);
-          return;
-        }
-
-        // Update password in AsyncStorage
-        const updatedUserData = {
-          ...parsed,
-          password: formData.newPassword,
-        };
-
-        await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
-        
-        Alert.alert('Success', 'Password changed successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
-      } else {
-        Alert.alert('Error', 'No user data found. Please try again.');
-      }
+      // Use Firebase Auth to change password
+      await authService.changePassword(formData.oldPassword, formData.newPassword);
+      
+      Alert.alert('Success', 'Password changed successfully!', [
+        { text: 'OK', onPress: () => navigation.goBack() }
+      ]);
     } catch (error) {
       console.error('Error changing password:', error);
-      Alert.alert('Error', 'Failed to change password. Please try again.');
+      
+      let errorMessage = 'Failed to change password. Please try again.';
+      
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Current password is incorrect.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'New password is too weak. Please choose a stronger password.';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'Please sign out and sign back in before changing your password.';
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }

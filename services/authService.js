@@ -5,13 +5,16 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  updatePassword,
   sendPasswordResetEmail,
   sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
-  getIdToken
+  getIdToken,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -132,6 +135,28 @@ export const authService = {
         console.log('Enable anonymous in your firebase console.');
       }
       console.error('Error signing in anonymously:', error);
+      throw error;
+    }
+  },
+
+  // Change password
+  changePassword: async (currentPassword, newPassword) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user is currently signed in');
+      }
+
+      // Re-authenticate user with current password
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Update password
+      await updatePassword(user, newPassword);
+      
+      return true;
+    } catch (error) {
+      console.error('Error changing password:', error);
       throw error;
     }
   },

@@ -14,11 +14,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
+import { userProfileService } from '../services/userProfileService';
+import { authService } from '../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EditProfileScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     currentUsername: '',
     newUsername: '',
@@ -29,28 +34,42 @@ const EditProfileScreen = ({ navigation }) => {
 
   // Keep tab bar behavior consistent with other settings pages (no hide on push)
 
+  // Hide tab bar when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [setTabHidden])
+  );
+
   // Load current user data on mount
   React.useEffect(() => {
     loadUserData();
   }, []);
 
   const loadUserData = async () => {
+    if (!user?.uid) return;
+    
     try {
-      const userData = await AsyncStorage.getItem('userData');
-      if (userData) {
-        const parsed = JSON.parse(userData);
+      setIsLoading(true);
+      const userProfile = await userProfileService.getUserProfile(user.uid);
+      
+      if (userProfile) {
         setFormData({
-          currentUsername: parsed.pseudonym || '',
+          currentUsername: userProfile.username || userProfile.displayName || '',
           newUsername: '',
           confirmUsername: '',
         });
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+      Alert.alert('Error', 'Failed to load user profile');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const validateForm = () => {
+  const validateForm = async () => {
     const newErrors = {};
 
     // Current username validation
@@ -65,6 +84,8 @@ const EditProfileScreen = ({ navigation }) => {
       newErrors.newUsername = 'Username must be at least 3 characters';
     } else if (formData.newUsername.trim().length > 20) {
       newErrors.newUsername = 'Username must be 20 characters or less';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.newUsername)) {
+      newErrors.newUsername = 'Username can only contain letters, numbers, and underscores';
     }
 
     // Confirm username validation
@@ -75,8 +96,24 @@ const EditProfileScreen = ({ navigation }) => {
     }
 
     // Check if new username is different from current
-    if (formData.currentUsername && formData.newUsername && formData.currentUsername === formData.newUsername) {
+    if (formData.currentUsername && formData.newUsername && formData.currentUsername.toLowerCase() === formData.newUsername.toLowerCase()) {
       newErrors.newUsername = 'New username must be different from current username';
+    }
+
+    // Check username availability if no other errors
+    if (!newErrors.newUsername && formData.newUsername.trim()) {
+      try {
+        const isAvailable = await userProfileService.isUsernameAvailable(
+          formData.newUsername, 
+          user?.uid
+        );
+        if (!isAvailable) {
+          newErrors.newUsername = 'This username is already taken';
+        }
+      } catch (error) {
+        console.error('Error checking username availability:', error);
+        newErrors.newUsername = 'Unable to verify username availability';
+      }
     }
 
     setErrors(newErrors);
@@ -92,42 +129,39 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
+    if (!user?.uid) {
+      Alert.alert('Error', 'You must be logged in to update your profile');
+      return;
+    }
+
+    const isValid = await validateForm();
+    if (!isValid) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update user profile in Firestore
+      const updateData = {
+        username: formData.newUsername.trim().toLowerCase(),
+        displayName: formData.newUsername.trim(),
+      };
 
-      // Update user data in AsyncStorage
-      const existingUserData = await AsyncStorage.getItem('userData');
-      if (existingUserData) {
-        const userData = JSON.parse(existingUserData);
-        
-        // Check if current username matches
-        if (userData.pseudonym !== formData.currentUsername.trim()) {
-          Alert.alert('Error', 'Current username is incorrect.');
-          setIsLoading(false);
-          return;
-        }
+      await userProfileService.updateUserProfile(user.uid, updateData);
 
-        const updatedUserData = {
-          ...userData,
-          pseudonym: formData.newUsername.trim(),
-        };
+      // Update Firebase Auth display name
+      await authService.updateUserProfile({
+        displayName: formData.newUsername.trim()
+      });
 
-        await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
-        Alert.alert('Success', 'Username updated successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
-      } else {
-        Alert.alert('Error', 'No user data found. Please try again.');
-      }
+      Alert.alert(
+        'Success', 
+        'Your username has been updated successfully!',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
     } catch (error) {
-      console.error('Error updating username:', error);
+      console.error('Error updating profile:', error);
       Alert.alert('Error', 'Failed to update username. Please try again.');
     } finally {
       setIsLoading(false);
