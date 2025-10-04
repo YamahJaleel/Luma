@@ -33,52 +33,6 @@ const getTypeMeta = (type) => {
   return types[type] || { label: 'General', icon: 'chatbubble', color: '#6B7280' };
 };
 
-const makeMockComments = () => ([
-  {
-    id: 1,
-    author: 'MysticWolf',
-    avatarColor: '#3E5F44',
-    text: 'Totally agree. Setting boundaries early really helps.',
-    timestamp: '12m ago',
-    replies: [
-      {
-        id: 11,
-        author: 'NeonStar',
-        avatarColor: '#8B5CF6',
-        text: 'Yes! And communicate them clearly.',
-        timestamp: '8m ago',
-        replies: [],
-      },
-    ],
-  },
-  {
-    id: 2,
-    author: 'CyberPhoenix',
-    avatarColor: '#10B981',
-    text: 'Experienced something similar. Staying firm is key.',
-    timestamp: '1h ago',
-    replies: [
-      {
-        id: 21,
-        author: 'QuantumFlame',
-        avatarColor: '#F59E0B',
-        text: 'Agree. Also keep friends in the loop for safety.',
-        timestamp: '44m ago',
-        replies: [
-          {
-            id: 211,
-            author: 'ShadowRider',
-            avatarColor: '#EF4444',
-            text: 'This. A check-in plan helps.',
-            timestamp: '30m ago',
-            replies: [],
-          },
-        ],
-      },
-    ],
-  },
-]);
-
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return 'just now';
   

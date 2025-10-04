@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,53 @@ import { Card, List, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useTabContext } from '../components/TabContext';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const UserScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
+  const { user } = useAuth();
   const scrollYRef = React.useRef(0);
+  const [userProfile, setUserProfile] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  // Load user profile data
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user?.uid) {
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'userProfiles', user.uid));
+        if (userDoc.exists()) {
+          setUserProfile(userDoc.data());
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadUserProfile();
+  }, [user?.uid]);
+
+  // Generate initials from username or displayName
+  const getInitials = () => {
+    if (!userProfile) return 'U';
+    const name = userProfile.displayName || userProfile.username || 'User';
+    return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (!userProfile) return 'User';
+    return userProfile.displayName || userProfile.username || 'User';
+  };
   
 
   return (
@@ -39,11 +81,11 @@ const UserScreen = ({ navigation }) => {
         <View style={styles.headerContent}>
           <View style={styles.profileInfo}>
             <View style={styles.profileAvatar}>
-              <Text style={styles.avatarText}>LU</Text>
+              <Text style={styles.avatarText}>{getInitials()}</Text>
             </View>
             <View style={styles.profileText}>
               <View style={styles.nameAndVerifyRow}>
-                <Text style={[styles.profileName, { color: theme.colors.text }]}>Luma User</Text>
+                <Text style={[styles.profileName, { color: theme.colors.text }]}>{getDisplayName()}</Text>
               </View>
             </View>
           </View>
