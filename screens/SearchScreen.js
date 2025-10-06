@@ -425,7 +425,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c1',
                 author: 'Tyler Bradshaw',
-                text: 'Hey everyone! Just moved to Toronto and looking to meet new people. Love hiking, photography, and trying new restaurants. Hit me up if you want to explore the city together!',
+                text: 'Hey Toronto! Fresh face in the city and absolutely loving it so far. When I\'m not hiking the trails or snapping photos of the skyline, you\'ll find me hunting down the best ramen spots. Anyone up for an adventure?',
                 timestamp: '2 hours ago',
                 isOwner: true
               },
@@ -475,7 +475,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c6',
                 author: 'Jake Thompson',
-                text: 'Looking for people to join my book club! We meet every Tuesday at the downtown library. Currently reading sci-fi novels. All welcome!',
+                text: 'Bookworm alert! 📚 Our sci-fi book club is where magic happens every Tuesday. We\'re currently diving into some mind-bending dystopian novels and the discussions are absolutely wild. Coffee, books, and great company - what more could you want?',
                 timestamp: '3 hours ago',
                 isOwner: true
               },
@@ -525,7 +525,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c11',
                 author: 'Mike Johnson',
-                text: 'Looking for workout partners! I go to the gym 5x a week and love trying new fitness challenges. Hit me up if you want to train together!',
+                text: 'Gym rat here! 💪 I live for the pump and love pushing my limits. Whether you\'re a beginner or a beast, I\'m always down to train hard and motivate each other. Let\'s turn those goals into gains together!',
                 timestamp: '4 hours ago',
                 isOwner: true
               },
@@ -575,7 +575,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c16',
                 author: 'Ryan Miller',
-                text: 'Software developer here! Always looking to connect with other tech professionals. Love discussing new projects and sharing knowledge.',
+                text: 'Code wizard by day, tech enthusiast by night! 🚀 I\'m all about building cool stuff and sharing knowledge. Currently working on some exciting projects and always eager to collaborate with fellow developers. Let\'s create something amazing!',
                 timestamp: '5 hours ago',
                 isOwner: true
               },
@@ -625,7 +625,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c21',
                 author: 'Brian Ochieng',
-                text: 'New to the city! Just graduated and moved here for work. Would love to make friends and explore Toronto together.',
+                text: 'Toronto newbie here! 🌟 Just landed in this amazing city after graduation and I\'m still figuring out where everything is. Would love to meet some friendly faces who can show me around and maybe grab some coffee?',
                 timestamp: '1 day ago',
                 isOwner: true
               },
@@ -675,7 +675,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c26',
                 author: 'Chris Anderson',
-                text: 'Community organizer here! I run weekly volunteer events around the city. Always looking for people who want to make a difference.',
+                text: 'Community champion! 🌱 I\'m passionate about making Toronto a better place, one volunteer event at a time. From food drives to park cleanups, I organize weekly activities that bring people together for good causes. Join the movement!',
                 timestamp: '6 hours ago',
                 isOwner: true
               },
@@ -725,7 +725,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c31',
                 author: 'Raj Patel',
-                text: 'Photography enthusiast! Love capturing city life and nature. Looking for fellow photographers to explore Toronto\'s hidden gems.',
+                text: 'Camera in hand, adventure in heart! 📸 I\'m obsessed with capturing Toronto\'s hidden beauty - from sunrise at the CN Tower to the graffiti alleys of Kensington. Looking for fellow shutterbugs to explore the city\'s photogenic spots with me!',
                 timestamp: '1 day ago',
                 isOwner: true
               },
@@ -775,7 +775,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c36',
                 author: 'Brandon Green',
-                text: 'Entrepreneur and fitness coach! Always looking to connect with ambitious people. Let\'s build something amazing together!',
+                text: 'Hustle hard, dream bigger! 💼 I\'m building my empire one day at a time - from fitness coaching to launching my next big venture. Looking to connect with other ambitious minds who aren\'t afraid to grind and make things happen!',
                 timestamp: '2 days ago',
                 isOwner: true
               },
@@ -825,7 +825,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c41',
                 author: 'James Brown',
-                text: 'Music producer and DJ here! Love creating beats and spinning tracks. Looking for other musicians and music lovers to collaborate with.',
+                text: 'Beat maker and vibe creator! 🎵 When I\'m not dropping fire tracks in the studio, I\'m spinning records at local venues. Music is my lifeblood and I love connecting with other artists who share the same passion. Let\'s make some magic!',
                 timestamp: '3 hours ago',
                 isOwner: true
               },
@@ -875,7 +875,7 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c46',
                 author: 'Kevin Davis',
-                text: 'Chef and food blogger! Love experimenting with new recipes and exploring Toronto\'s food scene. Always looking for dining companions.',
+                text: 'Culinary artist and flavor explorer! 👨‍🍳 I\'m always experimenting in the kitchen and documenting Toronto\'s incredible food scene. From hole-in-the-wall gems to fine dining experiences, I live for great food and great company. Let\'s eat!',
                 timestamp: '1 day ago',
                 isOwner: true
               },

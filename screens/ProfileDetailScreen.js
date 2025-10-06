@@ -202,7 +202,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         const ownerNotes = {
           1: { // Tyler Bradshaw
             author: 'Vyntra7',
-            text: 'I created this profile to warn others about Tyler. He seemed charming at first but quickly became pushy and aggressive. Please be careful if you match with him.',
+            text: '⚠️ Tyler seemed charming at first but quickly became pushy and aggressive. Please be careful if you match with him.',
             timestamp: '2h ago'
           },
         2: { // Jake Thompson
@@ -212,7 +212,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         },
           3: { // Mike Johnson
             author: 'Arctynx54',
-            text: 'I created this profile to share positive experiences with Mike. He\'s been respectful, reliable, and genuine. A rare find in the dating world!',
+            text: '🚨 Mike has been reported multiple times for harassment. He\'s not safe to interact with.',
             timestamp: '3h ago'
           },
         4: { // Ryan Miller
@@ -222,39 +222,39 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         },
           5: { // Brian Ochieng
             author: 'Dravex92',
-            text: 'I created this profile to highlight Brian\'s helpfulness. He\'s given me great dating advice and is genuinely supportive. A trustworthy person!',
+            text: 'Brian has been incredibly helpful and supportive! He\'s given me great dating advice and is genuinely caring. A trustworthy person!',
             timestamp: '6h ago'
           },
         6: { // Chris Anderson
           author: 'Lyrixon41',
-          text: 'I created this profile to highlight Chris\'s community leadership. He\'s organized amazing volunteer events and always puts others first.',
+          text: 'Chris is an amazing community leader! He\'s organized incredible volunteer events and always puts others first. A true inspiration!',
           timestamp: '1d ago'
         },
         7: { // Raj Patel
           author: 'Umbren204',
-          text: 'I created this profile to share my experience with Raj. He\'s unreliable and has cancelled on me multiple times.',
+          text: 'Raj has been really unreliable. He\'s cancelled on me multiple times and never follows through with plans.',
           timestamp: '2d ago'
         },
         8: { // Brandon Green
           author: 'Umbren204',
-          text: 'I created this profile to warn others about Brandon. He\'s been reported for harassment and fake profile claims.',
+          text: '⚠️ Brandon has been reported for harassment and fake profile claims. Stay away from this one.',
           timestamp: '3d ago'
         },
         9: { // James Brown
           author: 'Umbren204',
-          text: 'I created this profile to highlight James\'s music talents. He\'s a great DJ and music producer.',
+          text: 'James is incredibly talented! He\'s an amazing DJ and music producer. His beats are fire and he\'s always willing to help other artists.',
           timestamp: '1d ago'
         },
         10: { // Kevin Davis
           author: 'Umbren204',
-          text: 'I created this profile to share my experience with Kevin. He\'s inconsistent with following through on plans.',
+          text: 'Kevin is pretty inconsistent. He\'s nice but doesn\'t follow through with plans. Hard to make concrete arrangements with him.',
           timestamp: '2d ago'
         }
         };
         
         return ownerNotes[profileId] || {
           author: 'Umbren204',
-          text: 'I created this profile to share my experience. Please add your own experiences to help keep our community safe.',
+          text: 'Sharing my experience here. Please add your own experiences to help keep our community safe.',
           timestamp: '2h ago'
         };
       };
