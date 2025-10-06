@@ -611,8 +611,8 @@ const SearchScreen = ({ navigation, route }) => {
           },
           {
             id: 5,
-            name: 'Alex Chen',
-            username: '@alexchen',
+            name: 'Brian Ochieng',
+            username: '@briano',
             avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
             size: 'small',
             isOnline: true,
@@ -624,7 +624,7 @@ const SearchScreen = ({ navigation, route }) => {
             comments: [
               {
                 id: 'c21',
-                author: 'Alex Chen',
+                author: 'Brian Ochieng',
                 text: 'New to the city! Just graduated and moved here for work. Would love to make friends and explore Toronto together.',
                 timestamp: '1 day ago',
                 isOwner: true
@@ -632,28 +632,28 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c22',
                 author: 'Mike_J',
-                text: 'Alex seemed nice when we met for coffee, but he\'s been really inconsistent with responding to messages. Takes days to reply.',
+                text: 'Brian seemed nice when we met for coffee, but he\'s been really inconsistent with responding to messages. Takes days to reply.',
                 timestamp: '20 hours ago',
                 isOwner: false
               },
               {
                 id: 'c23',
                 author: 'Sarah_L',
-                text: 'Alex cancelled on me twice for dinner plans. First time he forgot, second time he said he was too tired. Not very reliable.',
+                text: 'Brian cancelled on me twice for dinner plans. First time he forgot, second time he said he was too tired. Not very reliable.',
                 timestamp: '18 hours ago',
                 isOwner: false
               },
               {
                 id: 'c24',
                 author: 'David_W',
-                text: 'Alex is new to the city so I\'ll give him some slack, but he needs to work on his communication skills. Hard to make plans with him.',
+                text: 'Brian is new to the city so I\'ll give him some slack, but he needs to work on his communication skills. Hard to make plans with him.',
                 timestamp: '15 hours ago',
                 isOwner: false
               },
               {
                 id: 'c25',
                 author: 'Emma_R',
-                text: 'Alex seems like a nice guy but he\'s still figuring out city life. Maybe he\'ll get better with time and experience.',
+                text: 'Brian seems like a nice guy but he\'s still figuring out city life. Maybe he\'ll get better with time and experience.',
                 timestamp: '12 hours ago',
                 isOwner: false
               }
@@ -661,8 +661,8 @@ const SearchScreen = ({ navigation, route }) => {
           },
           {
             id: 6,
-            name: 'David Kim',
-            username: '@davidk',
+            name: 'Chris Anderson',
+            username: '@chrisa',
             avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
             size: 'large',
             isOnline: false,
@@ -674,7 +674,7 @@ const SearchScreen = ({ navigation, route }) => {
             comments: [
               {
                 id: 'c26',
-                author: 'David Kim',
+                author: 'Chris Anderson',
                 text: 'Community organizer here! I run weekly volunteer events around the city. Always looking for people who want to make a difference.',
                 timestamp: '6 hours ago',
                 isOwner: true
@@ -682,28 +682,28 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c27',
                 author: 'Sarah_P',
-                text: 'David organized the biggest food drive our neighborhood has ever seen. He\'s incredibly dedicated and brings everyone together.',
+                text: 'Chris organized the biggest food drive our neighborhood has ever seen. He\'s incredibly dedicated and brings everyone together.',
                 timestamp: '5 hours ago',
                 isOwner: false
               },
               {
                 id: 'c28',
                 author: 'Mark_T',
-                text: 'David helped me find housing when I was struggling. He went above and beyond to connect me with resources. Truly caring person.',
+                text: 'Chris helped me find housing when I was struggling. He went above and beyond to connect me with resources. Truly caring person.',
                 timestamp: '4 hours ago',
                 isOwner: false
               },
               {
                 id: 'c29',
                 author: 'Lisa_C',
-                text: 'David\'s community events are always well-organized and meaningful. He has a gift for bringing people together for good causes.',
+                text: 'Chris\'s community events are always well-organized and meaningful. He has a gift for bringing people together for good causes.',
                 timestamp: '3 hours ago',
                 isOwner: false
               },
               {
                 id: 'c30',
                 author: 'James_R',
-                text: 'David is the kind of person who makes our city better. He\'s always looking out for others and organizing positive activities.',
+                text: 'Chris is the kind of person who makes our city better. He\'s always looking out for others and organizing positive activities.',
                 timestamp: '2 hours ago',
                 isOwner: false
               }
@@ -711,8 +711,8 @@ const SearchScreen = ({ navigation, route }) => {
           },
           {
             id: 7,
-            name: 'Chris Park',
-            username: '@chrisp',
+            name: 'Raj Patel',
+            username: '@rajp',
             avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
             size: 'small',
             isOnline: true,
@@ -724,7 +724,7 @@ const SearchScreen = ({ navigation, route }) => {
             comments: [
               {
                 id: 'c31',
-                author: 'Chris Park',
+                author: 'Raj Patel',
                 text: 'Photography enthusiast! Love capturing city life and nature. Looking for fellow photographers to explore Toronto\'s hidden gems.',
                 timestamp: '1 day ago',
                 isOwner: true
@@ -732,28 +732,28 @@ const SearchScreen = ({ navigation, route }) => {
               {
                 id: 'c32',
                 author: 'Emma_L',
-                text: 'Chris promised to send me photos from our photo walk but never did. He\'s nice but not very reliable with follow-through.',
+                text: 'Raj promised to send me photos from our photo walk but never did. He\'s nice but not very reliable with follow-through.',
                 timestamp: '22 hours ago',
                 isOwner: false
               },
               {
                 id: 'c33',
                 author: 'Tom_S',
-                text: 'Chris cancelled our photography meetup twice at the last minute. First time he forgot, second time he said he was busy.',
+                text: 'Raj cancelled our photography meetup twice at the last minute. First time he forgot, second time he said he was busy.',
                 timestamp: '20 hours ago',
                 isOwner: false
               },
               {
                 id: 'c34',
                 author: 'Anna_W',
-                text: 'Chris takes amazing photos but he\'s really slow to respond to messages. Sometimes takes a week to get back to you.',
+                text: 'Raj takes amazing photos but he\'s really slow to respond to messages. Sometimes takes a week to get back to you.',
                 timestamp: '18 hours ago',
                 isOwner: false
               },
               {
                 id: 'c35',
                 author: 'Ben_K',
-                text: 'Chris seems like a nice guy and his photography skills are impressive, but he needs to work on his communication and reliability.',
+                text: 'Raj seems like a nice guy and his photography skills are impressive, but he needs to work on his communication and reliability.',
                 timestamp: '15 hours ago',
                 isOwner: false
               }
