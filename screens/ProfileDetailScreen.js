@@ -1241,7 +1241,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                   } catch {}
                 }}
               >
-                <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
+                <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>Luma AI</Text>
                 {aiLoading ? (
                   <LottieView
                     source={require('../assets/animations/Loading Dots Blue.json')}
@@ -1263,7 +1263,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                     ))}
                   </View>
                 ) : (
-                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Press to see</Text>
+                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Illuminate</Text>
                 )}
               </View>
             </TouchableOpacity>
@@ -1352,7 +1352,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         >
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleAIBoxPress}>
             <View style={[styles.expandedAIContent, { backgroundColor: theme.colors.surface }] }>
-              <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>AI Overview</Text>
+               <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>Luma AI</Text>
               {aiLoading ? (
                 <LottieView
                   source={require('../assets/animations/Loading Dots Blue.json')}
