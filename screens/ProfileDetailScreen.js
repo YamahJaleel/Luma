@@ -201,39 +201,39 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       const generateOwnerNote = (profileId) => {
         const ownerNotes = {
           1: { // Tyler Bradshaw
-            author: 'MysticWolf',
+            author: 'Vyntra7',
             text: 'I created this profile to warn others about Tyler. He seemed charming at first but quickly became pushy and aggressive. Please be careful if you match with him.',
             timestamp: '2h ago'
           },
         2: { // Jake Thompson
-          author: 'Starlight',
+          author: 'Kynora118',
           text: 'I\'m sharing my experience with Jake here. He ghosted me after weeks of great conversation. I want to help others avoid the same disappointment.',
           timestamp: '1d ago'
         },
           3: { // Mike Johnson
-            author: 'Phoenix',
+            author: 'Arctynx54',
             text: 'I created this profile to share positive experiences with Mike. He\'s been respectful, reliable, and genuine. A rare find in the dating world!',
             timestamp: '3h ago'
           },
         4: { // Ryan Miller
-          author: 'NeonStar',
+          author: 'Solvian3',
           text: 'I\'m warning others about Ryan. His photos are heavily edited and he looks completely different in person. Don\'t waste your time like I did.',
           timestamp: '4h ago'
         },
           5: { // Alex Rodriguez
-            author: 'CyberPhoenix',
+            author: 'Dravex92',
             text: 'I created this profile to highlight Alex\'s helpfulness. He\'s given me great dating advice and is genuinely supportive. A trustworthy person!',
             timestamp: '6h ago'
           },
         6: { // Chris Park
-          author: 'Crystal',
+          author: 'Lyrixon41',
           text: 'I\'m sharing my frustrating experience with Chris. He\'s cancelled on me multiple times and is completely unreliable. Save yourself the disappointment.',
           timestamp: '1d ago'
         }
         };
         
         return ownerNotes[profileId] || {
-          author: 'MysticWolf',
+          author: 'Umbren204',
           text: 'I created this profile to share my experience. Please add your own experiences to help keep our community safe.',
           timestamp: '2h ago'
         };
@@ -255,14 +255,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         1: [ // Tyler Bradshaw
           {
             id: 1,
-            author: 'MysticWolf',
+            author: 'Zephra65',
             avatarColor: '#EF4444',
             text: '🚩🚩🚩 Met Tyler last week and he was extremely pushy about meeting at his place. When I said no, he got really aggressive and started calling me names. Stay away!',
             timestamp: '2h ago',
             replies: [
               {
                 id: 11,
-                author: 'NeonStar',
+                author: 'Caelix5',
                 avatarColor: '#8B5CF6',
                 text: 'Oh my god, that\'s terrifying! Thank you for sharing this. Did you report him?',
                 timestamp: '1h ago',
@@ -270,7 +270,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
               },
               {
                 id: 12,
-                author: 'MysticWolf',
+                author: 'Zephra65',
                 avatarColor: '#EF4444',
                 text: 'Yes, I reported him immediately. The way he switched from charming to aggressive was so scary.',
                 timestamp: '45m ago',
@@ -280,14 +280,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           },
           {
             id: 2,
-            author: 'CyberPhoenix',
+            author: 'Mystra84',
             avatarColor: '#10B981',
             text: 'I actually had a different experience with Tyler. We met for coffee and he was really nice and respectful. But reading these comments is making me question everything...',
             timestamp: '3h ago',
             replies: [
               {
                 id: 21,
-                author: 'QuantumFlame',
+                author: 'Ecliptor9',
                 avatarColor: '#F59E0B',
                 text: 'That\'s exactly how these guys work! They\'re nice at first to gain your trust. Please be careful.',
                 timestamp: '2h ago',
@@ -297,7 +297,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           },
           {
             id: 3,
-            author: 'ShadowRider',
+            author: 'Novelle62',
             avatarColor: '#3B82F6',
             text: 'Tyler tried to pressure me into sending nudes on the first day of talking. When I refused, he said I was "prudish" and unmatched me. Bullet dodged!',
             timestamp: '4h ago',
@@ -307,14 +307,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         2: [ // Jake Thompson
           {
             id: 1,
-            author: 'Starlight',
+            author: 'Lumara203',
             avatarColor: '#EC4899',
             text: 'Jake seemed nice at first but he\'s a total ghost. We had great conversations for a week, then he just disappeared mid-conversation. No explanation, nothing.',
             timestamp: '1d ago',
             replies: [
               {
                 id: 11,
-                author: 'Moonbeam',
+                author: 'Voxen18',
                 avatarColor: '#8B5CF6',
                 text: 'Same thing happened to me! We were supposed to meet for coffee and he just stopped responding the day before.',
                 timestamp: '20h ago',
@@ -324,7 +324,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           },
           {
             id: 2,
-            author: 'Crystal',
+            author: 'Auren97',
             avatarColor: '#F97316',
             text: 'Jake is inconsistent with communication. Sometimes he\'s super responsive, other times he takes days to reply. It\'s confusing and frustrating.',
             timestamp: '2d ago',
@@ -334,14 +334,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         3: [ // Mike Johnson
           {
             id: 1,
-            author: 'Phoenix',
+            author: 'Krysen44',
             avatarColor: '#059669',
             text: 'Mike is genuinely a great guy! We\'ve been talking for a few weeks and he\'s been respectful, funny, and reliable. He always shows up when he says he will.',
             timestamp: '3h ago',
             replies: [
               {
                 id: 11,
-                author: 'Aurora',
+                author: 'Thalara2',
                 avatarColor: '#DC2626',
                 text: 'That\'s so refreshing to hear! It\'s nice to see positive experiences shared here too.',
                 timestamp: '2h ago',
@@ -351,7 +351,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           },
           {
             id: 2,
-            author: 'MysticWolf',
+            author: 'Jyntra122',
             avatarColor: '#EF4444',
             text: 'Mike has been really good at communicating his intentions clearly. No games, no mixed signals. He\'s been a breath of fresh air.',
             timestamp: '1d ago',
@@ -361,14 +361,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         4: [ // Ryan Miller
           {
             id: 1,
-            author: 'NeonStar',
+            author: 'Virex56',
             avatarColor: '#8B5CF6',
             text: '⚠️ Ryan is NOT who he claims to be. His photos are heavily filtered/edited and he looks completely different in person. Total catfish situation.',
             timestamp: '4h ago',
             replies: [
               {
                 id: 11,
-                author: 'ShadowRider',
+                author: 'Astryn300',
                 avatarColor: '#3B82F6',
                 text: 'I had the same experience! The photos were from years ago and heavily edited. Very misleading.',
                 timestamp: '3h ago',
@@ -378,7 +378,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           },
           {
             id: 2,
-            author: 'QuantumFlame',
+            author: 'Tenebra4',
             avatarColor: '#F59E0B',
             text: 'Ryan was very aggressive and inappropriate in his messages. He kept sending unsolicited photos and got angry when I didn\'t respond the way he wanted.',
             timestamp: '1d ago',
@@ -388,14 +388,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         5: [ // Alex Rodriguez
           {
             id: 1,
-            author: 'CyberPhoenix',
+            author: 'Mystra84',
             avatarColor: '#10B981',
             text: 'Alex is super helpful and genuine! He gave me great advice about dating safety and was really supportive when I shared some concerns.',
             timestamp: '6h ago',
             replies: [
               {
                 id: 11,
-                author: 'Starlight',
+                author: 'Nexra27',
                 avatarColor: '#EC4899',
                 text: 'I\'ve had similar experiences with Alex. He\'s really knowledgeable and caring.',
                 timestamp: '5h ago',
@@ -405,7 +405,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           },
           {
             id: 2,
-            author: 'Moonbeam',
+            author: 'Aetheron81',
             avatarColor: '#8B5CF6',
             text: 'Alex is verified and has been consistently helpful in the community. He\'s someone you can trust for good advice.',
             timestamp: '2d ago',
@@ -415,14 +415,14 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         6: [ // Chris Park
           {
             id: 1,
-            author: 'Crystal',
+            author: 'Lynix11',
             avatarColor: '#F97316',
             text: 'Chris is unreliable. He\'s cancelled on me three times at the last minute with weak excuses. I\'ve given up trying to make plans with him.',
             timestamp: '1d ago',
             replies: [
               {
                 id: 11,
-                author: 'Phoenix',
+                author: 'Valtor105',
                 avatarColor: '#059669',
                 text: 'Same here! He seems nice in messages but never follows through with plans.',
                 timestamp: '20h ago',
@@ -432,10 +432,478 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           },
           {
             id: 2,
-            author: 'Aurora',
+            author: 'Serenix6',
             avatarColor: '#DC2626',
             text: 'Chris has been reported for being unreliable by multiple people. He seems to have commitment issues with actually meeting up.',
             timestamp: '3d ago',
+            replies: [],
+          },
+        ],
+        7: [ // David Kim
+          {
+            id: 1,
+            author: 'Onyrix73',
+            avatarColor: '#10B981',
+            text: 'David is amazing! He\'s been so helpful in organizing community events and always looks out for everyone\'s safety.',
+            timestamp: '2h ago',
+            replies: [
+              {
+                id: 11,
+                author: 'Ecliptor9',
+                avatarColor: '#F59E0B',
+                text: 'I can vouch for David too! He\'s one of the most trustworthy people in our community.',
+                timestamp: '1h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'Arclen209',
+            avatarColor: '#8B5CF6',
+            text: 'David has been verified for months and has never had any issues reported. A true community leader!',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        8: [ // Brandon Green
+          {
+            id: 1,
+            author: 'Noctra35',
+            avatarColor: '#059669',
+            text: 'Brandon is super friendly and always responds quickly. We\'ve had great conversations!',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Velix88',
+            avatarColor: '#EC4899',
+            text: 'Brandon is very active in the community and always helpful. Highly recommend!',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        9: [ // James Brown
+          {
+            id: 1,
+            author: 'Zyntra7',
+            avatarColor: '#EF4444',
+            text: '⚠️ James was very aggressive in his messages and made inappropriate comments. Stay away!',
+            timestamp: '4h ago',
+            replies: [
+              {
+                id: 11,
+                author: 'Ecliptor9',
+                avatarColor: '#F59E0B',
+                text: 'Thank you for reporting this. Did you report him to the platform?',
+                timestamp: '3h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'Morvyn42',
+            avatarColor: '#DC2626',
+            text: 'James has been reported multiple times for harassment. He\'s not safe to interact with.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        10: [ // Maria Garcia
+          {
+            id: 1,
+            author: 'Cryden134',
+            avatarColor: '#8B5CF6',
+            text: 'Maria is new to the platform but seems genuine. She\'s been verified and is learning the ropes.',
+            timestamp: '6h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Aetheron81',
+            avatarColor: '#10B981',
+            text: 'Maria is verified and has been respectful in all our interactions. Give her a chance!',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        11: [ // Chris Lee
+          {
+            id: 1,
+            author: 'Sylith25',
+            avatarColor: '#F59E0B',
+            text: 'Chris is inconsistent with communication. Sometimes great, sometimes disappears for days.',
+            timestamp: '2h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Orryx301',
+            avatarColor: '#F97316',
+            text: 'Chris sends mixed signals. One day he\'s interested, next day he\'s cold. Very confusing.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        12: [ // Amanda Taylor
+          {
+            id: 1,
+            author: 'Halyn13',
+            avatarColor: '#059669',
+            text: 'Amanda is super helpful and always responds thoughtfully. She\'s given me great advice!',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Vareen95',
+            avatarColor: '#8B5CF6',
+            text: 'Amanda is very responsive and genuine. She\'s been a great addition to our community.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        13: [ // Ryan Miller (different from #4)
+          {
+            id: 1,
+            author: 'Lyara9',
+            avatarColor: '#10B981',
+            text: 'This Ryan is verified and trusted! He\'s been helpful and reliable in all interactions.',
+            timestamp: '4h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Valtor105',
+            avatarColor: '#059669',
+            text: 'Ryan is reliable and always follows through with plans. A trustworthy person!',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        14: [ // Jessica White
+          {
+            id: 1,
+            author: 'Pyrion223',
+            avatarColor: '#EF4444',
+            text: '🚨 Jessica\'s profile seems fake. Photos look heavily edited and she\'s been reported for harassment.',
+            timestamp: '2h ago',
+            replies: [
+              {
+                id: 11,
+                author: 'Astryn300',
+                avatarColor: '#3B82F6',
+                text: 'I noticed the same thing! Her photos look like stock images.',
+                timestamp: '1h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'Xalara55',
+            avatarColor: '#DC2626',
+            text: 'Jessica has been reported multiple times for harassment. Avoid at all costs.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        15: [ // Kevin Davis
+          {
+            id: 1,
+            author: 'Draxen76',
+            avatarColor: '#059669',
+            text: 'Kevin is friendly and easy to talk to. We\'ve had pleasant conversations!',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Soltrix19',
+            avatarColor: '#8B5CF6',
+            text: 'Kevin seems like a nice person. No red flags so far.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        16: [ // Sophie Anderson
+          {
+            id: 1,
+            author: 'Kymera4',
+            avatarColor: '#F59E0B',
+            text: 'Sophie is unreliable. She\'s cancelled plans multiple times at the last minute.',
+            timestamp: '2h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Venrix303',
+            avatarColor: '#F97316',
+            text: 'Sophie has commitment issues. She seems interested but never follows through.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        17: [ // Olivia Martinez
+          {
+            id: 1,
+            author: 'Aurion63',
+            avatarColor: '#059669',
+            text: 'Olivia is friendly and responsive! She always replies quickly and seems genuine.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Valyra7',
+            avatarColor: '#8B5CF6',
+            text: 'Olivia seems like a genuine person. No issues in our interactions.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        18: [ // Noah Thompson
+          {
+            id: 1,
+            author: 'Cythera20',
+            avatarColor: '#F59E0B',
+            text: 'Noah is inconsistent. Sometimes he\'s great, sometimes he\'s completely different.',
+            timestamp: '2h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Thrynn84',
+            avatarColor: '#F97316',
+            text: 'Noah sends mixed signals. Hard to know what he really wants.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        19: [ // Ava Nguyen
+          {
+            id: 1,
+            author: 'Nyxen2',
+            avatarColor: '#10B981',
+            text: 'Ava is trusted and verified! She\'s been reliable in all our interactions.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Aerith101',
+            avatarColor: '#059669',
+            text: 'Ava is reliable and always follows through. A trustworthy community member.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        20: [ // William Clark
+          {
+            id: 1,
+            author: 'Luntra5',
+            avatarColor: '#EF4444',
+            text: '⚠️ William has been reported for harassment. He made inappropriate comments and wouldn\'t stop.',
+            timestamp: '2h ago',
+            replies: [
+              {
+                id: 11,
+                author: 'Ecliptor9',
+                avatarColor: '#F59E0B',
+                text: 'Thank you for sharing this. Did you report him?',
+                timestamp: '1h ago',
+                replies: [],
+              },
+            ],
+          },
+          {
+            id: 2,
+            author: 'Vornyx70',
+            avatarColor: '#DC2626',
+            text: 'William has been reported multiple times. He\'s not safe to interact with.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        21: [ // Isabella Rossi
+          {
+            id: 1,
+            author: 'Onyrix73',
+            avatarColor: '#10B981',
+            text: 'Isabella is a community leader! She\'s organized several safe meetups and is very trustworthy.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Kalvyn8',
+            avatarColor: '#059669',
+            text: 'Isabella is a trusted community leader. She\'s always looking out for everyone\'s safety.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        22: [ // Liam Patel
+          {
+            id: 1,
+            author: 'Syrra201',
+            avatarColor: '#F59E0B',
+            text: 'Liam is slow to respond. Sometimes takes days to reply to messages.',
+            timestamp: '2h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Elvra14',
+            avatarColor: '#F97316',
+            text: 'Liam has delayed response times. Not great for communication.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        23: [ // Mia Lopez
+          {
+            id: 1,
+            author: 'Ryntrix304',
+            avatarColor: '#10B981',
+            text: 'Mia is helpful and verified! She\'s given me great advice and is very supportive.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Orvian62',
+            avatarColor: '#059669',
+            text: 'Mia is very supportive and helpful. She\'s a great community member.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        24: [ // Ethan Walker
+          {
+            id: 1,
+            author: 'Valyra7',
+            avatarColor: '#059669',
+            text: 'Ethan seems genuine and authentic. No red flags in our conversations.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Myrix90',
+            avatarColor: '#8B5CF6',
+            text: 'Ethan appears to be authentic. He\'s been honest and straightforward.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        25: [ // Charlotte King
+          {
+            id: 1,
+            author: 'Sylith25',
+            avatarColor: '#F59E0B',
+            text: 'Charlotte is inconsistent. Sometimes she\'s great, sometimes she\'s completely different.',
+            timestamp: '2h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Orryx301',
+            avatarColor: '#F97316',
+            text: 'Charlotte sends mixed signals. Hard to know what she really wants.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        26: [ // Benjamin Scott
+          {
+            id: 1,
+            author: 'Talara3',
+            avatarColor: '#059669',
+            text: 'Benjamin is responsive and always replies quickly. Great communication!',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Zyvra212',
+            avatarColor: '#8B5CF6',
+            text: 'Benjamin is a good communicator. He\'s clear and direct in his messages.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        27: [ // Harper Young
+          {
+            id: 1,
+            author: 'Arclen209',
+            avatarColor: '#10B981',
+            text: 'Harper is trusted and reliable. She\'s been consistent in all our interactions.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'ReliablePerson',
+            avatarColor: '#059669',
+            text: 'Harper is reliable and trustworthy. No issues with her behavior.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        28: [ // Elijah Rivera
+          {
+            id: 1,
+            author: 'VerifiedUser',
+            avatarColor: '#10B981',
+            text: 'Elijah is verified and has been great to interact with. No red flags!',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'SafeUser',
+            avatarColor: '#059669',
+            text: 'Elijah is safe to interact with. He\'s been respectful and genuine.',
+            timestamp: '5h ago',
+            replies: [],
+          },
+        ],
+        29: [ // Amelia Baker
+          {
+            id: 1,
+            author: 'SlowResponse',
+            avatarColor: '#F59E0B',
+            text: 'Amelia is slow to respond. Sometimes takes days to reply.',
+            timestamp: '2h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'DelayedCommunication',
+            avatarColor: '#F97316',
+            text: 'Amelia has delayed communication. Not ideal for ongoing conversations.',
+            timestamp: '1d ago',
+            replies: [],
+          },
+        ],
+        30: [ // Lucas Bennett
+          {
+            id: 1,
+            author: 'Onyrix73',
+            avatarColor: '#10B981',
+            text: 'Lucas is a community leader! He\'s organized safe events and is very trustworthy.',
+            timestamp: '3h ago',
+            replies: [],
+          },
+          {
+            id: 2,
+            author: 'Kalvyn8',
+            avatarColor: '#059669',
+            text: 'Lucas is a trusted community leader. He\'s always looking out for everyone\'s safety.',
+            timestamp: '5h ago',
             replies: [],
           },
         ],
@@ -506,6 +974,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   // Flag state
   const [greenFlagCount, setGreenFlagCount] = useState(0);
   const [redFlagCount, setRedFlagCount] = useState(0);
+  const [thumbAnimations, setThumbAnimations] = useState({}); // Track thumb animations for each comment
   const [userGreenFlag, setUserGreenFlag] = useState(false);
   const [userRedFlag, setUserRedFlag] = useState(false);
   
@@ -634,6 +1103,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         setVoteCounts((counts) => ({
           ...counts,
           [commentId]: (counts[commentId] || 0) + 1
+        }));
+        // Trigger thumb animation
+        setThumbAnimations(prev => ({
+          ...prev,
+          [commentId]: Date.now()
         }));
         // Remove from downvotes if it was downvoted
         setDownvotedComments((downPrev) => {
@@ -947,11 +1421,25 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                   }
                 }}
               >
-                <Ionicons 
-                  name={isUpvoted ? 'heart' : 'heart-outline'} 
-                  size={16} 
-                  color={isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.placeholder} 
-                />
+                {isUpvoted ? (
+                  <LottieView
+                    source={require('../assets/animations/Thumb.json')}
+                    style={{ width: 20, height: 20 }}
+                    autoPlay={false}
+                    loop={false}
+                    ref={(ref) => {
+                      if (ref && thumbAnimations[c.id]) {
+                        ref.play();
+                      }
+                    }}
+                  />
+                ) : (
+                  <Ionicons 
+                    name="heart-outline" 
+                    size={16} 
+                    color={isDownvoted ? '#EF4444' : theme.colors.placeholder} 
+                  />
+                )}
                 <Text style={[styles.voteCount, { color: isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.placeholder }]}>
                   {voteCounts[c.id] || 0}
                 </Text>
@@ -1337,7 +1825,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
-    imageContainer: { position: 'relative', marginBottom: 6.5, width: 260, height: 260, alignSelf: 'center', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', padding: 8 },
+    imageContainer: { position: 'relative', marginBottom: 6.5, width: 320, height: 320, alignSelf: 'center', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', padding: 8 },
   profileImage: { width: '100%', height: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
   
   profileName: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
