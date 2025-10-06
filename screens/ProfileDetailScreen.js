@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal, Dimensions } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -636,6 +636,23 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [thumbAnimations, setThumbAnimations] = useState({}); // Track thumb animations for each comment
   const [userGreenFlag, setUserGreenFlag] = useState(false);
   const [userRedFlag, setUserRedFlag] = useState(false);
+  // Play intro thumb animations once on screen load
+  const [hasPlayedIntroThumbs, setHasPlayedIntroThumbs] = useState(false);
+
+  useEffect(() => {
+    if (!hasPlayedIntroThumbs) {
+      const timer = setTimeout(() => {
+        try {
+          thumbUpAnimationRef.current?.reset?.();
+          thumbUpAnimationRef.current?.play?.();
+          thumbDownAnimationRef.current?.reset?.();
+          thumbDownAnimationRef.current?.play?.();
+        } catch (_) {}
+        setHasPlayedIntroThumbs(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [hasPlayedIntroThumbs]);
   
   // Lottie animation refs
   const thumbUpAnimationRef = useRef(null);
@@ -1095,11 +1112,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 ) : (
                   <Ionicons 
                     name="heart-outline" 
-                    size={16} 
-                    color={isDownvoted ? '#EF4444' : theme.colors.placeholder} 
+                    size={18} 
+                    color={isDownvoted ? '#EF4444' : theme.colors.primary} 
                   />
                 )}
-                <Text style={[styles.voteCount, { color: isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.placeholder }]}>
+                <Text style={[styles.voteCount, { color: isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.primary }]}>
                   {voteCounts[c.id] || 0}
                 </Text>
               </TouchableOpacity>

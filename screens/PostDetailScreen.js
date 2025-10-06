@@ -826,10 +826,10 @@ const PostDetailScreen = ({ route, navigation }) => {
               >
               <Ionicons 
                   name={isUpvoted ? 'heart' : 'heart-outline'} 
-                  size={16} 
-                  color={isUpvoted ? '#EF4444' : isDownvoted ? '#EF4444' : theme.colors.placeholder} 
+                  size={18} 
+                  color={isUpvoted ? '#EF4444' : (isDownvoted ? '#EF4444' : theme.colors.primary)} 
                 />
-                <Text style={[styles.voteCount, { color: isUpvoted ? '#3E5F44' : isDownvoted ? '#EF4444' : theme.colors.placeholder }]}>
+                <Text style={[styles.voteCount, { color: isUpvoted ? '#3E5F44' : (isDownvoted ? '#EF4444' : theme.colors.primary) }]}> 
                   {voteCounts[c.id] || 0}
                 </Text>
               </TouchableOpacity>
