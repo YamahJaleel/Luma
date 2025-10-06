@@ -7,15 +7,18 @@ import {
   Image,
   FlatList,
   Dimensions,
-    TextInput,
+  TextInput,
   Modal,
- } from 'react-native';
+  Animated,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
 import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { profileService } from '../services/firebaseService';
+import LottieView from 'lottie-react-native';
 
 const { width } = Dimensions.get('window');
 const screenPadding = 20;
@@ -386,6 +389,11 @@ const SearchScreen = ({ navigation, route }) => {
   ];
 
   const [profiles, setProfiles] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const pullY = React.useRef(new Animated.Value(0)).current;
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullProgress, setPullProgress] = useState(0); // 0..1 plain number for Lottie progress
+  const PULL_THRESHOLD = 90;
 
   // Merge helper to avoid duplicates by id
   const mergeUniqueById = (primary, secondary) => {
@@ -399,6 +407,48 @@ const SearchScreen = ({ navigation, route }) => {
     }
     return merged;
   };
+
+  // Seed initial list with mock profiles for the current location so UI isn't empty
+  React.useEffect(() => {
+    setProfiles((prev) => {
+      if (prev && prev.length > 0) return prev;
+      const seeded = mockProfiles.map((p) => ({ ...p, location }));
+      return seeded;
+    });
+  }, []);
+
+  // Pull fetch helper
+  const fetchProfiles = React.useCallback(async () => {
+    try {
+      const remote = await profileService.getProfiles();
+      const normalized = (remote || []).map((p) => ({
+        id: p.id,
+        name: p.name || 'Unknown',
+        username: p.username || '@user',
+        avatar: p.avatar || 'https://via.placeholder.com/150',
+        size: p.size || 'small',
+        isOnline: !!p.isOnline,
+        lastSeen: p.lastSeen || 'now',
+        mutualFriends: p.mutualFriends ?? 0,
+        riskLevel: p.riskLevel || 'green',
+        flags: Array.isArray(p.flags) ? p.flags : [],
+        reports: p.reports ?? 0,
+        bio: p.bio || '',
+        location: p.location || 'Toronto, ON',
+        isUserCreatedProfile: !!p.isUserCreatedProfile,
+      }));
+      setProfiles((prev) => mergeUniqueById(normalized, prev));
+    } catch (e) {
+      console.log('Error fetching profiles:', e);
+    }
+  }, []);
+
+  // On focus, fetch once
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfiles();
+    }, [fetchProfiles])
+  );
 
   // Create one realistic profile with community comments
   React.useEffect(() => {
@@ -913,7 +963,8 @@ const SearchScreen = ({ navigation, route }) => {
         
         // Save to AsyncStorage and set state
         await AsyncStorage.setItem('userProfiles', JSON.stringify(newProfiles));
-        setProfiles(newProfiles);
+        // Tag initial seed with current location so the location filter includes them
+        setProfiles(newProfiles.map((p) => ({ ...p, location })));
         console.log('Created 10 realistic profiles with unique community comments');
       } catch (e) {
         console.log('Error creating profile:', e);
@@ -1033,8 +1084,14 @@ const SearchScreen = ({ navigation, route }) => {
     </TouchableOpacity>
   );
 
-  const fullList = searchQuery.trim() === '' ? profiles : filteredProfiles;
-  const displayProfiles = dataUsageEnabled ? fullList.slice(0, 24) : fullList;
+  // Apply location filter first, then search filter
+  const locationFiltered = React.useMemo(() => {
+    const current = (location || '').toLowerCase();
+    return profiles.filter((p) => (p.location || '').toLowerCase() === current);
+  }, [profiles, location]);
+
+  const listAfterSearch = searchQuery.trim() === '' ? locationFiltered : filteredProfiles.filter((p) => (p.location || '').toLowerCase() === (location || '').toLowerCase());
+  const displayProfiles = dataUsageEnabled ? listAfterSearch.slice(0, 24) : listAfterSearch;
 
   // Create rows for the alternating pattern
   const createRows = () => {
@@ -1057,6 +1114,58 @@ const SearchScreen = ({ navigation, route }) => {
 
   const rows = createRows();
 
+  const onTriggerRefresh = React.useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    const REFRESH_MIN_MS = 2000; // ensure the animation is visible long enough
+    const startedAt = Date.now();
+    try {
+      await fetchProfiles();
+    } finally {
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, REFRESH_MIN_MS - elapsed);
+      setTimeout(() => {
+        Animated.timing(pullY, { toValue: 0, duration: 300, useNativeDriver: false }).start(() => {
+          setRefreshing(false);
+          setIsPulling(false);
+        });
+      }, remaining);
+    }
+  }, [fetchProfiles, refreshing, pullY]);
+
+  const handlePullScroll = React.useCallback((e) => {
+    const y = e.nativeEvent.contentOffset.y;
+    if (y < 0 && !refreshing) {
+      const dist = Math.min(-y, 140);
+      pullY.setValue(dist);
+      setIsPulling(true);
+    } else if (!refreshing) {
+      pullY.setValue(0);
+      setIsPulling(false);
+    }
+  }, [pullY, refreshing]);
+
+  const handlePullEnd = React.useCallback(() => {
+    pullY.stopAnimation((val) => {
+      if (val >= PULL_THRESHOLD && !refreshing) {
+        onTriggerRefresh();
+      } else {
+        Animated.timing(pullY, { toValue: 0, duration: 180, useNativeDriver: false }).start(() => setIsPulling(false));
+      }
+    });
+  }, [onTriggerRefresh, pullY, refreshing]);
+
+  // Map pull distance to 0..1 numeric progress for Lottie (avoid passing Animated object)
+  React.useEffect(() => {
+    const id = pullY.addListener(({ value }) => {
+      const p = Math.max(0, Math.min(1, value / PULL_THRESHOLD));
+      setPullProgress(p);
+    });
+    return () => pullY.removeListener(id);
+  }, [pullY]);
+
+  // Using numeric pullProgress instead of Animated interpolation
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       {/* Profile Grid */}
@@ -1075,7 +1184,33 @@ const SearchScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.gridContainer}
         ListHeaderComponent={
-          <View style={styles.searchContainer}>
+          <View>
+            {/* Pull-to-refresh header */}
+              <Animated.View style={{ height: pullY, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 0 }}>
+              {refreshing ? (
+                <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                  <LottieView
+                    source={require('../assets/animations/Load.json')}
+                    style={{ width: 180, height: 132 }}
+                    autoPlay
+                    loop
+                  />
+                </View>
+              ) : (
+                <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                  <LottieView
+                    source={require('../assets/animations/Load.json')}
+                    style={{ width: 180, height: 132 }}
+                    autoPlay={false}
+                    loop={false}
+                    progress={pullProgress}
+                  />
+                </View>
+              )}
+            </Animated.View>
+
+            {/* Search controls */}
+            <View style={styles.searchContainer}>
             <View style={styles.searchHeaderRow}>
               <View style={[styles.searchBar, { backgroundColor: theme.colors.surface }]}> 
                 <Ionicons name="search" size={20} color={theme.colors.primary} style={styles.searchIcon} />
@@ -1107,12 +1242,14 @@ const SearchScreen = ({ navigation, route }) => {
               <Ionicons name="location" size={12} color="#3E5F44" />
               <Text style={[styles.locationText, { color: "#3E5F44" }]}>{location}</Text>
             </TouchableOpacity>
+            </View>
           </View>
         }
         initialNumToRender={dataUsageEnabled ? 4 : 8}
         windowSize={dataUsageEnabled ? 3 : 5}
         removeClippedSubviews={true}
         onScroll={(e) => {
+          handlePullScroll(e);
           const y = e.nativeEvent.contentOffset.y;
           const prevY = scrollYRef.current || 0;
           const dy = y - prevY;
@@ -1123,6 +1260,7 @@ const SearchScreen = ({ navigation, route }) => {
           }
           scrollYRef.current = y;
         }}
+        onScrollEndDrag={handlePullEnd}
         scrollEventThrottle={16}
       />
 
@@ -1184,7 +1322,7 @@ const SearchScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  searchContainer: { paddingHorizontal: 0, paddingTop: 60, paddingBottom: 12 },
+  searchContainer: { paddingHorizontal: 0, paddingTop: 48, paddingBottom: 12 },
   searchHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 0, paddingRight: 0 },
   searchBar: {
     flex: 1,

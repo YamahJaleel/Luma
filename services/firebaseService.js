@@ -14,7 +14,8 @@ import {
   serverTimestamp,
   setDoc,
   arrayUnion,
-  arrayRemove 
+  arrayRemove,
+  increment
 } from 'firebase/firestore';
 import { 
   ref, 
@@ -93,6 +94,22 @@ export const profileService = {
       });
     } catch (error) {
       console.error('Error updating profile:', error);
+      throw error;
+    }
+  },
+
+  // Atomically increment/decrement flag counts
+  incrementFlags: async (profileId, deltaGreen = 0, deltaRed = 0) => {
+    try {
+      const docRef = doc(db, COLLECTIONS.PROFILES, profileId);
+      const update = {};
+      if (deltaGreen !== 0) update.greenFlagCount = increment(deltaGreen);
+      if (deltaRed !== 0) update.redFlagCount = increment(deltaRed);
+      if (Object.keys(update).length > 0) {
+        await updateDoc(docRef, update);
+      }
+    } catch (error) {
+      console.error('Error incrementing flags:', error);
       throw error;
     }
   },
@@ -477,6 +494,15 @@ export const realtimeService = {
         ...doc.data()
       }));
       callback(profiles);
+    });
+  },
+
+  // Listen to a single profile by id
+  listenToProfile: (profileId, callback) => {
+    const refDoc = doc(db, COLLECTIONS.PROFILES, profileId);
+    return onSnapshot(refDoc, (snap) => {
+      if (snap.exists()) callback({ id: snap.id, ...snap.data() });
+      else callback(null);
     });
   },
 

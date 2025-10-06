@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, View, FlatList, Text, StatusBar, TouchableOpacity, ScrollView, Image, Modal, TextInput } from 'react-native';
+import { StyleSheet, View, FlatList, Text, StatusBar, TouchableOpacity, ScrollView, Image, Modal, TextInput, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
 import { postService } from '../services/postService';
+import LottieView from 'lottie-react-native';
 import { auth } from '../config/firebase';
 
 // Categories data (could be moved to Firestore later)
@@ -119,13 +120,16 @@ const HomeScreen = () => {
   const [posts, setPosts] = useState(null);
   const [category, setCategory] = useState('dating-advice');
   const [isLoading, setIsLoading] = useState(false);
+  const pullY = useRef(new Animated.Value(0)).current;
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullProgress, setPullProgress] = useState(0);
+  const PULL_THRESHOLD = 90;
   const [showSortModal, setShowSortModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState('recent');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Load posts from Firebase
   const loadPosts = useCallback(async () => {
-    setIsLoading(true);
     try {
       const fetchedPosts = await postService.getPosts(
         category,
@@ -149,7 +153,7 @@ const HomeScreen = () => {
       console.error('Error loading posts:', error);
       // Keep existing posts if there's an error
     } finally {
-      setIsLoading(false);
+      // Caller controls isLoading timing to keep the Lottie animation visible
     }
   }, [category, selectedSort]);
 
@@ -205,6 +209,56 @@ const HomeScreen = () => {
     }, [loadPosts])
   );
 
+  // Custom pull-to-refresh handlers
+  const onTriggerRefresh = useCallback(async () => {
+    if (isLoading) return;
+    const REFRESH_MIN_MS = 2000;
+    const startedAt = Date.now();
+    setIsLoading(true);
+    try {
+      await loadPosts();
+    } finally {
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, REFRESH_MIN_MS - elapsed);
+      setTimeout(() => {
+        Animated.timing(pullY, { toValue: 0, duration: 300, useNativeDriver: false }).start(() => {
+          setIsPulling(false);
+          setIsLoading(false);
+        });
+      }, remaining);
+    }
+  }, [isLoading, loadPosts, pullY]);
+
+  const handlePullScroll = useCallback((e) => {
+    const y = e.nativeEvent.contentOffset.y;
+    if (y < 0 && !isLoading) {
+      const dist = Math.min(-y, 140);
+      pullY.setValue(dist);
+      setIsPulling(true);
+    } else if (!isLoading) {
+      pullY.setValue(0);
+      setIsPulling(false);
+    }
+  }, [isLoading, pullY]);
+
+  const handlePullEnd = useCallback(() => {
+    pullY.stopAnimation((val) => {
+      if (val >= PULL_THRESHOLD && !isLoading) {
+        onTriggerRefresh();
+      } else {
+        Animated.timing(pullY, { toValue: 0, duration: 180, useNativeDriver: false }).start(() => setIsPulling(false));
+      }
+    });
+  }, [PULL_THRESHOLD, isLoading, onTriggerRefresh, pullY]);
+
+  useEffect(() => {
+    const id = pullY.addListener(({ value }) => {
+      const p = Math.max(0, Math.min(1, value / PULL_THRESHOLD));
+      setPullProgress(p);
+    });
+    return () => pullY.removeListener(id);
+  }, [PULL_THRESHOLD, pullY]);
+
   // Handle search
   const handleSearch = useCallback((query) => {
     setSearchQuery(query);
@@ -237,10 +291,9 @@ const HomeScreen = () => {
         <FlatList
           data={filterPosts(posts)}
           extraData={isLoading}
-          refreshing={isLoading}
-          onRefresh={loadPosts}
           keyExtractor={(item) => item.id}
           onScroll={(e) => {
+            handlePullScroll(e);
             const y = e.nativeEvent.contentOffset.y;
             const prevY = scrollYRef.current || 0;
             const dy = y - prevY;
@@ -251,9 +304,33 @@ const HomeScreen = () => {
             }
             scrollYRef.current = y;
           }}
+          onScrollEndDrag={handlePullEnd}
           scrollEventThrottle={16}
           ListHeaderComponent={
             <View>
+              {/* Pull-to-refresh header */}
+              <Animated.View style={{ height: pullY, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 0 }}>
+                {isLoading ? (
+                  <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                    <LottieView
+                      source={require('../assets/animations/Load.json')}
+                      style={{ width: 180, height: 132 }}
+                      autoPlay
+                      loop
+                    />
+                  </View>
+                ) : (
+                  <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                    <LottieView
+                      source={require('../assets/animations/Load.json')}
+                      style={{ width: 180, height: 132 }}
+                      autoPlay={false}
+                      loop={false}
+                      progress={pullProgress}
+                    />
+                  </View>
+                )}
+              </Animated.View>
               <View style={styles.header}>
                 <View style={styles.headerTopRow}>
                   <View style={styles.headerRow}>

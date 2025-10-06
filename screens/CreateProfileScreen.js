@@ -4,6 +4,8 @@ import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTabContext } from '../components/TabContext';
+import { profileService, storageService } from '../services/firebaseService';
+import { auth } from '../config/firebase';
 
 const CreateProfileScreen = ({ route, navigation }) => {
   const theme = useTheme();
@@ -16,6 +18,7 @@ const CreateProfileScreen = ({ route, navigation }) => {
   const [location, setLocation] = useState('Toronto, ON');
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationInput, setLocationInput] = useState('Toronto, ON');
+  const [submitting, setSubmitting] = useState(false);
 
   // Location data (same as SearchScreen)
   const CAN_LOCATIONS = [
@@ -109,12 +112,18 @@ const CreateProfileScreen = ({ route, navigation }) => {
     );
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) {
       Alert.alert('Missing Info', 'Please enter a name.');
       return;
     }
-    
+    if (!location || !location.trim()) {
+      Alert.alert('Missing Info', 'Please select a location.');
+      return;
+    }
+    if (submitting) return;
+    setSubmitting(true);
+
     // Auto-generate username from name
     const generateUsername = (fullName) => {
       const nameParts = fullName.trim().toLowerCase().split(' ');
@@ -124,30 +133,51 @@ const CreateProfileScreen = ({ route, navigation }) => {
         return nameParts[0];
       }
     };
-    
-    const newProfile = {
-      id: Date.now(),
-      name: name.trim(),
-      username: generateUsername(name.trim()),
-      avatar: selectedImage ? selectedImage.uri : 'https://via.placeholder.com/150',
-      size: 'small',
-      isOnline: false,
-      lastSeen: 'just now',
-      mutualFriends: 0,
-      riskLevel: 'green',
-      flags: [],
-      reports: 0,
-      bio: bio.trim(),
-      location: location,
-    };
-    // Navigate back to Search with a serializable param
-    navigation.navigate('Search', { newProfile });
-    // Clear form after creating
-    setName('');
-    setBio('');
-    setLocation('Toronto, ON');
-    setLocationInput('Toronto, ON');
-    setSelectedImage(null);
+    try {
+      const userId = auth.currentUser?.uid || null;
+
+      // Upload image to Firebase Storage if provided
+      let avatarUrl = '';
+      if (selectedImage?.uri) {
+        const response = await fetch(selectedImage.uri);
+        const blob = await response.blob();
+        const path = `profiles/${userId || 'anonymous'}/${Date.now()}.jpg`;
+        avatarUrl = await storageService.uploadImage(blob, path);
+      }
+
+      const payload = {
+        name: name.trim(),
+        username: generateUsername(name.trim()),
+        avatar: avatarUrl || selectedImage?.uri || 'https://via.placeholder.com/150',
+        size: 'small',
+        isOnline: false,
+        lastSeen: 'just now',
+        mutualFriends: 0,
+        riskLevel: 'green',
+        flags: [],
+        reports: 0,
+        bio: bio.trim(),
+        location: location,
+        userId,
+        isUserCreatedProfile: true,
+      };
+
+      await profileService.createProfile(payload);
+      // Navigate back to Search (realtime listener will update list)
+      navigation.navigate('Search');
+
+      // Clear form after creating
+      setName('');
+      setBio('');
+      setLocation('Toronto, ON');
+      setLocationInput('Toronto, ON');
+      setSelectedImage(null);
+    } catch (e) {
+      console.log('Create profile error:', e);
+      Alert.alert('Error', 'Failed to create profile. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -157,8 +187,8 @@ const CreateProfileScreen = ({ route, navigation }) => {
           <Ionicons name="close" size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Share an experience</Text>
-        <TouchableOpacity style={[styles.createButton, { backgroundColor: theme.colors.primary }]} onPress={handleCreate}>
-          <Text style={styles.createText}>Create</Text>
+        <TouchableOpacity style={[styles.createButton, { backgroundColor: theme.colors.primary, opacity: submitting ? 0.6 : 1 }]} onPress={handleCreate} disabled={submitting}>
+          <Text style={styles.createText}>{submitting ? 'Creating...' : 'Create'}</Text>
         </TouchableOpacity>
       </View>
 

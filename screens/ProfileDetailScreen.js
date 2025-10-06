@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { realtimeService, profileService } from '../services/firebaseService';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal, Dimensions } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +11,16 @@ import axios from 'axios';
 const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { profile, fromScreen } = route.params;
+  const [liveProfile, setLiveProfile] = useState(profile);
+
+  // Keep detail in sync with Firestore
+  useEffect(() => {
+    if (!profile?.id) return;
+    const unsubscribe = realtimeService.listenToProfile(profile.id, (doc) => {
+      if (doc) setLiveProfile((prev) => ({ ...prev, ...doc }));
+    });
+    return () => unsubscribe && unsubscribe();
+  }, [profile?.id]);
 
   // Local avatar support (mirrors SearchScreen): static requires so Metro can bundle images
   const LOCAL_AVATARS = [
@@ -1175,7 +1186,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{profile?.name}</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{liveProfile?.name}</Text>
         {isUserCreatedProfile ? (
           <View style={styles.menuContainer}>
             <TouchableOpacity 
@@ -1227,7 +1238,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             { backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.75)' }
           ]}>
             <Image 
-              source={getAvatarSource((profile.id || 1) - 1, profile.avatar)}
+              source={getAvatarSource((liveProfile?.id || 1) - 1, liveProfile?.avatar)}
               style={[
                 styles.profileImage,
                 { backgroundColor: theme.dark ? 'rgba(0, 0, 0, 0.2)' : 'white' }
