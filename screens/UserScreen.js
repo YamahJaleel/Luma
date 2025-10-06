@@ -48,15 +48,22 @@ const UserScreen = ({ navigation }) => {
 
   // Generate initials from username or displayName
   const getInitials = () => {
-    if (!userProfile) return 'U';
-    const name = userProfile.displayName || userProfile.username || 'User';
+    if (!userProfile) {
+      // Use Firebase user's displayName or email as fallback
+      const name = user?.displayName || user?.email?.split('@')[0] || 'User';
+      return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
+    }
+    const name = userProfile.displayName || userProfile.username || user?.displayName || user?.email?.split('@')[0] || 'User';
     return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
   };
 
   // Get display name
   const getDisplayName = () => {
-    if (!userProfile) return 'User';
-    return userProfile.displayName || userProfile.username || 'User';
+    if (!userProfile) {
+      // Use Firebase user's displayName or email as fallback
+      return user?.displayName || user?.email?.split('@')[0] || 'User';
+    }
+    return userProfile.displayName || userProfile.username || user?.displayName || user?.email?.split('@')[0] || 'User';
   };
   
 
