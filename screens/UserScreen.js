@@ -14,6 +14,7 @@ import { useTabContext } from '../components/TabContext';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { authService } from '../services/authService';
 
 const UserScreen = ({ navigation }) => {
   const theme = useTheme();
@@ -194,10 +195,20 @@ Privacy is our foundation we use secure systems to ensure user information is ne
         <Card.Content style={styles.menuContent}>
           <TouchableOpacity style={[styles.logoutRow]} onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?', [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Logout', style: 'destructive', onPress: () => {
-                  // Hide tab bar immediately across auth flow until Home is shown again
-                  setTabHidden(true);
-                  navigation.reset({ index: 0, routes: [{ name: 'SignInCopy' }] });
+              { text: 'Logout', style: 'destructive', onPress: async () => {
+                  try {
+                    // Hide tab bar immediately across auth flow until Home is shown again
+                    setTabHidden(true);
+                    
+                    // Sign out from Firebase
+                    await authService.signOut();
+                    
+                    // Navigate to login screen
+                    navigation.reset({ index: 0, routes: [{ name: 'SignInCopy' }] });
+                  } catch (error) {
+                    console.error('Error signing out:', error);
+                    Alert.alert('Error', 'Failed to logout. Please try again.');
+                  }
                 } }
             ])}>
             <Ionicons name="log-out-outline" size={20} color="#FC8181" />
