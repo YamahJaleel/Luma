@@ -458,15 +458,42 @@ export const messageService = {
 
 // Storage operations
 export const storageService = {
-  // Upload image
-  uploadImage: async (file, path) => {
+  // Upload image from React Native
+  uploadImage: async (imageUri, path) => {
     try {
+      console.log('Uploading image from URI:', imageUri);
+      
+      // Convert image URI to blob for React Native
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      
+      console.log('Blob created, size:', blob.size);
+      
       const storageRef = ref(storage, path);
-      const snapshot = await uploadBytes(storageRef, file);
+      console.log('Storage ref created:', path);
+      
+      const snapshot = await uploadBytes(storageRef, blob);
+      console.log('Upload completed, getting download URL...');
+      
       const downloadURL = await getDownloadURL(snapshot.ref);
+      console.log('Download URL obtained:', downloadURL);
+      
       return downloadURL;
     } catch (error) {
       console.error('Error uploading image:', error);
+      throw error;
+    }
+  },
+
+  // Upload image from blob (for web compatibility)
+  uploadImageBlob: async (blob, path) => {
+    try {
+      const storageRef = ref(storage, path);
+      const snapshot = await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
+    } catch (error) {
+      console.error('Error uploading image blob:', error);
       throw error;
     }
   },
