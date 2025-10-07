@@ -276,10 +276,9 @@ const HomeScreen = () => {
 
   const sortOptions = [
     { id: 'recent', name: 'Most Recent', icon: 'time' },
-    { id: 'top', name: 'Top Posts', icon: 'trending-up' },
     { id: 'liked', name: 'Most Liked', icon: 'heart' },
-    { id: 'trending', name: 'Trending', icon: 'flame' },
     { id: 'comments', name: 'Most Comments', icon: 'chatbubble' },
+    { id: 'top', name: 'Top Posts', icon: 'trending-up' },
   ];
 
   const canCreate = true;

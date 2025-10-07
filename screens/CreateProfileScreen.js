@@ -150,9 +150,14 @@ const CreateProfileScreen = ({ route, navigation }) => {
         username: generateUsername(name.trim()),
         avatar: avatarUrl || selectedImage?.uri || 'https://via.placeholder.com/150',
         riskLevel: 'green',
-        bio: bio.trim(),
+        experience: bio.trim(),
         location: location,
         userId,
+        originalPoster: {
+          name: name.trim(),
+          userId: userId,
+          avatar: avatarUrl || selectedImage?.uri || 'https://via.placeholder.com/150'
+        },
         isUserCreatedProfile: true,
       };
 
@@ -180,7 +185,7 @@ const CreateProfileScreen = ({ route, navigation }) => {
         <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={22} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Share an experience</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Share an Experience</Text>
         <TouchableOpacity style={[styles.createButton, { backgroundColor: theme.colors.primary, opacity: submitting ? 0.6 : 1 }]} onPress={handleCreate} disabled={submitting}>
           <Text style={styles.createText}>{submitting ? 'Creating...' : 'Create'}</Text>
         </TouchableOpacity>
@@ -239,11 +244,11 @@ const CreateProfileScreen = ({ route, navigation }) => {
             <Text style={[styles.locationText, { color: "#3E5F44" }]}>{location}</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.label, { color: theme.colors.text }]}>About</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>Your Experience</Text>
           <TextInput
             value={bio}
             onChangeText={setBio}
-            placeholder="Write about your experience"
+            placeholder="Share your experience story..."
             placeholderTextColor={theme.colors.placeholder}
             multiline
             numberOfLines={4}

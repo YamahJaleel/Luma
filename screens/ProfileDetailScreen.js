@@ -22,6 +22,32 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     return () => unsubscribe && unsubscribe();
   }, [profile?.id]);
 
+  // Load Firebase comments
+  useEffect(() => {
+    if (!profile?.id) return;
+    const unsubscribe = realtimeService.listenToProfileComments(profile.id, (firebaseComments) => {
+      // Sort comments: original poster first, then by creation time
+      const sortedComments = firebaseComments.sort((a, b) => {
+        if (a.isOriginalPoster && !b.isOriginalPoster) return -1;
+        if (!a.isOriginalPoster && b.isOriginalPoster) return 1;
+        return new Date(a.createdAt?.toDate?.() || 0) - new Date(b.createdAt?.toDate?.() || 0);
+      });
+      
+      // Convert Firebase comments to the expected format
+      const formattedComments = sortedComments.map(comment => ({
+        id: comment.id,
+        author: comment.userName || comment.userId,
+        text: comment.text,
+        timestamp: comment.createdAt?.toDate?.()?.toLocaleDateString() || 'now',
+        isOriginalPoster: comment.isOriginalPoster || false,
+        replies: comment.replies || []
+      }));
+      
+      setFirebaseComments(formattedComments);
+    });
+    return () => unsubscribe && unsubscribe();
+  }, [profile?.id]);
+
   // Local avatar support (mirrors SearchScreen): static requires so Metro can bundle images
   const LOCAL_AVATARS = [
     require('../assets/profiles/pexels-albert-bilousov-210750737-12471262.jpg'),
@@ -595,6 +621,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   };
 
   const [comments, setComments] = useState(makeMockComments());
+  const [firebaseComments, setFirebaseComments] = useState([]);
   const originalPosterName = useMemo(() => {
     try {
       // For new profiles, the current user is always the OP
@@ -696,7 +723,13 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     });
     return out;
   };
-  const flatComments = useMemo(() => flattenVisible(comments), [comments, expandedThreads]);
+  const flatComments = useMemo(() => {
+    if (firebaseComments.length > 0) {
+      // Use Firebase comments directly (they're already flat)
+      return firebaseComments.map(comment => ({ node: comment, depth: 0 }));
+    }
+    return flattenVisible(comments);
+  }, [comments, expandedThreads, firebaseComments]);
 
   // Build AI prompt and fetch overview from first 6 top-level comments
   const requestAiOverview = async () => {
@@ -1057,9 +1090,9 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 <Text style={[styles.commentAuthor, { color: theme.colors.text }]} numberOfLines={1}>
                   {c.author}
                 </Text>
-                {c.id === 'owner-note' && (
+                {(c.id === 'owner-note' || c.isOriginalPoster) && (
                   <View style={styles.opBadge}>
-                    <Text style={styles.opBadgeText}>OP</Text>
+                    <Text style={styles.opBadgeText}>Original Poster</Text>
                   </View>
                 )}
               </View>
