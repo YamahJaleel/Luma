@@ -240,6 +240,8 @@ const HomeScreen = () => {
   const [showSortModal, setShowSortModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState('recent');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
 
   // Load posts from Firebase
   const loadPosts = useCallback(async () => {
@@ -375,6 +377,13 @@ const HomeScreen = () => {
   // Handle search
   const handleSearch = useCallback((query) => {
     setSearchQuery(query);
+    setSearchInput(query);
+  }, []);
+
+  // Handle search input change
+  const handleSearchInputChange = useCallback((text) => {
+    setSearchInput(text);
+    setSearchQuery(text);
   }, []);
 
   // Filter posts by search query
@@ -457,10 +466,7 @@ const HomeScreen = () => {
                   <View style={styles.headerRightButtons}>
                     <TouchableOpacity 
                       style={[styles.headerIconSquare, { backgroundColor: colors.surface }]}
-                      onPress={() => {
-                        // You can add search functionality here or navigate to a search screen
-                        console.log('Search pressed');
-                      }}
+                      onPress={() => setShowSearchModal(true)}
                     >
                       <Ionicons name="search" size={16} color={colors.primary} />
                     </TouchableOpacity>
@@ -533,6 +539,83 @@ const HomeScreen = () => {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Search Modal */}
+      <Modal visible={showSearchModal} transparent={true} animationType="fade" onRequestClose={() => setShowSearchModal(false)}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSearchModal(false)}
+        >
+          <View style={[styles.searchModalContent, { backgroundColor: colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Search Posts</Text>
+              <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Search Input */}
+            <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
+              <Ionicons name="search" size={20} color={colors.primary} style={styles.searchIcon} />
+              <TextInput
+                style={[styles.searchTextInput, { color: colors.text }]}
+                placeholder="Search posts..."
+                placeholderTextColor={colors.placeholder}
+                value={searchInput}
+                onChangeText={handleSearchInputChange}
+                autoFocus
+              />
+              {searchInput.length > 0 && (
+                <TouchableOpacity onPress={() => handleSearch('')}>
+                  <Ionicons name="close-circle" size={20} color={colors.placeholder} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Search Results */}
+            <FlatList
+              data={filterPosts(posts || [])}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <PostItem
+                  item={item}
+                  onPress={() => {
+                    setShowSearchModal(false);
+                    navigation.navigate('PostDetail', { post: item });
+                  }}
+                  onComment={() => {
+                    setShowSearchModal(false);
+                    navigation.navigate('PostDetail', { post: item });
+                  }}
+                  onLike={() => handleLike(item.id)}
+                />
+              )}
+              contentContainerStyle={{ paddingBottom: 12 }}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                searchInput.trim() ? (
+                  <View style={styles.emptySearchContainer}>
+                    <Ionicons name="search" size={48} color="#E2E8F0" />
+                    <Text style={[styles.emptySearchTitle, { color: colors.text }]}>No Results Found</Text>
+                    <Text style={[styles.emptySearchSubtitle, { color: colors.placeholder }]}>
+                      No posts found for "{searchInput}". Try searching with different keywords.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.emptySearchContainer}>
+                    <Ionicons name="search" size={48} color="#E2E8F0" />
+                    <Text style={[styles.emptySearchTitle, { color: colors.text }]}>Search Posts</Text>
+                    <Text style={[styles.emptySearchSubtitle, { color: colors.placeholder }]}>
+                      Enter keywords to search through post titles and content.
+                    </Text>
+                  </View>
+                )
+              }
+            />
           </View>
         </TouchableOpacity>
       </Modal>
@@ -729,6 +812,39 @@ const styles = StyleSheet.create({
   selectedSortOption: { backgroundColor: '#3E5F44' },
   sortOptionText: { fontSize: 15, fontWeight: '600', color: '#6B7280', marginLeft: 10 },
   selectedSortOptionText: { color: 'white' },
+  // Search Modal Styles
+  searchModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    width: '90%',
+    maxHeight: '80%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  searchIcon: { marginRight: 12 },
+  searchTextInput: { flex: 1, fontSize: 16, paddingVertical: 0 },
+  emptySearchContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptySearchTitle: { fontSize: 18, fontWeight: 'bold', marginTop: 16, marginBottom: 8 },
+  emptySearchSubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 });
 
 export default HomeScreen;
