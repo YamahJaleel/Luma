@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { realtimeService, profileService, storageService } from '../services/firebaseService';
+import { realtimeService, profileService, storageService, commentService } from '../services/firebaseService';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal, Dimensions, Alert } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +32,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   // Load Firebase comments
   useEffect(() => {
     if (!profile?.id || isDeleting) return;
+    
+    // Set loading state when starting to load comments
+    setIsLoadingComments(true);
+    
     const unsubscribe = realtimeService.listenToProfileComments(profile.id, (firebaseComments) => {
       // Don't update comments if we're in the process of deleting
       if (isDeleting) return;
@@ -54,6 +58,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       }));
       
       setFirebaseComments(formattedComments);
+      setIsLoadingComments(false); // Comments loaded
     });
     return () => unsubscribe && unsubscribe();
   }, [profile?.id, isDeleting]);
@@ -211,429 +216,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
   // removed expandedAiText in favor of rendering bullet lines directly
 
-  // Threaded comments (profile discussion)
-  const makeMockComments = () => {
-    const items = [];
-    
-    // Only add mock community comments for established profiles (not new ones)
-    // New profiles use Date.now() for ID, which will be much larger than mock profile IDs (1-30)
-    if (profile?.id && profile.id > 10000) { 
-      // For new profiles, show owner note with experience or default message
-      if (profile?.experience && profile.experience.trim()) {
-        const ownerNote = profile.experience.trim();
-        const creatorName = profile?.createdBy || 'Anonymous';
-        items.push({
-          id: 'owner-note',
-          author: creatorName,
-          avatarColor: '#7C9AFF',
-          text: ownerNote,
-          timestamp: 'now',
-          replies: [],
-        });
-      } else {
-        // For new profiles without experience, add a default owner note
-        const creatorName = profile?.createdBy || 'Anonymous';
-        items.push({
-          id: 'owner-note',
-          author: creatorName,
-          avatarColor: '#7C9AFF',
-          text: 'This is a new profile. Share your experiences and help keep the community safe.',
-          timestamp: 'now',
-          replies: [],
-        });
-      }
-      return items; // Return early for new profiles
-    }
-    
-    // For established profiles, add a profile-specific owner note with pseudonym
-    if (!profile?.bio || !profile.bio.trim()) {
-      const generateOwnerNote = (profileId) => {
-        const ownerNotes = {
-          1: { // Tyler Bradshaw
-            author: 'Vyntra7',
-            text: '⚠️ Tyler seemed charming at first but quickly became pushy and aggressive. Please be careful if you match with him.',
-            timestamp: '2h ago'
-          },
-        2: { // Jake Thompson
-          author: 'Kynora118',
-          text: 'I\'m sharing my experience with Jake here. He ghosted me after weeks of great conversation. I want to help others avoid the same disappointment.',
-          timestamp: '1d ago'
-        },
-          3: { // Mike Johnson
-            author: 'Arctynx54',
-            text: '🚨 Mike has been reported multiple times for harassment. He\'s not safe to interact with.',
-            timestamp: '3h ago'
-          },
-        4: { // Ryan Miller
-          author: 'Solvian3',
-          text: 'I\'m warning others about Ryan. His photos are heavily edited and he looks completely different in person. Don\'t waste your time like I did.',
-          timestamp: '4h ago'
-        },
-          5: { // Brian Ochieng
-            author: 'Dravex92',
-            text: 'Brian has been incredibly helpful and supportive! He\'s given me great dating advice and is genuinely caring. A trustworthy person!',
-            timestamp: '6h ago'
-          },
-        6: { // Chris Anderson
-          author: 'Lyrixon41',
-          text: 'Chris is an amazing community leader! He\'s organized incredible volunteer events and always puts others first. A true inspiration!',
-          timestamp: '1d ago'
-        },
-        7: { // Raj Patel
-          author: 'Umbren204',
-          text: 'Raj has been really unreliable. He\'s cancelled on me multiple times and never follows through with plans.',
-          timestamp: '2d ago'
-        },
-        8: { // Brandon Green
-          author: 'Umbren204',
-          text: '⚠️ Brandon has been reported for harassment and fake profile claims. Stay away from this one.',
-          timestamp: '3d ago'
-        },
-        9: { // James Brown
-          author: 'Umbren204',
-          text: 'James is incredibly talented! He\'s an amazing DJ and music producer. His beats are fire and he\'s always willing to help other artists.',
-          timestamp: '1d ago'
-        },
-        10: { // Kevin Davis
-          author: 'Umbren204',
-          text: 'Kevin is pretty inconsistent. He\'s nice but doesn\'t follow through with plans. Hard to make concrete arrangements with him.',
-          timestamp: '2d ago'
-        }
-        };
-        
-        return ownerNotes[profileId] || {
-          author: 'Umbren204',
-          text: 'Sharing my experience here. Please add your own experiences to help keep our community safe.',
-          timestamp: '2h ago'
-        };
-      };
-      
-      const ownerNote = generateOwnerNote(profile?.id);
-      items.push({
-        id: 'owner-note',
-        author: ownerNote.author,
-        avatarColor: '#7C9AFF',
-        text: ownerNote.text,
-        timestamp: ownerNote.timestamp,
-        replies: [],
-      });
-    }
-    // Generate unique comments based on profile
-    const generateProfileComments = (profileId) => {
-      const commentSets = {
-        1: [ // Tyler Bradshaw
-          {
-            id: 1,
-            author: 'Zephra65',
-            avatarColor: '#EF4444',
-            text: '🚩🚩🚩 Met Tyler last week and he was extremely pushy about meeting at his place. When I said no, he got really aggressive and started calling me names. Stay away!',
-            timestamp: '2h ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Caelix5',
-                avatarColor: '#8B5CF6',
-                text: 'Oh my god, that\'s terrifying! Thank you for sharing this. Did you report him?',
-                timestamp: '1h ago',
-                replies: [],
-              },
-              {
-                id: 12,
-                author: 'Zephra65',
-                avatarColor: '#EF4444',
-                text: 'Yes, I reported him immediately. The way he switched from charming to aggressive was so scary.',
-                timestamp: '45m ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Mystra84',
-            avatarColor: '#10B981',
-            text: 'I actually had a different experience with Tyler. We met for coffee and he was really nice and respectful. But reading these comments is making me question everything...',
-            timestamp: '3h ago',
-            replies: [
-              {
-                id: 21,
-                author: 'Ecliptor9',
-                avatarColor: '#F59E0B',
-                text: 'That\'s exactly how these guys work! They\'re nice at first to gain your trust. Please be careful.',
-                timestamp: '2h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 3,
-            author: 'Novelle62',
-            avatarColor: '#3B82F6',
-            text: 'Tyler tried to pressure me into sending nudes on the first day of talking. When I refused, he said I was "prudish" and unmatched me. Bullet dodged!',
-            timestamp: '4h ago',
-            replies: [],
-          },
-        ],
-        2: [ // Jake Thompson
-          {
-            id: 1,
-            author: 'Lumara203',
-            avatarColor: '#EC4899',
-            text: 'Jake seemed nice at first but he\'s a total ghost. We had great conversations for a week, then he just disappeared mid-conversation. No explanation, nothing.',
-            timestamp: '1d ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Voxen18',
-                avatarColor: '#8B5CF6',
-                text: 'Same thing happened to me! We were supposed to meet for coffee and he just stopped responding the day before.',
-                timestamp: '20h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Auren97',
-            avatarColor: '#F97316',
-            text: 'Jake is inconsistent with communication. Sometimes he\'s super responsive, other times he takes days to reply. It\'s confusing and frustrating.',
-            timestamp: '2d ago',
-            replies: [],
-          },
-        ],
-        3: [ // Mike Johnson
-          {
-            id: 1,
-            author: 'Krysen44',
-            avatarColor: '#059669',
-            text: 'Mike is genuinely a great guy! We\'ve been talking for a few weeks and he\'s been respectful, funny, and reliable. He always shows up when he says he will.',
-            timestamp: '3h ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Thalara2',
-                avatarColor: '#DC2626',
-                text: 'That\'s so refreshing to hear! It\'s nice to see positive experiences shared here too.',
-                timestamp: '2h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Jyntra122',
-            avatarColor: '#EF4444',
-            text: 'Mike has been really good at communicating his intentions clearly. No games, no mixed signals. He\'s been a breath of fresh air.',
-            timestamp: '1d ago',
-            replies: [],
-          },
-        ],
-        4: [ // Ryan Miller
-          {
-            id: 1,
-            author: 'Virex56',
-            avatarColor: '#8B5CF6',
-            text: '⚠️ Ryan is NOT who he claims to be. His photos are heavily filtered/edited and he looks completely different in person. Total catfish situation.',
-            timestamp: '4h ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Astryn300',
-                avatarColor: '#3B82F6',
-                text: 'I had the same experience! The photos were from years ago and heavily edited. Very misleading.',
-                timestamp: '3h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Tenebra4',
-            avatarColor: '#F59E0B',
-            text: 'Ryan was very aggressive and inappropriate in his messages. He kept sending unsolicited photos and got angry when I didn\'t respond the way he wanted.',
-            timestamp: '1d ago',
-            replies: [],
-          },
-        ],
-        5: [ // Brian Ochieng
-          {
-            id: 1,
-            author: 'Mystra84',
-            avatarColor: '#10B981',
-            text: 'Brian is super helpful and genuine! He gave me great advice about dating safety and was really supportive when I shared some concerns.',
-            timestamp: '6h ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Nexra27',
-                avatarColor: '#EC4899',
-                text: 'I\'ve had similar experiences with Brian. He\'s really knowledgeable and caring.',
-                timestamp: '5h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Aetheron81',
-            avatarColor: '#8B5CF6',
-            text: 'Brian is verified and has been consistently helpful in the community. He\'s someone you can trust for good advice.',
-            timestamp: '2d ago',
-            replies: [],
-          },
-        ],
-        6: [ // Chris Anderson
-          {
-            id: 1,
-            author: 'Lynix11',
-            avatarColor: '#F97316',
-            text: 'Chris organized an amazing food drive last month. He\'s incredibly dedicated to helping the community and always follows through on his commitments.',
-            timestamp: '1d ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Valtor105',
-                avatarColor: '#059669',
-                text: 'I\'ve worked with Chris on several events. He\'s reliable, organized, and truly cares about making a difference.',
-                timestamp: '20h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Serenix6',
-            avatarColor: '#DC2626',
-            text: 'Chris has been a community leader for years. He\'s trustworthy, helpful, and always puts others first. Highly recommended!',
-            timestamp: '3d ago',
-            replies: [],
-          },
-        ],
-        7: [ // Raj Patel
-          {
-            id: 1,
-            author: 'Onyrix73',
-            avatarColor: '#10B981',
-            text: 'Raj is unreliable. He\'s cancelled on me three times at the last minute with weak excuses. I\'ve given up trying to make plans with him.',
-            timestamp: '2h ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Ecliptor9',
-                avatarColor: '#F59E0B',
-                text: 'Same here! He seems nice in messages but never follows through with plans.',
-                timestamp: '1h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Arclen209',
-            avatarColor: '#8B5CF6',
-            text: 'Raj has been reported for being unreliable by multiple people. He seems to have commitment issues with actually meeting up.',
-            timestamp: '1d ago',
-            replies: [],
-          },
-        ],
-        8: [ // Brandon Green
-          {
-            id: 1,
-            author: 'Noctra35',
-            avatarColor: '#059669',
-            text: 'Brandon is super friendly and always responds quickly. We\'ve had great conversations!',
-            timestamp: '3h ago',
-            replies: [],
-          },
-          {
-            id: 2,
-            author: 'Velix88',
-            avatarColor: '#EC4899',
-            text: 'Brandon is very active in the community and always helpful. Highly recommend!',
-            timestamp: '5h ago',
-            replies: [],
-          },
-        ],
-        9: [ // James Brown
-          {
-            id: 1,
-            author: 'Zyntra7',
-            avatarColor: '#EF4444',
-            text: '⚠️ James was very aggressive in his messages and made inappropriate comments. Stay away!',
-            timestamp: '4h ago',
-            replies: [
-              {
-                id: 11,
-                author: 'Ecliptor9',
-                avatarColor: '#F59E0B',
-                text: 'Thank you for reporting this. Did you report him to the platform?',
-                timestamp: '3h ago',
-                replies: [],
-              },
-            ],
-          },
-          {
-            id: 2,
-            author: 'Morvyn42',
-            avatarColor: '#DC2626',
-            text: 'James has been reported multiple times for harassment. He\'s not safe to interact with.',
-            timestamp: '1d ago',
-            replies: [],
-          },
-        ],
-        10: [ // Kevin Davis
-          {
-            id: 1,
-            author: 'Cryden134',
-            avatarColor: '#8B5CF6',
-            text: 'Kevin promised to cook dinner for our group but cancelled last minute saying he was sick. Then I saw him posting about being at a restaurant.',
-            timestamp: '6h ago',
-            replies: [],
-          },
-          {
-            id: 2,
-            author: 'Aetheron81',
-            avatarColor: '#10B981',
-            text: 'Kevin\'s food photos look amazing but he\'s really inconsistent with following through on plans. We\'ve had several dinner plans fall through.',
-            timestamp: '1d ago',
-            replies: [],
-          },
-        ],
-      };
-      
-      return commentSets[profileId] || [];
-    };
-    
-    const profileComments = generateProfileComments(profile?.id);
-    items.push(...profileComments);
-    return items;
-  };
 
-  const flattenComments = (nodes, depth = 0) => {
-    const out = [];
-    nodes.forEach((n) => {
-      out.push({ node: n, depth });
-      if (n.replies && n.replies.length > 0) {
-        out.push(...flattenComments(n.replies, depth + 1));
-      }
-    });
-    return out;
-  };
 
-  const addReplyById = (nodes, targetId, newReply) => {
-    return nodes.map((n) => {
-      if (n.id === targetId) {
-        const replies = Array.isArray(n.replies) ? n.replies : [];
-        return { ...n, replies: [...replies, newReply] };
-      }
-      if (n.replies && n.replies.length) {
-        return { ...n, replies: addReplyById(n.replies, targetId, newReply) };
-      }
-      return n;
-    });
-  };
-
-  const [comments, setComments] = useState(makeMockComments());
   const [firebaseComments, setFirebaseComments] = useState([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(true);
   const originalPosterName = useMemo(() => {
     try {
       // All profiles are created by someone else, so we use the profile name
@@ -644,7 +230,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   }, [profile]);
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for profile-level comment
-  const [expandedThreads, setExpandedThreads] = useState(new Set()); // top-level ids expanded
   const [upvotedComments, setUpvotedComments] = useState(new Set()); // Track upvoted comments
   const [downvotedComments, setDownvotedComments] = useState(new Set()); // Track downvoted comments
   const [voteCounts, setVoteCounts] = useState({}); // Track vote counts for each comment
@@ -712,31 +297,10 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const smallAICardRef = useRef(null);
   const [inlineAICardLayout, setInlineAICardLayout] = useState(null);
-  // Count total nested replies for a node
-  const countReplies = (node) => {
-    if (!node?.replies || node.replies.length === 0) return 0;
-    return node.replies.reduce((acc, r) => acc + 1 + countReplies(r), 0);
-  };
-
-  // Visible comments depend on which top-level threads are expanded
-  const flattenVisible = (nodes, depth = 0) => {
-    const out = [];
-    nodes.forEach((n) => {
-      out.push({ node: n, depth });
-      const shouldIncludeChildren = depth === 0 ? expandedThreads.has(n.id) : true;
-      if (shouldIncludeChildren && n.replies && n.replies.length > 0) {
-        out.push(...flattenVisible(n.replies, depth + 1));
-      }
-    });
-    return out;
-  };
   const flatComments = useMemo(() => {
-    if (firebaseComments.length > 0) {
-      // Use Firebase comments directly (they're already flat)
+    // Only use Firebase comments - no mock data
       return firebaseComments.map(comment => ({ node: comment, depth: 0 }));
-    }
-    return flattenVisible(comments);
-  }, [comments, expandedThreads, firebaseComments]);
+  }, [firebaseComments]);
 
   // Build AI prompt and fetch overview from first 6 top-level comments
   const requestAiOverview = async () => {
@@ -775,43 +339,34 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = replyText.trim();
-    if (!text) return;
-    const newItem = {
-      id: Date.now(),
-      author: 'luma user',
-      avatarColor: '#7C9AFF',
-      text,
-      timestamp: 'now',
-      replies: [],
-    };
-    if (replyTarget && replyTarget.id) {
-      // Auto-expand the top-level thread that contains the target
-      const findRootId = (nodes, targetId) => {
-        for (const n of nodes) {
-          if (n.id === targetId) return n.id;
-          const stack = [...(n.replies || [])];
-          while (stack.length) {
-            const cur = stack.pop();
-            if (cur.id === targetId) return n.id;
-            if (cur.replies && cur.replies.length) stack.push(...cur.replies);
-          }
-        }
-        return null;
+    if (!text || !profile?.id) return;
+    
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert('Error', 'You must be signed in to comment.');
+        return;
+      }
+
+      const commentData = {
+        profileId: profile.id,
+        text: text,
+        authorName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
+        userId: user.uid,
+        isOriginalPoster: false,
+        parentCommentId: replyTarget?.id || null,
       };
-      const rootId = findRootId(comments, replyTarget.id) || replyTarget.id;
-      setExpandedThreads((prev) => {
-        const next = new Set(prev);
-        next.add(rootId);
-        return next;
-      });
-      setComments((prev) => addReplyById(prev, replyTarget.id, newItem));
-    } else {
-      setComments((prev) => [...prev, newItem]);
-    }
+
+      await commentService.createComment(commentData);
+      
     setReplyText('');
     setReplyTarget(null);
+    } catch (error) {
+      console.error('Error creating comment:', error);
+      Alert.alert('Error', 'Failed to create comment. Please try again.');
+    }
   };
 
   const handleUpvote = (commentId) => {
@@ -1094,19 +649,15 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  // Delete a comment (and its subtree) by id from the nested comments structure
-  const removeCommentById = (nodes, targetId) => {
-    return nodes
-      .filter((n) => n.id !== targetId)
-      .map((n) => ({
-        ...n,
-        replies: n.replies && n.replies.length ? removeCommentById(n.replies, targetId) : n.replies,
-      }));
-  };
 
-  const handleDeleteComment = (commentId) => {
-    setComments((prev) => removeCommentById(prev, commentId));
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await commentService.deleteComment(commentId);
     if (dropdownVisible === commentId) closeDropdown();
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      Alert.alert('Error', 'Failed to delete comment. Please try again.');
+    }
   };
 
   // Close dropdown when scrolling or when reply target changes
@@ -1121,6 +672,15 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     const isUpvoted = upvotedComments.has(c.id);
     const isDownvoted = downvotedComments.has(c.id);
     const showDropdown = dropdownVisible === c.id;
+    
+    // Check if current user is the profile owner
+    const isCurrentUserProfileOwner = auth.currentUser?.uid === liveProfile?.userId;
+    
+    // Check if this is an OP comment (owner note or marked as original poster)
+    const isOPComment = isOwnerNote || c.isOriginalPoster;
+    
+    // Hide three dots menu for OP comments if current user is the profile owner
+    const shouldHideThreeDots = isOPComment && isCurrentUserProfileOwner;
 
     return (
       <View
@@ -1162,22 +722,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
               <TouchableOpacity style={styles.replyLink} onPress={() => setReplyTarget({ id: c.id, author: c.author })}>
                 <Text style={[styles.replyText, { color: theme.colors.primary }]}>Reply</Text>
               </TouchableOpacity>
-              {depth === 0 && countReplies(c) > 0 && (
-                <TouchableOpacity
-                  style={styles.replyLink}
-                  onPress={() =>
-                    setExpandedThreads((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
-                      return next;
-                    })
-                  }
-                >
-                  <Text style={[styles.replyText, { color: theme.colors.primary }]}>
-                    {expandedThreads.has(c.id) ? 'Hide replies' : `Show replies (${countReplies(c)})`}
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
             <View style={styles.votingButtons}>
               <TouchableOpacity 
@@ -1224,14 +768,15 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           </View>
         </View>
         
-        {/* 3-dots menu button with dropdown */}
-        <View style={styles.menuContainer}>
-          <TouchableOpacity 
-            style={styles.menuButton}
-            onPress={() => toggleDropdown(c.id)}
-          >
-            <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
-          </TouchableOpacity>
+        {/* 3-dots menu button with dropdown - hide for OP comments when user is profile owner */}
+        {!shouldHideThreeDots && (
+          <View style={styles.menuContainer}>
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => toggleDropdown(c.id)}
+            >
+              <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
+            </TouchableOpacity>
           
           {/* Dropdown menu */}
           {showDropdown && (
@@ -1263,7 +808,8 @@ const ProfileDetailScreen = ({ route, navigation }) => {
               </View>
             </>
           )}
-        </View>
+          </View>
+        )}
       </View>
     );
   };
@@ -1442,12 +988,24 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         <View style={[styles.section, { backgroundColor: theme.colors.surface }]}> 
           <View style={styles.commentsHeader}>
           </View>
+          {isLoadingComments ? (
+            <View style={styles.loadingContainer}>
+              <LottieView
+                source={require('../assets/animations/Loading Dots Blue.json')}
+                autoPlay
+                loop
+                style={{ width: 60, height: 24 }}
+              />
+              <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading comments...</Text>
+            </View>
+          ) : (
           <FlatList
             data={flatComments}
             renderItem={renderComment}
             keyExtractor={(item) => `${item.node.id}`}
             scrollEnabled={false}
           />
+          )}
         </View>
       </ScrollView>
 
@@ -1974,6 +1532,16 @@ const styles = StyleSheet.create({
   lottieAnimation: {
     width: 70,
     height: 70,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
