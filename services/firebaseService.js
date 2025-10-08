@@ -114,11 +114,42 @@ export const profileService = {
     }
   },
 
-  // Delete profile
+  // Delete profile and all related data
   deleteProfile: async (profileId) => {
     try {
-      const docRef = doc(db, COLLECTIONS.PROFILES, profileId);
-      await deleteDoc(docRef);
+      // Get profile data first to check for related data
+      const profileRef = doc(db, COLLECTIONS.PROFILES, profileId);
+      const profileSnap = await getDoc(profileRef);
+      
+      if (!profileSnap.exists()) {
+        console.warn('Profile not found:', profileId);
+        return;
+      }
+
+      // Delete all comments related to this profile
+      try {
+        const commentsQuery = query(
+          collection(db, COLLECTIONS.COMMENTS),
+          where('profileId', '==', profileId)
+        );
+        const commentsSnapshot = await getDocs(commentsQuery);
+        
+        // Delete all comments in parallel
+        const deletePromises = commentsSnapshot.docs.map(commentDoc => 
+          deleteDoc(doc(db, COLLECTIONS.COMMENTS, commentDoc.id))
+        );
+        await Promise.all(deletePromises);
+        
+        console.log(`✅ Deleted ${commentsSnapshot.docs.length} comments for profile ${profileId}`);
+      } catch (commentError) {
+        console.warn('⚠️ Failed to delete profile comments:', commentError);
+        // Continue with profile deletion even if comment deletion fails
+      }
+
+      // Delete the profile document
+      await deleteDoc(profileRef);
+      console.log('✅ Profile deleted from Firestore:', profileId);
+      
     } catch (error) {
       console.error('Error deleting profile:', error);
       throw error;

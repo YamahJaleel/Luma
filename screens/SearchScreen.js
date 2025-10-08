@@ -424,18 +424,17 @@ const SearchScreen = ({ navigation, route }) => {
       const normalized = (remote || []).map((p) => ({
         id: p.id,
         name: p.name || 'Unknown',
-        username: p.username || '@user',
+        username: p.username || `@${p.name?.toLowerCase().replace(/\s+/g, '') || 'user'}`, // Generate username from name if not provided
         avatar: p.avatar || 'https://via.placeholder.com/150',
         size: p.size || 'small',
         isOnline: !!p.isOnline,
         lastSeen: p.lastSeen || 'now',
         mutualFriends: p.mutualFriends ?? 0,
-        riskLevel: p.riskLevel || 'green',
+        riskLevel: p.riskLevel || 'green', // Default to green if not specified
         flags: Array.isArray(p.flags) ? p.flags : [],
         reports: p.reports ?? 0,
         bio: p.bio || '',
         location: p.location || 'Toronto, ON',
-        isUserCreatedProfile: !!p.isUserCreatedProfile,
       }));
       setProfiles((prev) => mergeUniqueById(normalized, prev));
     } catch (e) {

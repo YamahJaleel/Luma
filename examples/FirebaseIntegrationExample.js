@@ -21,12 +21,9 @@ const FirebaseIntegrationExample = () => {
     try {
       const profileData = {
         name: 'John Doe',
-        username: 'johndoe',
         bio: 'This is a test profile created with Firebase',
         location: 'Toronto, ON',
-        riskLevel: 'green',
-        flags: ['trustworthy'],
-        reports: 0
+        userId: 'test-user-id'
       };
 
       const profileId = await createProfile(profileData);
@@ -131,7 +128,7 @@ const FirebaseIntegrationExample = () => {
         {item.name} - {item.username}
       </Text>
       <Text style={[styles.itemSubtext, { color: theme.colors.text }]}>
-        Risk: {item.riskLevel} | Reports: {item.reports}
+        Reports: {item.reports || 0}
       </Text>
     </TouchableOpacity>
   );

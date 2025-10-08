@@ -113,12 +113,8 @@ const profileId = await profileService.createProfile({
 ```javascript
 {
   name: string,
-  username: string,
   bio: string,
   location: string,
-  riskLevel: 'green' | 'yellow' | 'red',
-  flags: string[],
-  reports: number,
   userId: string,
   createdBy: string,
   createdAt: timestamp,

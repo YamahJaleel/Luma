@@ -4,7 +4,7 @@ import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTabContext } from '../components/TabContext';
-import { profileService, storageService } from '../services/firebaseService';
+import { profileService, storageService, commentService } from '../services/firebaseService';
 import { auth } from '../config/firebase';
 
 const CreateProfileScreen = ({ route, navigation }) => {
@@ -14,7 +14,7 @@ const CreateProfileScreen = ({ route, navigation }) => {
 
   const [name, setName] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [bio, setBio] = useState('');
+  const [experience, setExperience] = useState('');
   const [location, setLocation] = useState('Toronto, ON');
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationInput, setLocationInput] = useState('Toronto, ON');
@@ -124,50 +124,51 @@ const CreateProfileScreen = ({ route, navigation }) => {
     if (submitting) return;
     setSubmitting(true);
 
-    // Auto-generate username from name
-    const generateUsername = (fullName) => {
-      const nameParts = fullName.trim().toLowerCase().split(' ');
-      if (nameParts.length >= 2) {
-        return `${nameParts[0]}${nameParts[1].charAt(0)}`;
-      } else {
-        return nameParts[0];
-      }
-    };
     try {
       const userId = auth.currentUser?.uid || null;
 
       // Upload image to Firebase Storage if provided
       let avatarUrl = '';
       if (selectedImage?.uri) {
-        const response = await fetch(selectedImage.uri);
-        const blob = await response.blob();
         const path = `profiles/${userId || 'anonymous'}/${Date.now()}.jpg`;
-        avatarUrl = await storageService.uploadImage(blob, path);
+        avatarUrl = await storageService.uploadImage(selectedImage.uri, path);
       }
 
       const payload = {
         name: name.trim(),
-        username: generateUsername(name.trim()),
         avatar: avatarUrl || selectedImage?.uri || 'https://via.placeholder.com/150',
-        riskLevel: 'green',
-        experience: bio.trim(),
+        experience: experience.trim(),
         location: location,
-        userId,
-        originalPoster: {
-          name: name.trim(),
-          userId: userId,
-          avatar: avatarUrl || selectedImage?.uri || 'https://via.placeholder.com/150'
-        },
-        isUserCreatedProfile: true,
+        userId, // ID of the person creating the profile
+        createdBy: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Anonymous', // Store creator's name
       };
 
-      await profileService.createProfile(payload);
+      const profileId = await profileService.createProfile(payload);
+      
+      // Create the owner-note comment with the experience text
+      if (experience.trim()) {
+        try {
+          const commentData = {
+            profileId: profileId,
+            text: experience.trim(),
+            authorName: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Anonymous',
+            userId: userId,
+            isOriginalPoster: true,
+            parentCommentId: null,
+          };
+          await commentService.createComment(commentData);
+          console.log('✅ Owner-note comment created');
+        } catch (commentError) {
+          console.warn('⚠️ Failed to create owner-note comment:', commentError);
+          // Don't fail profile creation if comment creation fails
+        }
+      }
       // Navigate back to Search (realtime listener will update list)
       navigation.navigate('Search');
 
       // Clear form after creating
       setName('');
-      setBio('');
+      setExperience('');
       setLocation('Toronto, ON');
       setLocationInput('Toronto, ON');
       setSelectedImage(null);
@@ -246,8 +247,8 @@ const CreateProfileScreen = ({ route, navigation }) => {
 
           <Text style={[styles.label, { color: theme.colors.text }]}>Your Experience</Text>
           <TextInput
-            value={bio}
-            onChangeText={setBio}
+            value={experience}
+            onChangeText={setExperience}
             placeholder="Share your experience story..."
             placeholderTextColor={theme.colors.placeholder}
             multiline

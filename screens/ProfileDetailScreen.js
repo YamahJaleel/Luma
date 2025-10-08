@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { realtimeService, profileService } from '../services/firebaseService';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal, Dimensions } from 'react-native';
+import { realtimeService, profileService, storageService } from '../services/firebaseService';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal, Dimensions, Alert } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { auth } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import Animated, { useSharedValue, withSpring, withTiming, Easing, runOnJS } from 'react-native-reanimated';
@@ -36,7 +37,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       // Convert Firebase comments to the expected format
       const formattedComments = sortedComments.map(comment => ({
         id: comment.id,
-        author: comment.userName || comment.userId,
+        author: comment.authorName || comment.userName || comment.userId,
         text: comment.text,
         timestamp: comment.createdAt?.toDate?.()?.toLocaleDateString() || 'now',
         isOriginalPoster: comment.isOriginalPoster || false,
@@ -191,7 +192,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
   // Simple AI overview text synthesized from profile signals
   const overviewText = (() => {
-    const risk = getRiskLevelText(profile.riskLevel);
+    const risk = getRiskLevelText(profile.riskLevel || 'green'); // Default to green if not specified
     const positives = profile.flags.filter((f) => ['trustworthy','responsive','genuine','verified','helpful','community_leader','trusted','friendly','active','new_user'].includes(f));
     const cautions = profile.flags.filter((f) => ['inconsistent','ghosting','unreliable','catfish','fake_profile','harassment','aggressive','inappropriate'].includes(f));
     const posPart = positives.length ? `Positive signals: ${positives.map((f) => f.replace('_',' ')).join(', ')}.` : '';
@@ -208,22 +209,24 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     // Only add mock community comments for established profiles (not new ones)
     // New profiles use Date.now() for ID, which will be much larger than mock profile IDs (1-30)
     if (profile?.id && profile.id > 10000) { 
-      // For new profiles, show owner note with bio or default message
-      if (profile?.bio && profile.bio.trim()) {
-        const ownerNote = profile.bio.trim();
+      // For new profiles, show owner note with experience or default message
+      if (profile?.experience && profile.experience.trim()) {
+        const ownerNote = profile.experience.trim();
+        const creatorName = profile?.createdBy || 'Anonymous';
         items.push({
           id: 'owner-note',
-          author: 'luma user',
+          author: creatorName,
           avatarColor: '#7C9AFF',
           text: ownerNote,
           timestamp: 'now',
           replies: [],
         });
       } else {
-        // For new profiles without bio, add a default owner note
+        // For new profiles without experience, add a default owner note
+        const creatorName = profile?.createdBy || 'Anonymous';
         items.push({
           id: 'owner-note',
-          author: 'luma user',
+          author: creatorName,
           avatarColor: '#7C9AFF',
           text: 'This is a new profile. Share your experiences and help keep the community safe.',
           timestamp: 'now',
@@ -624,17 +627,12 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [firebaseComments, setFirebaseComments] = useState([]);
   const originalPosterName = useMemo(() => {
     try {
-      // For new profiles, the current user is always the OP
-      if (profile?.id && profile.id > 10000) {
-        return 'luma user';
-      }
-      // For established profiles, find the owner note
-      const owner = comments?.find?.((n) => n?.id === 'owner-note');
-      return owner?.author || null;
+      // All profiles are created by someone else, so we use the profile name
+      return profile?.name || 'Unknown';
     } catch {
-      return null;
+      return 'Unknown';
     }
-  }, [comments, profile]);
+  }, [profile]);
   const [replyText, setReplyText] = useState('');
   const [replyTarget, setReplyTarget] = useState(null); // null for profile-level comment
   const [expandedThreads, setExpandedThreads] = useState(new Set()); // top-level ids expanded
@@ -644,7 +642,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [selectedComment, setSelectedComment] = useState(null); // for long-press selection
   const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false); // three-dots in header
-  const isUserCreatedProfile = !!(profile?.id && profile.id > 10000);
+  const isUserCreatedProfile = true; // All profiles are created by someone else
   
   // Message modal state
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -665,7 +663,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       9: { green: 19, red: 4 },    // James Brown - positive
       10: { green: 11, red: 9 },   // Kevin Davis - mixed
     };
-    return voteCounts[profileId] || { green: 5, red: 5 };
+    return voteCounts[profileId] || { green: 0, red: 0 };
   };
 
   const simulatedCounts = getSimulatedVoteCounts(profile?.id);
@@ -1022,17 +1020,60 @@ const ProfileDetailScreen = ({ route, navigation }) => {
 
   const handleDeleteProfile = async () => {
     try {
-      // Remove from AsyncStorage list of user profiles
-      const stored = await AsyncStorage.getItem('userProfiles');
-      const list = stored ? JSON.parse(stored) : [];
-      const next = Array.isArray(list) ? list.filter((p) => p.id !== profile.id) : [];
-      await AsyncStorage.setItem('userProfiles', JSON.stringify(next));
+      // Show confirmation dialog
+      Alert.alert(
+        'Delete Profile',
+        'Are you sure you want to permanently delete this profile? This action cannot be undone.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                // Delete profile image from Firebase Storage if it exists
+                if (profile?.avatar && profile.avatar.startsWith('https://firebasestorage.googleapis.com/')) {
+                  try {
+                    // Extract the path from the Firebase Storage URL
+                    const url = new URL(profile.avatar);
+                    const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
+                    if (pathMatch) {
+                      const imagePath = decodeURIComponent(pathMatch[1]);
+                      await storageService.deleteImage(imagePath);
+                      console.log('✅ Profile image deleted from storage');
+                    }
+                  } catch (imageError) {
+                    console.warn('⚠️ Failed to delete profile image:', imageError);
+                    // Continue with profile deletion even if image deletion fails
+                  }
+                }
 
-      // Return to the screen you came from
-      const returnScreen = fromScreen || 'Search';
-      navigation.navigate(returnScreen, { deletedProfileId: profile.id });
+                // Hard delete profile from Firebase Firestore
+                await profileService.deleteProfile(profile.id);
+                console.log('✅ Profile deleted from Firebase');
+
+                // Remove from AsyncStorage list of user profiles
+                const stored = await AsyncStorage.getItem('userProfiles');
+                const list = stored ? JSON.parse(stored) : [];
+                const next = Array.isArray(list) ? list.filter((p) => p.id !== profile.id) : [];
+                await AsyncStorage.setItem('userProfiles', JSON.stringify(next));
+
+                // Return to the screen you came from
+                const returnScreen = fromScreen || 'Search';
+                navigation.navigate(returnScreen, { deletedProfileId: profile.id });
+              } catch (deleteError) {
+                console.error('❌ Failed to delete profile:', deleteError);
+                Alert.alert('Error', 'Failed to delete profile. Please try again.');
+              }
+            },
+          },
+        ]
+      );
     } catch (e) {
-      console.warn('Failed to delete profile', e);
+      console.warn('Failed to show delete confirmation', e);
     } finally {
       setHeaderMenuOpen(false);
     }
@@ -1092,7 +1133,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 </Text>
                 {(c.id === 'owner-note' || c.isOriginalPoster) && (
                   <View style={styles.opBadge}>
-                    <Text style={styles.opBadgeText}>Original Poster</Text>
+                    <Text style={styles.opBadgeText}>OP</Text>
                   </View>
                 )}
               </View>
