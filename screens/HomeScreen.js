@@ -27,6 +27,119 @@ const CATEGORY_META = {
   'vent-space': { icon: 'chatbubble', color: '#8B5CF6' },
 };
 
+// Community Dropdown Component
+const CommunityDropdown = ({ selectedCategory, onCategoryChange, theme }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [animation] = useState(new Animated.Value(0));
+  const [rotateAnimation] = useState(new Animated.Value(0));
+
+  const toggleDropdown = () => {
+    const toValue = isOpen ? 0 : 1;
+    const rotateToValue = isOpen ? 0 : 1;
+    
+    Animated.parallel([
+      Animated.timing(animation, {
+        toValue,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(rotateAnimation, {
+        toValue: rotateToValue,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    setIsOpen(!isOpen);
+  };
+
+  const handleCategorySelect = (categoryId) => {
+    onCategoryChange(categoryId);
+    toggleDropdown();
+  };
+
+  const selectedCategoryData = CATEGORIES.find(c => c.id === selectedCategory);
+  const selectedMeta = CATEGORY_META[selectedCategory];
+
+  const dropdownHeight = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, CATEGORIES.length * 39.25], // Reduced from 50 to 46px per item
+  });
+
+  const rotateInterpolate = rotateAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
+  return (
+    <View style={styles.dropdownContainer}>
+      <TouchableOpacity 
+        style={styles.dropdownArrow}
+        onPress={toggleDropdown}
+        activeOpacity={0.8}
+      >
+        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+          <Ionicons name="chevron-down" size={16} color={theme.colors.primary} />
+        </Animated.View>
+      </TouchableOpacity>
+      
+      <Animated.View 
+        style={[
+          styles.dropdownList, 
+          { 
+            backgroundColor: theme.colors.surface,
+            height: dropdownHeight,
+            opacity: animation,
+          }
+        ]}
+      >
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 0 }}
+        >
+          {CATEGORIES.map((category) => {
+            const meta = CATEGORY_META[category.id];
+            const isSelected = selectedCategory === category.id;
+            
+            return (
+              <TouchableOpacity
+                key={category.id}
+                style={[
+                  styles.dropdownItem,
+                  isSelected && { backgroundColor: `${meta.color}15` },
+                  category.id === CATEGORIES[CATEGORIES.length - 1].id && { borderBottomWidth: 0 }
+                ]}
+                onPress={() => handleCategorySelect(category.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.dropdownItemContent}>
+                  <Ionicons 
+                    name={meta.icon} 
+                    size={16} 
+                    color={isSelected ? meta.color : theme.colors.text} 
+                  />
+                  <Text style={[
+                    styles.dropdownItemText, 
+                    { 
+                      color: isSelected ? meta.color : theme.colors.text,
+                      fontWeight: isSelected ? '600' : '400'
+                    }
+                  ]}>
+                    {category.label}
+                  </Text>
+                  {isSelected && (
+                    <Ionicons name="checkmark" size={16} color={meta.color} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </Animated.View>
+    </View>
+  );
+};
+
 // CategoryPicker component
 const CategoryPicker = ({ selectedCategory, onClick }) => {
   const theme = useTheme();
@@ -335,48 +448,42 @@ const HomeScreen = () => {
                   <View style={styles.headerRow}>
                     <Image source={require('../assets/AppIcon.png')} style={styles.headerLogo} />
                     <Text style={[styles.headerTitle, { color: colors.text }]}>Luma</Text>
+                    <CommunityDropdown 
+                      selectedCategory={category} 
+                      onCategoryChange={setCategory}
+                      theme={{ colors }}
+                    />
+                  </View>
+                  <View style={styles.headerRightButtons}>
+                    <TouchableOpacity 
+                      style={[styles.headerIconSquare, { backgroundColor: colors.surface }]}
+                      onPress={() => {
+                        // You can add search functionality here or navigate to a search screen
+                        console.log('Search pressed');
+                      }}
+                    >
+                      <Ionicons name="search" size={16} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.headerIconSquare, { backgroundColor: colors.surface }]} 
+                      onPress={() => setShowSortModal(true)}
+                    >
+                      <Ionicons name="filter" size={18} color="#3E5F44" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.headerIconSquare, { backgroundColor: colors.surface, opacity: canCreate ? 1 : 0.5 }]}
+                      onPress={canCreate ? () => navigation.navigate('CreatePost', { communityId: category }) : undefined}
+                      disabled={!canCreate}
+                    >
+                      <Ionicons name="add" size={18} color={canCreate ? '#3E5F44' : colors.placeholder} />
+                    </TouchableOpacity>
                   </View>
                 </View>
-              </View>
-              <CategoryPicker selectedCategory={category} onClick={setCategory} />
-              <View style={styles.actionsUnderCats}>
-                <View style={[styles.searchPill, { backgroundColor: colors.surface }]}>
-                  <Ionicons name="search" size={16} color={colors.primary} />
-                  <TextInput
-                    style={[styles.searchPillInput, { color: colors.text }]}
-                    placeholder="Search posts"
-                    placeholderTextColor={colors.placeholder}
-                    value={searchQuery}
-                    onChangeText={handleSearch}
-                  />
-                  {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => handleSearch('')}>
-                      <Ionicons name="close-circle" size={18} color={colors.placeholder} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <TouchableOpacity 
-                  style={[styles.iconSquare, { backgroundColor: colors.surface }]} 
-                  onPress={() => setShowSortModal(true)}
-                >
-                  <Ionicons name="filter" size={18} color="#3E5F44" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.iconSquare, { backgroundColor: colors.surface, opacity: canCreate ? 1 : 0.5 }]}
-                  onPress={canCreate ? () => navigation.navigate('CreatePost', { communityId: category }) : undefined}
-                  disabled={!canCreate}
-                >
-                  <Ionicons name="add" size={18} color={canCreate ? '#3E5F44' : colors.placeholder} />
-                </TouchableOpacity>
               </View>
             </View>
           }
           ListHeaderComponentStyle={[styles.categoryPicker, { backgroundColor: 'transparent' }]}
-          ListEmptyComponent={
-            <Text style={[styles.empty, { color: colors.text }]}>
-              {searchQuery ? 'No posts found matching your search' : 'No posts yet'}
-            </Text>
-          }
+          ListEmptyComponent={null}
           renderItem={({ item }) => (
             <PostItem
               item={item}
@@ -437,9 +544,64 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 0 },
   headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  headerRightButtons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerLogo: { width: 40, height: 40, borderRadius: 12, marginRight: 10 },
-  headerTitle: { fontSize: 26, fontWeight: 'bold' },
+  headerTitle: { fontSize: 26, fontWeight: 'bold', marginRight: 2 },
+  headerIconSquare: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    marginLeft: 8,
+  },
+  // Dropdown styles
+  dropdownContainer: {
+    position: 'relative',
+    zIndex: 9999,
+  },
+  dropdownArrow: {
+    padding: 4,
+  },
+  dropdownList: {
+    position: 'absolute',
+    top: '100%',
+    left: -60,
+    right: -60,
+    minWidth: 200,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    overflow: 'hidden',
+    marginTop: 4,
+    zIndex: 9999,
+  },
+  dropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  dropdownItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dropdownItemText: {
+    fontSize: 15,
+    flex: 1,
+  },
   categoryPicker: { padding: 5, marginTop: 0, marginBottom: 4, elevation: 3 },
   catList: { paddingHorizontal: 10, paddingVertical: 6, gap: 8, backgroundColor: 'transparent' },
   catChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
@@ -484,12 +646,26 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: '#E5E7EB',
   },
-  actionsUnderCats: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
     marginBottom: 4,
     paddingHorizontal: 16,
+    justifyContent: 'space-between',
+  },
+  searchBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    marginRight: 16,
   },
   iconSquare: {
     width: 36,
