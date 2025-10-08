@@ -98,7 +98,7 @@ const UserScreen = ({ navigation }) => {
             </View>
           </View>
           <TouchableOpacity style={[styles.settingsButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.navigate('Settings')}>
-            <Ionicons name="settings-outline" size={24} color={theme.colors.primary} />
+            <Ionicons name="settings-outline" size={22} color={theme.colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -258,17 +258,16 @@ const styles = StyleSheet.create({
   menuItemDescription: { fontSize: 14 },
   menuSectionTitle: { fontSize: 18, fontWeight: 'bold', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   settingsButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    marginTop: 10,
   },
   logoutRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, gap: 8 },
   logoutText: { fontSize: 16, fontWeight: '600', marginLeft: 4 },

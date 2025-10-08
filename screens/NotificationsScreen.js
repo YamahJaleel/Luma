@@ -330,7 +330,7 @@ const NotificationsScreen = ({ navigation }) => {
           </View>
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
-              style={[styles.iconSquare, { backgroundColor: theme.colors.surface }]}
+              style={[styles.checkBtn, { backgroundColor: theme.colors.surface }]}
               onPress={async () => {
                 try {
                   await AsyncStorage.removeItem('notifications');
@@ -340,7 +340,7 @@ const NotificationsScreen = ({ navigation }) => {
                 }
               }}
             >
-              <Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />
+              <Ionicons name="checkmark" size={22} color="#3E5F44" />
             </TouchableOpacity>
           </View>
         </View>
@@ -390,7 +390,18 @@ const styles = StyleSheet.create({
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerText: { flexDirection: 'row', alignItems: 'center' },
   buttonContainer: { flexDirection: 'row', gap: 8 },
-  iconSquare: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  checkBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
   headerTitle: { fontSize: 26, fontWeight: 'bold' },
   badge: {
     backgroundColor: '#EF4444',
