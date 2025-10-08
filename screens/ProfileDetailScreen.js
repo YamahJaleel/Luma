@@ -13,20 +13,29 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { profile, fromScreen } = route.params;
   const [liveProfile, setLiveProfile] = useState(profile);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Keep detail in sync with Firestore
   useEffect(() => {
     if (!profile?.id) return;
     const unsubscribe = realtimeService.listenToProfile(profile.id, (doc) => {
-      if (doc) setLiveProfile((prev) => ({ ...prev, ...doc }));
+      if (doc) {
+        setLiveProfile((prev) => ({ ...prev, ...doc }));
+      } else {
+        // Profile was deleted, don't update state - just keep current data
+        console.log('Profile deleted from Firebase, keeping current state');
+      }
     });
     return () => unsubscribe && unsubscribe();
   }, [profile?.id]);
 
   // Load Firebase comments
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!profile?.id || isDeleting) return;
     const unsubscribe = realtimeService.listenToProfileComments(profile.id, (firebaseComments) => {
+      // Don't update comments if we're in the process of deleting
+      if (isDeleting) return;
+      
       // Sort comments: original poster first, then by creation time
       const sortedComments = firebaseComments.sort((a, b) => {
         if (a.isOriginalPoster && !b.isOriginalPoster) return -1;
@@ -47,7 +56,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       setFirebaseComments(formattedComments);
     });
     return () => unsubscribe && unsubscribe();
-  }, [profile?.id]);
+  }, [profile?.id, isDeleting]);
 
   // Local avatar support (mirrors SearchScreen): static requires so Metro can bundle images
   const LOCAL_AVATARS = [
@@ -1034,6 +1043,12 @@ const ProfileDetailScreen = ({ route, navigation }) => {
             style: 'destructive',
             onPress: async () => {
               try {
+                // Set deletion flag to prevent state updates
+                setIsDeleting(true);
+                
+                // Immediately navigate away to prevent any state updates
+                const returnScreen = fromScreen || 'Search';
+                
                 // Delete profile image from Firebase Storage if it exists
                 if (profile?.avatar && profile.avatar.startsWith('https://firebasestorage.googleapis.com/')) {
                   try {
@@ -1061,12 +1076,12 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                 const next = Array.isArray(list) ? list.filter((p) => p.id !== profile.id) : [];
                 await AsyncStorage.setItem('userProfiles', JSON.stringify(next));
 
-                // Return to the screen you came from
-                const returnScreen = fromScreen || 'Search';
+                // Navigate back immediately
                 navigation.navigate(returnScreen, { deletedProfileId: profile.id });
               } catch (deleteError) {
                 console.error('❌ Failed to delete profile:', deleteError);
                 Alert.alert('Error', 'Failed to delete profile. Please try again.');
+                setIsDeleting(false); // Reset flag on error
               }
             },
           },
@@ -1751,7 +1766,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 40,
     right: 0,
-    width: 140,
+    width: 150,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -1774,6 +1789,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 12,
+    paddingRight: 4,
   },
   dropdownOverlay: {
     position: 'absolute',
