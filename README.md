@@ -1,4 +1,4 @@
-# Luma - Safety-First Dating Community
+# Luma - Safety-First Dating
 
 Luma is a comprehensive safety-focused platform that empowers women to share experiences, verify concerns, and navigate the dating world with confidence through community-driven insights and anonymous reporting.
 
@@ -60,51 +60,6 @@ Women aged 18-40 who use dating platforms and want to:
 - Share experiences safely and anonymously
 - Access community-driven safety insights
 - Connect with others who understand their experiences
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
-- Expo CLI
-- Firebase project setup
-- iOS Simulator or Android Emulator (optional)
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd App
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Configure Firebase:
-   - Set up Firebase project
-   - Add configuration to `config/firebase.js`
-   - Enable Authentication, Firestore, and Storage
-
-4. Start the development server:
-```bash
-npm start
-```
-
-5. Run on your preferred platform:
-```bash
-# iOS
-npm run ios
-
-# Android
-npm run android
-
-# Web
-npm run web
-```
 
 ## 📱 Current App Structure
 
@@ -222,9 +177,7 @@ App/
     └── [other assets]
 ```
 
-## 📋 Changelog
-
-### Version 2.0 - December 2024
+### Changelog Version 2.0 - October 8th 2025
 
 #### 🎨 UI/UX Improvements
 - **Header Button Consistency**: Standardized all header buttons to 44x44 size with consistent styling
@@ -298,18 +251,6 @@ App/
 - **Mobile Apps**: Native iOS and Android applications
 - **International Expansion**: Multi-language and region support
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the 0BSD License - see the LICENSE file for details.
-
 ## 🆘 Support
 
 For support and questions:
@@ -327,17 +268,8 @@ For support and questions:
 - **User Verification**: Multi-layer verification prevents abuse
 - **Data Control**: Users have complete control over their data
 
-## 🌟 Key Achievements
-
-- **Community-Driven Safety**: Over 1000+ community experiences shared
-- **Real-time Features**: Instant messaging and notifications
-- **Comprehensive Profiles**: Detailed profile system with photo uploads
-- **AI Integration**: Smart insights and community analysis
-- **Mobile-First Design**: Optimized for mobile with responsive design
-- **Firebase Integration**: Scalable backend with real-time capabilities
-
 ---
 
 **Luma - Empowering women through community-driven safety** 💜
 
-*Last Updated: December 2024*
+*Last Updated: October 8th 2025*
