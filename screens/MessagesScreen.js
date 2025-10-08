@@ -191,12 +191,20 @@ const MessagesScreen = ({ navigation, route }) => {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Messages</Text>
-          <TouchableOpacity 
-            style={styles.robotButton}
-            onPress={() => navigation.navigate('LumaAI')}
-          >
-            <AntDesign name="robot" size={24} color={theme.colors.primary} />
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity 
+              style={styles.robotButton}
+              onPress={() => navigation.navigate('LumaAI')}
+            >
+              <AntDesign name="robot" size={24} color={theme.colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.addBtn, { backgroundColor: theme.colors.surface }]}
+              onPress={handleStartNewChat}
+            >
+              <Ionicons name="add" size={22} color={theme.colors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -225,13 +233,6 @@ const MessagesScreen = ({ navigation, route }) => {
         )}
       />
 
-      {/* Floating Action Button */}
-      <TouchableOpacity 
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        onPress={handleStartNewChat}
-      >
-        <Ionicons name="add" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
 
       {/* User Search Modal */}
       <Modal 
@@ -301,6 +302,19 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 60 },
   headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerTitle: { fontSize: 28, fontWeight: 'bold' },
+  headerButtons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  addBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
   robotButton: {
     padding: 8,
     borderRadius: 20,
@@ -352,21 +366,6 @@ const styles = StyleSheet.create({
   time: { fontSize: 13, color: '#9CA3AF', marginBottom: 4 },
   badge: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   badgeText: { color: 'white', fontSize: 13, fontWeight: 'bold' },
-  fab: {
-    position: 'absolute',
-    bottom: 100,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
   // Modal styles
   modalOverlay: {
     flex: 1,
