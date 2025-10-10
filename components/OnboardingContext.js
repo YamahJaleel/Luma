@@ -15,9 +15,18 @@ export const OnboardingProvider = ({ children }) => {
 
   const checkOnboardingStatus = async () => {
     try {
-      // Reset onboarding status - act like first time download
-      await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
-      setIsOnboarded(false);
+      // Simulate first-time download - clear onboarding status once
+      const hasBeenReset = await AsyncStorage.getItem('@onboarding_reset');
+      if (!hasBeenReset) {
+        // First time running after reset - clear onboarding and mark as reset
+        await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+        await AsyncStorage.setItem('@onboarding_reset', 'true');
+        setIsOnboarded(false);
+      } else {
+        // Normal behavior - check if onboarding was completed
+        const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
+        setIsOnboarded(value === 'true');
+      }
     } catch (error) {
       console.error('Error reading onboarding status:', error);
     } finally {
