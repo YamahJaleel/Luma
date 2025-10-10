@@ -54,7 +54,7 @@ const UserScreen = ({ navigation }) => {
       const name = user?.displayName || user?.email?.split('@')[0] || 'User';
       return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
     }
-    const name = userProfile.displayName || userProfile.username || user?.displayName || user?.email?.split('@')[0] || 'User';
+    const name = userProfile.displayName || user?.displayName || user?.email?.split('@')[0] || 'User';
     return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
   };
 
@@ -64,7 +64,7 @@ const UserScreen = ({ navigation }) => {
       // Use Firebase user's displayName or email as fallback
       return user?.displayName || user?.email?.split('@')[0] || 'User';
     }
-    return userProfile.displayName || userProfile.username || user?.displayName || user?.email?.split('@')[0] || 'User';
+    return userProfile.displayName || user?.displayName || user?.email?.split('@')[0] || 'User';
   };
   
 

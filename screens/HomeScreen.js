@@ -8,6 +8,7 @@ import { useTabContext } from '../components/TabContext';
 import { postService } from '../services/postService';
 import LottieView from 'lottie-react-native';
 import { auth } from '../config/firebase';
+import { normalizeForSearch } from '../utils/normalization';
 
 // Categories data (could be moved to Firestore later)
 const CATEGORIES = [
@@ -28,14 +29,13 @@ const CATEGORY_META = {
 };
 
 // Community Dropdown Component
-const CommunityDropdown = ({ selectedCategory, onCategoryChange, theme }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const CommunityDropdown = ({ selectedCategory, onCategoryChange, theme, onToggle, isOpen }) => {
   const [animation] = useState(new Animated.Value(0));
   const [rotateAnimation] = useState(new Animated.Value(0));
 
-  const toggleDropdown = () => {
-    const toValue = isOpen ? 0 : 1;
-    const rotateToValue = isOpen ? 0 : 1;
+  useEffect(() => {
+    const toValue = isOpen ? 1 : 0;
+    const rotateToValue = isOpen ? 1 : 0;
     
     Animated.parallel([
       Animated.timing(animation, {
@@ -49,13 +49,11 @@ const CommunityDropdown = ({ selectedCategory, onCategoryChange, theme }) => {
         useNativeDriver: true,
       }),
     ]).start();
-    
-    setIsOpen(!isOpen);
-  };
+  }, [isOpen]);
 
   const handleCategorySelect = (categoryId) => {
     onCategoryChange(categoryId);
-    toggleDropdown();
+    onToggle();
   };
 
   const selectedCategoryData = CATEGORIES.find(c => c.id === selectedCategory);
@@ -63,7 +61,7 @@ const CommunityDropdown = ({ selectedCategory, onCategoryChange, theme }) => {
 
   const dropdownHeight = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, CATEGORIES.length * 39.25], // Reduced from 50 to 46px per item
+    outputRange: [0, CATEGORIES.length * 28], // Much smaller height per item
   });
 
   const rotateInterpolate = rotateAnimation.interpolate({
@@ -75,67 +73,13 @@ const CommunityDropdown = ({ selectedCategory, onCategoryChange, theme }) => {
     <View style={styles.dropdownContainer}>
       <TouchableOpacity 
         style={styles.dropdownArrow}
-        onPress={toggleDropdown}
+        onPress={onToggle}
         activeOpacity={0.8}
       >
         <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
           <Ionicons name="chevron-down" size={16} color={theme.colors.primary} />
         </Animated.View>
       </TouchableOpacity>
-      
-      <Animated.View 
-        style={[
-          styles.dropdownList, 
-          { 
-            backgroundColor: theme.colors.surface,
-            height: dropdownHeight,
-            opacity: animation,
-          }
-        ]}
-      >
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 0 }}
-        >
-          {CATEGORIES.map((category) => {
-            const meta = CATEGORY_META[category.id];
-            const isSelected = selectedCategory === category.id;
-            
-            return (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.dropdownItem,
-                  isSelected && { backgroundColor: `${meta.color}15` },
-                  category.id === CATEGORIES[CATEGORIES.length - 1].id && { borderBottomWidth: 0 }
-                ]}
-                onPress={() => handleCategorySelect(category.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.dropdownItemContent}>
-                  <Ionicons 
-                    name={meta.icon} 
-                    size={16} 
-                    color={isSelected ? meta.color : theme.colors.text} 
-                  />
-                  <Text style={[
-                    styles.dropdownItemText, 
-                    { 
-                      color: isSelected ? meta.color : theme.colors.text,
-                      fontWeight: isSelected ? '600' : '400'
-                    }
-                  ]}>
-                    {category.label}
-                  </Text>
-                  {isSelected && (
-                    <Ionicons name="checkmark" size={16} color={meta.color} />
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </Animated.View>
     </View>
   );
 };
@@ -242,6 +186,7 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Load posts from Firebase
   const loadPosts = useCallback(async () => {
@@ -388,11 +333,11 @@ const HomeScreen = () => {
 
   // Filter posts by search query
   const filterPosts = useCallback((postsToFilter) => {
-    const query = (searchQuery || '').trim().toLowerCase();
+    const query = normalizeForSearch(searchQuery);
     if (!query) return postsToFilter;
     return postsToFilter.filter((p) =>
-      (p.title || '').toLowerCase().includes(query) ||
-      (p.text || '').toLowerCase().includes(query)
+      normalizeForSearch(p.title).includes(query) ||
+      normalizeForSearch(p.text).includes(query)
     );
   }, [searchQuery]);
 
@@ -428,61 +373,65 @@ const HomeScreen = () => {
           onScrollEndDrag={handlePullEnd}
           scrollEventThrottle={16}
           ListHeaderComponent={
-            <View>
-              {/* Pull-to-refresh header */}
-              <Animated.View style={{ height: pullY, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 0 }}>
-                {isLoading ? (
-                  <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
-                    <LottieView
-                      source={require('../assets/animations/Load.json')}
-                      style={{ width: 180, height: 132 }}
-                      autoPlay
-                      loop
-                    />
-                  </View>
-                ) : (
-                  <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
-                    <LottieView
-                      source={require('../assets/animations/Load.json')}
-                      style={{ width: 180, height: 132 }}
-                      autoPlay={false}
-                      loop={false}
-                      progress={pullProgress}
-                    />
-                  </View>
-                )}
-              </Animated.View>
-              <View style={styles.header}>
-                <View style={styles.headerTopRow}>
-                  <View style={styles.headerRow}>
-                    <Image source={require('../assets/AppIcon.png')} style={styles.headerLogo} />
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Luma</Text>
-                    <CommunityDropdown 
-                      selectedCategory={category} 
-                      onCategoryChange={setCategory}
-                      theme={{ colors }}
-                    />
-                  </View>
-                  <View style={styles.headerRightButtons}>
-                    <TouchableOpacity 
-                      style={[styles.headerIconSquare, { backgroundColor: colors.surface }]}
-                      onPress={() => setShowSearchModal(true)}
-                    >
-                      <Ionicons name="search" size={16} color={colors.primary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.headerIconSquare, { backgroundColor: colors.surface }]} 
-                      onPress={() => setShowSortModal(true)}
-                    >
-                      <Ionicons name="filter" size={18} color="#3E5F44" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.headerIconSquare, { backgroundColor: colors.surface, opacity: canCreate ? 1 : 0.5 }]}
-                      onPress={canCreate ? () => navigation.navigate('CreatePost', { communityId: category }) : undefined}
-                      disabled={!canCreate}
-                    >
-                      <Ionicons name="add" size={18} color={canCreate ? '#3E5F44' : colors.placeholder} />
-                    </TouchableOpacity>
+            <View style={{ zIndex: 10000 }}>
+              <View>
+                {/* Pull-to-refresh header */}
+                <Animated.View style={{ height: pullY, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 0 }}>
+                  {isLoading ? (
+                    <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                      <LottieView
+                        source={require('../assets/animations/Load.json')}
+                        style={{ width: 180, height: 132 }}
+                        autoPlay
+                        loop
+                      />
+                    </View>
+                  ) : (
+                    <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                      <LottieView
+                        source={require('../assets/animations/Load.json')}
+                        style={{ width: 180, height: 132 }}
+                        autoPlay={false}
+                        loop={false}
+                        progress={pullProgress}
+                      />
+                    </View>
+                  )}
+                </Animated.View>
+                <View style={styles.header}>
+                  <View style={styles.headerTopRow}>
+                    <View style={styles.headerRow}>
+                      <Image source={require('../assets/AppIcon.png')} style={styles.headerLogo} />
+                      <Text style={[styles.headerTitle, { color: colors.text }]}>Luma</Text>
+                      <CommunityDropdown 
+                        selectedCategory={category} 
+                        onCategoryChange={setCategory}
+                        theme={{ colors }}
+                        onToggle={() => setShowDropdown(!showDropdown)}
+                        isOpen={showDropdown}
+                      />
+                    </View>
+                    <View style={styles.headerRightButtons}>
+                      <TouchableOpacity 
+                        style={[styles.headerIconSquare, { backgroundColor: colors.surface }]}
+                        onPress={() => setShowSearchModal(true)}
+                      >
+                        <Ionicons name="search" size={16} color={colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.headerIconSquare, { backgroundColor: colors.surface }]} 
+                        onPress={() => setShowSortModal(true)}
+                      >
+                        <Ionicons name="filter" size={18} color="#3E5F44" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.headerIconSquare, { backgroundColor: colors.surface, opacity: canCreate ? 1 : 0.5 }]}
+                        onPress={canCreate ? () => navigation.navigate('CreatePost', { communityId: category }) : undefined}
+                        disabled={!canCreate}
+                      >
+                        <Ionicons name="add" size={18} color={canCreate ? '#3E5F44' : colors.placeholder} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -619,15 +568,72 @@ const HomeScreen = () => {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Dropdown Modal - Rendered outside FlatList */}
+      <Modal visible={showDropdown} transparent={true} animationType="fade" onRequestClose={() => setShowDropdown(false)}>
+        <TouchableOpacity
+          style={styles.dropdownModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDropdown(false)}
+        >
+          <View style={[styles.dropdownModalContent, { backgroundColor: colors.surface }]}>
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 0, paddingTop: 0 }}
+            >
+              {CATEGORIES.map((categoryItem) => {
+                const meta = CATEGORY_META[categoryItem.id];
+                const isSelected = category === categoryItem.id;
+                
+                return (
+                  <TouchableOpacity
+                    key={categoryItem.id}
+                    style={[
+                      styles.dropdownItem,
+                      isSelected && { backgroundColor: `${meta.color}15` },
+                      categoryItem.id === CATEGORIES[CATEGORIES.length - 1].id && { borderBottomWidth: 0 }
+                    ]}
+                    onPress={() => {
+                      setCategory(categoryItem.id);
+                      setShowDropdown(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.dropdownItemContent}>
+                      <Ionicons 
+                        name={meta.icon} 
+                        size={16} 
+                        color={isSelected ? meta.color : colors.text} 
+                      />
+                      <Text style={[
+                        styles.dropdownItemText, 
+                        { 
+                          color: isSelected ? meta.color : colors.text,
+                          fontWeight: isSelected ? '600' : '400'
+                        }
+                      ]}>
+                        {categoryItem.label}
+                      </Text>
+                      {isSelected && (
+                        <Ionicons name="checkmark" size={16} color={meta.color} />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 0 },
-  headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerRow: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  header: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 0, zIndex: 10000 },
+  headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 10000 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', flex: 1, zIndex: 10000 },
   headerRightButtons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerLogo: { width: 40, height: 40, borderRadius: 12, marginRight: 10 },
   headerTitle: { fontSize: 26, fontWeight: 'bold', marginRight: 2 },
@@ -642,7 +648,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    marginLeft: 8,
   },
   // Dropdown styles
   dropdownContainer: {
@@ -672,7 +677,7 @@ const styles = StyleSheet.create({
   },
   dropdownItem: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
@@ -845,6 +850,28 @@ const styles = StyleSheet.create({
   },
   emptySearchTitle: { fontSize: 18, fontWeight: 'bold', marginTop: 16, marginBottom: 8 },
   emptySearchSubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  // Dropdown Modal Styles
+  dropdownModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 100, // Position below the header
+  },
+  dropdownModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    overflow: 'hidden',
+    minWidth: 200,
+    maxHeight: 160, // Much smaller max height
+  },
 });
 
 export default HomeScreen;

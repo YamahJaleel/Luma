@@ -216,7 +216,6 @@ const LicenseVerificationScreen = ({ route, navigation }) => {
       try {
         const userProfileData = {
           userId: user.uid,
-          username: pendingUserData.pseudonym.toLowerCase().replace(/\s+/g, ''),
           displayName: pendingUserData.pseudonym,
           email: pendingUserData.email,
           dateOfBirth: pendingUserData.dateOfBirth,

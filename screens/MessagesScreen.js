@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { realtimeService } from '../services/firebaseService';
 import { db } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { matchesSearch } from '../utils/normalization';
 
 // Note: Search only real users from Firestore (no mock users)
 
@@ -70,8 +71,8 @@ const MessagesScreen = ({ navigation, route }) => {
             const data = d.data();
             return {
               id: d.id || data?.userId,
-              name: data?.displayName || data?.name || data?.username || data?.email || 'User',
-              username: data?.username || '',
+              name: data?.displayName || data?.name || data?.email || 'User',
+              username: data?.displayName || data?.name || '',
               email: data?.email || ''
             };
           });
@@ -90,10 +91,8 @@ const MessagesScreen = ({ navigation, route }) => {
             const key = u.id;
             if (seen.has(key)) return false;
             
-            // Search both username and displayName
-            const uname = (u.username || '').toLowerCase();
-            const dname = (u.displayName || '').toLowerCase();
-            const match = uname.startsWith(qLower) || dname.startsWith(qLower);
+            // Search both name and displayName
+            const match = matchesSearch(query, u.name) || matchesSearch(query, u.displayName);
             
             if (match) seen.add(key);
             return match;

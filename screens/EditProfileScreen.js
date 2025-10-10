@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { userProfileService } from '../services/userProfileService';
 import { authService } from '../services/authService';
+import { areDisplayNamesEqual } from '../utils/normalization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EditProfileScreen = ({ navigation }) => {
@@ -25,9 +26,9 @@ const EditProfileScreen = ({ navigation }) => {
   const { setTabHidden } = useTabContext();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    currentUsername: '',
-    newUsername: '',
-    confirmUsername: '',
+    currentDisplayName: '',
+    newDisplayName: '',
+    confirmDisplayName: '',
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -56,9 +57,9 @@ const EditProfileScreen = ({ navigation }) => {
       
       if (userProfile) {
         setFormData({
-          currentUsername: userProfile.username || userProfile.displayName || '',
-          newUsername: '',
-          confirmUsername: '',
+          currentDisplayName: userProfile.displayName || '',
+          newDisplayName: '',
+          confirmDisplayName: '',
         });
       }
     } catch (error) {
@@ -72,48 +73,30 @@ const EditProfileScreen = ({ navigation }) => {
   const validateForm = async () => {
     const newErrors = {};
 
-    // Current username validation
-    if (!formData.currentUsername.trim()) {
-      newErrors.currentUsername = 'Current username is required';
+    // Current display name validation
+    if (!formData.currentDisplayName.trim()) {
+      newErrors.currentDisplayName = 'Current display name is required';
     }
 
-    // New username validation
-    if (!formData.newUsername.trim()) {
-      newErrors.newUsername = 'New username is required';
-    } else if (formData.newUsername.trim().length < 3) {
-      newErrors.newUsername = 'Username must be at least 3 characters';
-    } else if (formData.newUsername.trim().length > 20) {
-      newErrors.newUsername = 'Username must be 20 characters or less';
-    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.newUsername)) {
-      newErrors.newUsername = 'Username can only contain letters, numbers, and underscores';
+    // New display name validation
+    if (!formData.newDisplayName.trim()) {
+      newErrors.newDisplayName = 'New display name is required';
+    } else if (formData.newDisplayName.trim().length < 3) {
+      newErrors.newDisplayName = 'Display name must be at least 3 characters';
+    } else if (formData.newDisplayName.trim().length > 20) {
+      newErrors.newDisplayName = 'Display name must be 20 characters or less';
     }
 
-    // Confirm username validation
-    if (!formData.confirmUsername.trim()) {
-      newErrors.confirmUsername = 'Please confirm your new username';
-    } else if (formData.newUsername !== formData.confirmUsername) {
-      newErrors.confirmUsername = 'Usernames do not match';
+    // Confirm display name validation
+    if (!formData.confirmDisplayName.trim()) {
+      newErrors.confirmDisplayName = 'Please confirm your new display name';
+    } else if (formData.newDisplayName !== formData.confirmDisplayName) {
+      newErrors.confirmDisplayName = 'Display names do not match';
     }
 
-    // Check if new username is different from current
-    if (formData.currentUsername && formData.newUsername && formData.currentUsername.toLowerCase() === formData.newUsername.toLowerCase()) {
-      newErrors.newUsername = 'New username must be different from current username';
-    }
-
-    // Check username availability if no other errors
-    if (!newErrors.newUsername && formData.newUsername.trim()) {
-      try {
-        const isAvailable = await userProfileService.isUsernameAvailable(
-          formData.newUsername, 
-          user?.uid
-        );
-        if (!isAvailable) {
-          newErrors.newUsername = 'This username is already taken';
-        }
-      } catch (error) {
-        console.error('Error checking username availability:', error);
-        newErrors.newUsername = 'Unable to verify username availability';
-      }
+    // Check if new display name is different from current
+    if (formData.currentDisplayName && formData.newDisplayName && areDisplayNamesEqual(formData.currentDisplayName, formData.newDisplayName)) {
+      newErrors.newDisplayName = 'New display name must be different from current display name';
     }
 
     setErrors(newErrors);
@@ -144,25 +127,24 @@ const EditProfileScreen = ({ navigation }) => {
     try {
       // Update user profile in Firestore
       const updateData = {
-        username: formData.newUsername.trim().toLowerCase(),
-        displayName: formData.newUsername.trim(),
+        displayName: formData.newDisplayName.trim(),
       };
 
       await userProfileService.updateUserProfile(user.uid, updateData);
 
       // Update Firebase Auth display name
       await authService.updateUserProfile({
-        displayName: formData.newUsername.trim()
+        displayName: formData.newDisplayName.trim()
       });
 
       Alert.alert(
         'Success', 
-        'Your username has been updated successfully!',
+        'Your display name has been updated successfully!',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (error) {
       console.error('Error updating profile:', error);
-      Alert.alert('Error', 'Failed to update username. Please try again.');
+      Alert.alert('Error', 'Failed to update display name. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -216,7 +198,7 @@ const EditProfileScreen = ({ navigation }) => {
           >
             <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Change Username</Text>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Change Display Name</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -232,17 +214,17 @@ const EditProfileScreen = ({ navigation }) => {
                 <Ionicons name="person" size={32} color="white" />
               </View>
             </View>
-            <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>Change Username</Text>
+            <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>Change Display Name</Text>
             <Text style={[styles.welcomeSubtitle, { color: theme.colors.text }]}>
-              Update your username
+              Update your display name
             </Text>
           </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
-            {renderInput('currentUsername', 'Current Username', 'Enter your current username', { autoCapitalize: 'none' })}
-            {renderInput('newUsername', 'New Username', 'Enter your new username', { autoCapitalize: 'none' })}
-            {renderInput('confirmUsername', 'Confirm Username', 'Confirm your new username', { autoCapitalize: 'none' })}
+            {renderInput('currentDisplayName', 'Current Display Name', 'Enter your current display name', { autoCapitalize: 'words' })}
+            {renderInput('newDisplayName', 'New Display Name', 'Enter your new display name', { autoCapitalize: 'words' })}
+            {renderInput('confirmDisplayName', 'Confirm Display Name', 'Confirm your new display name', { autoCapitalize: 'words' })}
           </View>
 
           {/* Save Button */}
@@ -261,7 +243,7 @@ const EditProfileScreen = ({ navigation }) => {
                 <Text style={styles.saveButtonText}>Saving...</Text>
               ) : (
                 <>
-                  <Text style={styles.saveButtonText}>Update Username</Text>
+                  <Text style={styles.saveButtonText}>Update Display Name</Text>
                   <Ionicons name="checkmark" size={20} color="white" style={styles.checkIcon} />
                 </>
               )}

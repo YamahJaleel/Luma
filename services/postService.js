@@ -16,6 +16,7 @@ import {
   arrayRemove
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { normalizeForSearch } from '../utils/normalization';
 
 const COLLECTIONS = {
   POSTS: 'posts',
@@ -313,8 +314,8 @@ export const postService = {
           createdAt: doc.data().createdAt?.toDate()
         }))
         .filter(post => 
-          post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          post.text.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeForSearch(post.title).includes(normalizeForSearch(searchQuery)) ||
+        normalizeForSearch(post.text).includes(normalizeForSearch(searchQuery))
         );
     } catch (error) {
       console.error('Error searching posts:', error);

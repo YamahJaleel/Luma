@@ -183,37 +183,6 @@ export const userProfileService = {
     }
   },
 
-  // Check if username is available
-  isUsernameAvailable: async (username, currentUserId = null) => {
-    try {
-      const normalizedUsername = username.toLowerCase().trim();
-      
-      // Query for existing username
-      const q = query(
-        collection(db, COLLECTIONS.USER_PROFILES),
-        where('username', '==', normalizedUsername)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      
-      // If no results, username is available
-      if (querySnapshot.empty) {
-        return true;
-      }
-      
-      // If currentUserId is provided, check if it's the same user
-      if (currentUserId) {
-        const existingDoc = querySnapshot.docs[0];
-        return existingDoc.id === currentUserId;
-      }
-      
-      // Username is taken by someone else
-      return false;
-    } catch (error) {
-      console.error('Error checking username availability:', error);
-      throw error;
-    }
-  },
 
   // Update user preferences
   updateUserPreferences: async (userId, updateData) => {

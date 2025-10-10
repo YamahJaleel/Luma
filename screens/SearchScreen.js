@@ -19,6 +19,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { profileService } from '../services/firebaseService';
 import LottieView from 'lottie-react-native';
+import { generateUsername, matchesSearch } from '../utils/normalization';
 
 const { width } = Dimensions.get('window');
 const screenPadding = 20;
@@ -424,7 +425,7 @@ const SearchScreen = ({ navigation, route }) => {
       const normalized = (remote || []).map((p) => ({
         id: p.id,
         name: p.name || 'Unknown',
-        username: p.username || `@${p.name?.toLowerCase().replace(/\s+/g, '') || 'user'}`, // Generate username from name if not provided
+        username: generateUsername(p.name), // Generate username from name
         avatar: p.avatar || 'https://via.placeholder.com/150',
         size: p.size || 'small',
         isOnline: !!p.isOnline,
@@ -977,9 +978,7 @@ const SearchScreen = ({ navigation, route }) => {
       setFilteredProfiles([]);
     } else {
       const filtered = profiles.filter(
-        (profile) =>
-          profile.name.toLowerCase().includes(query.toLowerCase()) ||
-          profile.username?.toLowerCase().includes(query.toLowerCase())
+        (profile) => matchesSearch(query, profile.name)
       );
       setFilteredProfiles(filtered);
     }
@@ -1269,7 +1268,7 @@ const SearchScreen = ({ navigation, route }) => {
           <Ionicons name="search" size={64} color="#E2E8F0" />
           <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Results Found</Text>
           <Text style={[styles.emptySubtitle, theme.dark && { color: theme.colors.text }]}> 
-            No profiles found for "{searchQuery}". Try searching with a different name or username.
+            No profiles found for "{searchQuery}". Try searching with a different name.
           </Text>
         </View>
       )}
@@ -1322,7 +1321,7 @@ const SearchScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   searchContainer: { paddingHorizontal: 0, paddingTop: 48, paddingBottom: 12 },
-  searchHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 0, paddingRight: 0 },
+  searchHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 0, paddingRight: 0, gap: 8 },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
@@ -1339,7 +1338,6 @@ const styles = StyleSheet.create({
   addBtn: {
     width: 44,
     height: 44,
-    marginLeft: 2,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
