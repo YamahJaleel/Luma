@@ -15,8 +15,9 @@ export const OnboardingProvider = ({ children }) => {
 
   const checkOnboardingStatus = async () => {
     try {
-      const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-      setIsOnboarded(value === 'true');
+      // Reset onboarding status - act like first time download
+      await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+      setIsOnboarded(false);
     } catch (error) {
       console.error('Error reading onboarding status:', error);
     } finally {
