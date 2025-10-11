@@ -183,7 +183,7 @@ const LumaAIScreen = ({ navigation }) => {
       
       setMessages(prev => [...prev, errorResponse]);
       
-      // Show alert for debugging
+      // Show alert for user feedback
       Alert.alert(
         'Connection Error',
         'Failed to connect to Luma AI. Please check your internet connection.',

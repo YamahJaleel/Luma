@@ -12,8 +12,7 @@ import {
   limit,
   serverTimestamp,
   increment,
-  arrayUnion,
-  arrayRemove
+  setDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { normalizeForSearch } from '../utils/normalization';
@@ -186,27 +185,18 @@ export const postService = {
       const likeRef = doc(db, COLLECTIONS.LIKES, `${postId}_${userId}`);
 
       const likeDoc = await getDoc(likeRef);
-      
-      if (!likeDoc.exists()) {
-        console.log('👍 Adding like to post:', postId, 'by user:', userId);
-        
-        // Create like document
-        await addDoc(collection(db, COLLECTIONS.LIKES), {
-          postId,
-          userId,
-          createdAt: serverTimestamp()
-        });
-        
-        // Increment post likes
-        await updateDoc(postRef, {
-          likes: increment(1),
-          likedBy: arrayUnion(userId)
-        });
-        
-        console.log('✅ Like added successfully');
-        return true;
-      }
-      return false;
+      if (likeDoc.exists()) return false;
+
+      // Create like document with deterministic ID
+      await setDoc(likeRef, {
+        postId,
+        userId,
+        createdAt: serverTimestamp()
+      });
+
+      // Increment likes counter atomically
+      await updateDoc(postRef, { likes: increment(1) });
+      return true;
     } catch (error) {
       console.error('Error liking post:', error);
       throw error;
@@ -220,20 +210,12 @@ export const postService = {
       const likeRef = doc(db, COLLECTIONS.LIKES, `${postId}_${userId}`);
 
       const likeDoc = await getDoc(likeRef);
-      
-      if (likeDoc.exists()) {
-        // Delete like document
-        await deleteDoc(likeRef);
-        
-        // Decrement post likes
-        await updateDoc(postRef, {
-          likes: increment(-1),
-          likedBy: arrayRemove(userId)
-        });
-        
-        return true;
-      }
-      return false;
+      if (!likeDoc.exists()) return false;
+
+      // Delete like document and decrement counter
+      await deleteDoc(likeRef);
+      await updateDoc(postRef, { likes: increment(-1) });
+      return true;
     } catch (error) {
       console.error('Error unliking post:', error);
       throw error;

@@ -303,6 +303,11 @@ export const commentService = {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      // If this is a post comment, increment post.comments counter
+      if (commentData.postId) {
+        const postRef = doc(db, COLLECTIONS.POSTS, commentData.postId);
+        await updateDoc(postRef, { comments: increment(1) });
+      }
       return docRef.id;
     } catch (error) {
       console.error('Error creating comment:', error);
@@ -366,7 +371,14 @@ export const commentService = {
   deleteComment: async (commentId) => {
     try {
       const docRef = doc(db, COLLECTIONS.COMMENTS, commentId);
+      // Read comment to know if it targets a post
+      const snap = await getDoc(docRef);
+      const data = snap.exists() ? snap.data() : null;
       await deleteDoc(docRef);
+      if (data?.postId) {
+        const postRef = doc(db, COLLECTIONS.POSTS, data.postId);
+        await updateDoc(postRef, { comments: increment(-1) });
+      }
     } catch (error) {
       console.error('Error deleting comment:', error);
       throw error;

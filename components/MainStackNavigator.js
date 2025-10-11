@@ -8,7 +8,7 @@ import SearchScreen from '../screens/SearchScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import UserScreen from '../screens/UserScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import AnimatedTabBar from './AnimatedTabBar';
+import CustomNavBar from './CustomNavBar';
 import CreatePostScreen from '../screens/CreatePostScreen';
 import BrowseCommunitiesScreen from '../screens/BrowseCommunitiesScreen';
 import LikedPostsScreen from '../screens/LikedPostsScreen';
@@ -107,7 +107,7 @@ const MainStackNavigator = () => {
         <Stack.Screen name="ReportBug" component={ReportBugScreen} />
         <Stack.Screen name="SendFeedback" component={SendFeedbackScreen} />
       </Stack.Navigator>
-      <AnimatedTabBar />
+      <CustomNavBar />
     </View>
   );
 };

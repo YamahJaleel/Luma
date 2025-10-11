@@ -12,20 +12,20 @@ import { normalizeForSearch } from '../utils/normalization';
 
 // Categories data (could be moved to Firestore later)
 const CATEGORIES = [
-  { id: 'dating-advice', label: 'Dating' },
-  { id: 'red-flags', label: 'Red Flags' },
-  { id: 'success-stories', label: 'Green Flags' },
-  { id: 'safety-tips', label: 'Safety' },
-  { id: 'vent-space', label: 'Vent' },
+  { id: 'dating', label: 'Dating' },
+  { id: 'red flags', label: 'Red Flags' },
+  { id: 'green flags', label: 'Green Flags' },
+  { id: 'safety', label: 'Safety' },
+  { id: 'vent', label: 'Vent' },
 ];
 
 // Category metadata
 const CATEGORY_META = {
-  'dating-advice': { icon: 'heart', color: '#EC4899' },
-  'red-flags': { icon: 'warning', color: '#EF4444' },
-  'success-stories': { icon: 'checkmark-circle', color: '#10B981' },
-  'safety-tips': { icon: 'shield-checkmark', color: '#3B82F6' },
-  'vent-space': { icon: 'chatbubble', color: '#8B5CF6' },
+  'dating': { icon: 'heart', color: '#EC4899' },
+  'red flags': { icon: 'warning', color: '#EF4444' },
+  'green flags': { icon: 'checkmark-circle', color: '#10B981' },
+  'safety': { icon: 'shield-checkmark', color: '#3B82F6' },
+  'vent': { icon: 'chatbubble', color: '#8B5CF6' },
 };
 
 // Community Dropdown Component
@@ -175,7 +175,7 @@ const HomeScreen = () => {
   const scrollYRef = useRef(0);
 
   const [posts, setPosts] = useState(null);
-  const [category, setCategory] = useState('dating-advice');
+  const [category, setCategory] = useState('dating');
   const [isLoading, setIsLoading] = useState(false);
   const pullY = useRef(new Animated.Value(0)).current;
   const [isPulling, setIsPulling] = useState(false);
@@ -261,12 +261,11 @@ const HomeScreen = () => {
     loadPosts();
   }, [loadPosts]);
 
-  // Reload when screen is focused
+  // Hide/show tab bar when screen is focused/unfocused
   useFocusEffect(
     useCallback(() => {
       setTabHidden(false);
-      loadPosts();
-    }, [loadPosts])
+    }, [setTabHidden])
   );
 
   // Custom pull-to-refresh handlers
@@ -345,7 +344,6 @@ const HomeScreen = () => {
     { id: 'recent', name: 'Most Recent', icon: 'time' },
     { id: 'liked', name: 'Most Liked', icon: 'heart' },
     { id: 'comments', name: 'Most Comments', icon: 'chatbubble' },
-    { id: 'top', name: 'Top Posts', icon: 'trending-up' },
   ];
 
   const canCreate = true;
