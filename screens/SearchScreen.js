@@ -1165,7 +1165,7 @@ const SearchScreen = ({ navigation, route }) => {
   // Using numeric pullProgress instead of Animated interpolation
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: 20 }]}> 
       {/* Profile Grid */}
       <FlatList
         data={rows}
@@ -1320,7 +1320,7 @@ const SearchScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  searchContainer: { paddingHorizontal: 0, paddingTop: 48, paddingBottom: 12 },
+  searchContainer: { paddingHorizontal: 0, paddingTop: 32, paddingBottom: 12 },
   searchHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 0, paddingRight: 0, gap: 8 },
   searchBar: {
     flex: 1,
