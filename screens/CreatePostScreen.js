@@ -6,11 +6,32 @@ import { postService } from '../services/postService';
 import { auth } from '../config/firebase';
 import { useSettings } from '../components/SettingsContext';
 
+// Category definitions (matching HomeScreen)
+const CATEGORIES = [
+  { id: 'dating', label: 'Dating' },
+  { id: 'red flags', label: 'Red Flags' },
+  { id: 'green flags', label: 'Green Flags' },
+  { id: 'safety', label: 'Safety' },
+  { id: 'vent', label: 'Vent' },
+];
+
+const CATEGORY_META = {
+  'dating': { icon: 'heart', color: '#EC4899' },
+  'red flags': { icon: 'warning', color: '#EF4444' },
+  'green flags': { icon: 'checkmark-circle', color: '#10B981' },
+  'safety': { icon: 'shield-checkmark', color: '#3B82F6' },
+  'vent': { icon: 'chatbubble', color: '#8B5CF6' },
+};
+
 const CreatePostScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { darkModeEnabled } = useSettings();
-  const { communityId = 'dating-advice' } = route.params || {};
+  const { communityId = 'dating' } = route.params || {};
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get category info
+  const categoryData = CATEGORIES.find(c => c.id === communityId) || CATEGORIES[0];
+  const categoryMeta = CATEGORY_META[communityId] || CATEGORY_META['dating'];
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -110,7 +131,12 @@ const CreatePostScreen = ({ route, navigation }) => {
           
           <View style={styles.headerCenter}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>Create Post</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.placeholder }]}>Share your thoughts</Text>
+            <View style={styles.categoryIndicator}>
+              <Ionicons name={categoryMeta.icon} size={14} color={categoryMeta.color} />
+              <Text style={[styles.categoryText, { color: colors.placeholder }]}>
+                {categoryData.label}
+              </Text>
+            </View>
           </View>
           
           <TouchableOpacity 
@@ -252,6 +278,16 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 12,
     fontWeight: '400',
+  },
+  categoryIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   publishButton: {
     paddingHorizontal: 16,
