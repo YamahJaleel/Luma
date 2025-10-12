@@ -341,9 +341,9 @@ const HomeScreen = () => {
   }, [searchQuery]);
 
   const sortOptions = [
-    { id: 'recent', name: 'Most Recent', icon: 'time' },
-    { id: 'liked', name: 'Most Liked', icon: 'heart' },
-    { id: 'comments', name: 'Most Comments', icon: 'chatbubble' },
+    { id: 'recent', name: 'Most Recent', icon: 'time', description: 'Latest posts first' },
+    { id: 'liked', name: 'Most Liked', icon: 'heart', description: 'Highest engagement' },
+    { id: 'comments', name: 'Most Comments', icon: 'chatbubble', description: 'Most discussed' },
   ];
 
   const canCreate = true;
@@ -463,29 +463,64 @@ const HomeScreen = () => {
           activeOpacity={1}
           onPress={() => setShowSortModal(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Sort Posts</Text>
-              <TouchableOpacity onPress={() => setShowSortModal(false)}>
-                <Ionicons name="close" size={24} color="#6B7280" />
+          <View style={[styles.sortModalContent, { backgroundColor: '#FFFFFF' }]}>
+            <View style={styles.sortModalHeader}>
+              <View style={styles.sortModalTitleContainer}>
+                <Ionicons name="swap-vertical" size={20} color="#3E5F44" />
+                <Text style={styles.sortModalTitle}>Sort Posts</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.sortModalCloseButton}
+                onPress={() => setShowSortModal(false)}
+              >
+                <Ionicons name="close" size={20} color="#6B7280" />
               </TouchableOpacity>
             </View>
-            {sortOptions.map((opt) => (
-              <TouchableOpacity
-                key={opt.id}
-                style={[styles.sortOption, selectedSort === opt.id && styles.selectedSortOption]}
-                onPress={() => {
-                  setSelectedSort(opt.id);
-                  setShowSortModal(false);
-                  loadPosts();
-                }}
-              >
-                <Ionicons name={opt.icon} size={16} color={selectedSort === opt.id ? 'white' : '#6B7280'} />
-                <Text style={[styles.sortOptionText, selectedSort === opt.id && styles.selectedSortOptionText]}>
-                  {opt.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            
+            <View style={styles.sortOptionsContainer}>
+              {sortOptions.map((opt) => (
+                <TouchableOpacity
+                  key={opt.id}
+                  style={[
+                    styles.sortOptionCard, 
+                    selectedSort === opt.id && styles.selectedSortOptionCard
+                  ]}
+                  onPress={() => {
+                    setSelectedSort(opt.id);
+                    setShowSortModal(false);
+                    loadPosts();
+                  }}
+                >
+                  <View style={[
+                    styles.sortOptionIconContainer,
+                    selectedSort === opt.id && styles.selectedSortOptionIconContainer
+                  ]}>
+                    <Ionicons 
+                      name={opt.icon} 
+                      size={18} 
+                      color={selectedSort === opt.id ? '#FFFFFF' : '#3E5F44'} 
+                    />
+                  </View>
+                  <View style={styles.sortOptionTextContainer}>
+                    <Text style={[
+                      styles.sortOptionText, 
+                      selectedSort === opt.id && styles.selectedSortOptionText
+                    ]}>
+                      {opt.name}
+                    </Text>
+                    <Text style={[
+                      styles.sortOptionDescription,
+                      selectedSort === opt.id && styles.selectedSortOptionDescription
+                    ]}>
+                      {opt.description}
+                    </Text>
+                  </View>
+                  {selectedSort === opt.id && (
+                    <Ionicons name="checkmark-circle" size={20} color="#3E5F44" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -506,19 +541,19 @@ const HomeScreen = () => {
             </View>
             
             {/* Search Input */}
-            <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
+            <View style={[styles.searchInputContainer, { backgroundColor: '#FFFFFF' }]}>
               <Ionicons name="search" size={20} color={colors.primary} style={styles.searchIcon} />
               <TextInput
-                style={[styles.searchTextInput, { color: colors.text }]}
+                style={[styles.searchTextInput, { color: '#1F2937' }]}
                 placeholder="Search posts..."
-                placeholderTextColor={colors.placeholder}
+                placeholderTextColor="#6B7280"
                 value={searchInput}
                 onChangeText={handleSearchInputChange}
                 autoFocus
               />
               {searchInput.length > 0 && (
                 <TouchableOpacity onPress={() => handleSearch('')}>
-                  <Ionicons name="close-circle" size={20} color={colors.placeholder} />
+                  <Ionicons name="close-circle" size={20} color="#6B7280" />
                 </TouchableOpacity>
               )}
             </View>
@@ -815,6 +850,100 @@ const styles = StyleSheet.create({
   selectedSortOption: { backgroundColor: '#3E5F44' },
   sortOptionText: { fontSize: 15, fontWeight: '600', color: '#6B7280', marginLeft: 10 },
   selectedSortOptionText: { color: 'white' },
+  
+  // New Sort Modal Styles
+  sortModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  sortModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  sortModalTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sortModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginLeft: 8,
+  },
+  sortModalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F9FAFB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sortOptionsContainer: {
+    gap: 8,
+  },
+  sortOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  selectedSortOptionCard: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#3E5F44',
+    borderWidth: 2,
+  },
+  sortOptionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  selectedSortOptionIconContainer: {
+    backgroundColor: '#3E5F44',
+    borderColor: '#3E5F44',
+  },
+  sortOptionTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  sortOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  selectedSortOptionText: {
+    color: '#3E5F44',
+  },
+  sortOptionDescription: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#6B7280',
+  },
+  selectedSortOptionDescription: {
+    color: '#059669',
+  },
   // Search Modal Styles
   searchModalContent: {
     backgroundColor: 'white',

@@ -26,7 +26,8 @@ const AnimatedTabBar = () => {
           route?.name === 'SignInCopy' ||
           route?.name === 'CreateAccountCopy' ||
           route?.name === 'LicenseVerification' ||
-          route?.name === 'Congrats'
+          route?.name === 'Congrats' ||
+          route?.name === 'CreatePost'
         ) return true;
         if (route?.state && contains(route.state)) return true;
       }
