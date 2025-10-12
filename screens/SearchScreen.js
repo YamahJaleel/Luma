@@ -1186,19 +1186,19 @@ const SearchScreen = ({ navigation, route }) => {
             {/* Pull-to-refresh header */}
               <Animated.View style={{ height: pullY, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 0 }}>
               {refreshing ? (
-                <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                <View style={{ width: 180, height: 100, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
                   <LottieView
                     source={require('../assets/animations/Load.json')}
-                    style={{ width: 180, height: 132 }}
+                    style={{ width: 220, height: 160 }}
                     autoPlay
                     loop
                   />
                 </View>
               ) : (
-                <View style={{ width: 140, height: 84, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                <View style={{ width: 180, height: 100, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
                   <LottieView
                     source={require('../assets/animations/Load.json')}
-                    style={{ width: 180, height: 132 }}
+                    style={{ width: 220, height: 160 }}
                     autoPlay={false}
                     loop={false}
                     progress={pullProgress}
