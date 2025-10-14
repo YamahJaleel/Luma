@@ -12,12 +12,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
 import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import notificationService from '../services/notificationService';
+import { notificationService as firebaseNotificationService } from '../services/firebaseService';
 
 const NotificationsScreen = ({ navigation }) => {
   const theme = useTheme();
   const { notificationsEnabled, isCommunityNotificationEnabled } = useSettings();
   const { setTabHidden, setHasUnreadNotifications } = useTabContext();
+  const { user } = useAuth();
   const scrollYRef = React.useRef(0);
   
   // Mock post data for navigation
@@ -98,6 +102,23 @@ const NotificationsScreen = ({ navigation }) => {
 
   const loadNotifications = async () => {
     try {
+      if (!user) {
+        setNotifications([]);
+        return;
+      }
+
+      // Load from Firebase first
+      try {
+        const firebaseNotifications = await firebaseNotificationService.getUserNotifications(user.uid);
+        if (firebaseNotifications.length > 0) {
+          setNotifications(firebaseNotifications);
+          return;
+        }
+      } catch (error) {
+        console.log('Error loading Firebase notifications:', error);
+      }
+
+      // Fallback to local storage
       const savedNotifications = await AsyncStorage.getItem('notifications');
       if (savedNotifications) {
         const parsed = JSON.parse(savedNotifications);
@@ -127,21 +148,35 @@ const NotificationsScreen = ({ navigation }) => {
     }
   };
 
-  const markAsRead = (id) => {
-    setNotifications((prev) => {
-      const updated = prev.map((notification) =>
-        notification.id === id ? { ...notification, isRead: true } : notification
-      );
-      
-      // Check if all notifications are now read
-      const allRead = updated.every(notification => notification.isRead);
-      setHasUnreadNotifications(!allRead);
-      
-      // Save to storage
-      saveNotifications(updated);
-      
-      return updated;
-    });
+  const markAsRead = async (id) => {
+    try {
+      // Mark as read in Firebase if user is logged in
+      if (user) {
+        try {
+          await firebaseNotificationService.markNotificationAsRead(id);
+        } catch (error) {
+          console.log('Error marking notification as read in Firebase:', error);
+        }
+      }
+
+      // Update local state
+      setNotifications((prev) => {
+        const updated = prev.map((notification) =>
+          notification.id === id ? { ...notification, isRead: true } : notification
+        );
+        
+        // Check if all notifications are now read
+        const allRead = updated.every(notification => notification.isRead);
+        setHasUnreadNotifications(!allRead);
+        
+        // Save to storage
+        saveNotifications(updated);
+        
+        return updated;
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   const handleNotificationPress = async (notification) => {
@@ -225,6 +260,29 @@ const NotificationsScreen = ({ navigation }) => {
     
     // Add notification
     addNewPostNotification(samplePost, 'Dating Advice');
+  };
+
+  // Clear all notifications
+  const clearAllNotifications = async () => {
+    try {
+      if (user) {
+        // Clear from Firebase
+        try {
+          await firebaseNotificationService.markAllNotificationsAsRead(user.uid);
+        } catch (error) {
+          console.log('Error clearing Firebase notifications:', error);
+        }
+      }
+
+      // Clear local notifications
+      await notificationService.clearAllNotifications();
+      setNotifications([]);
+      setHasUnreadNotifications(false);
+      
+      console.log('✅ All notifications cleared');
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
   };
 
   const getNotificationIcon = (type) => {
@@ -331,14 +389,7 @@ const NotificationsScreen = ({ navigation }) => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={[styles.checkBtn, { backgroundColor: theme.colors.surface }]}
-              onPress={async () => {
-                try {
-                  await AsyncStorage.removeItem('notifications');
-                  setNotifications([]);
-                } catch (e) {
-                  console.log('Error clearing notifications', e);
-                }
-              }}
+              onPress={clearAllNotifications}
             >
               <Ionicons name="checkmark" size={22} color="#3E5F44" />
             </TouchableOpacity>

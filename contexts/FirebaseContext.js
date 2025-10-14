@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { profileService, postService, commentService, messageService } from '../services/firebaseService';
+import notificationTriggerService from '../services/notificationTriggerService';
 
 const FirebaseContext = createContext();
 
@@ -55,6 +56,9 @@ export const FirebaseProvider = ({ children }) => {
 
   const loadUserData = async () => {
     try {
+      // Initialize notification trigger service
+      await notificationTriggerService.initialize();
+      
       // Load user profiles
       const userProfilesData = await profileService.getUserProfiles(user.uid);
       setUserProfiles(userProfilesData);

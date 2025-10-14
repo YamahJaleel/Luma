@@ -84,6 +84,7 @@ const SettingsScreen = ({ navigation }) => {
       items: [
         { id: 'contact_support', title: 'Contact Support', subtitle: 'Get in touch with our team', icon: 'chat-outline', type: 'navigate' },
         { id: 'report_bug', title: 'Report a Bug', subtitle: 'Help us improve the app', icon: 'bug-outline', type: 'navigate' },
+        { id: 'notification_test', title: 'Test Notifications', subtitle: 'Test push notification system', icon: 'notifications-outline', type: 'navigate' },
         { id: 'feedback', title: 'Send Feedback', subtitle: 'Share your thoughts with us', icon: 'message-outline', type: 'navigate' },
       ],
     },
@@ -205,6 +206,8 @@ const SettingsScreen = ({ navigation }) => {
             navigation.navigate('ContactSupport');
           } else if (item.id === 'report_bug') {
             navigation.navigate('ReportBug');
+          } else if (item.id === 'notification_test') {
+            navigation.navigate('NotificationTest');
           } else if (item.id === 'feedback') {
             navigation.navigate('SendFeedback');
           } else {

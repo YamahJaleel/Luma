@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { postService } from '../services/postService';
 import { auth } from '../config/firebase';
 import { useSettings } from '../components/SettingsContext';
+import notificationTriggerService from '../services/notificationTriggerService';
 
 // Category definitions (matching HomeScreen)
 const CATEGORIES = [
@@ -86,6 +87,17 @@ const CreatePostScreen = ({ route, navigation }) => {
       }
       
       console.log('✅ Post created successfully:', newPost);
+      
+      // Trigger notification for new post
+      try {
+        await notificationTriggerService.triggerNewPostNotification({
+          id: newPost,
+          title: title.trim(),
+          text: content.trim()
+        }, communityId);
+      } catch (error) {
+        console.log('Error triggering post notification:', error);
+      }
       
       // Clear the form
       setTitle('');

@@ -11,6 +11,7 @@ import { OnboardingProvider, useOnboarding } from './components/OnboardingContex
 import { FirebaseProvider } from './contexts/FirebaseContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import TabNavigator from './components/MainStackNavigator';
+import notificationService from './services/notificationService';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import CreateAccountScreen from './screens/CreateAccountScreen';
@@ -21,10 +22,6 @@ import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import LicenseVerificationScreen from './screens/VerificationScreen';
 import CongratsScreen from './screens/CongratsScreen';
 const Stack = createStackNavigator();
-// Configure notification behavior (foreground)
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: false, shouldSetBadge: false }),
-});
 
 // Web-specific CSS injection for proper scrolling
 if (Platform.OS === 'web') {
@@ -105,34 +102,23 @@ const AppContent = () => {
   const { user } = useAuth();
 
   React.useEffect(() => {
-    const ensurePermissions = async () => {
+    const initializeNotifications = async () => {
       if (!notificationsEnabled) return;
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        console.log('Notifications permission not granted');
-        return;
-      }
-      // Get expo push token (requires EAS or Expo Go support)
+      
       try {
-        const token = await Notifications.getExpoPushTokenAsync();
-        console.log('Expo push token', token?.data);
-      } catch (e) {
-        console.log('Failed to get push token', e);
-        // This is expected in development without a proper projectId
-      }
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: 'default',
-          importance: Notifications.AndroidImportance.DEFAULT,
-        });
+        // Initialize the notification service
+        const initialized = await notificationService.initialize();
+        if (initialized) {
+          console.log('✅ Notification service initialized successfully');
+        } else {
+          console.log('⚠️ Notification service initialization failed');
+        }
+      } catch (error) {
+        console.error('❌ Error initializing notifications:', error);
       }
     };
-    ensurePermissions();
+
+    initializeNotifications();
   }, [notificationsEnabled]);
 
   return (

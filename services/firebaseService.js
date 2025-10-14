@@ -691,6 +691,132 @@ export const typingService = {
   }
 };
 
+// Notification operations
+export const notificationService = {
+  // Create a new notification
+  createNotification: async (notificationData) => {
+    try {
+      const docRef = await addDoc(collection(db, COLLECTIONS.NOTIFICATIONS), {
+        ...notificationData,
+        createdAt: serverTimestamp(),
+        isRead: false
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  },
+
+  // Get notifications for a user
+  getUserNotifications: async (userId, limitCount = 50) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.NOTIFICATIONS),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting user notifications:', error);
+      throw error;
+    }
+  },
+
+  // Mark notification as read
+  markNotificationAsRead: async (notificationId) => {
+    try {
+      const docRef = doc(db, COLLECTIONS.NOTIFICATIONS, notificationId);
+      await updateDoc(docRef, {
+        isRead: true,
+        readAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  },
+
+  // Mark all notifications as read for a user
+  markAllNotificationsAsRead: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.NOTIFICATIONS),
+        where('userId', '==', userId),
+        where('isRead', '==', false)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      const updatePromises = querySnapshot.docs.map(doc => 
+        updateDoc(doc(db, COLLECTIONS.NOTIFICATIONS, doc.id), {
+          isRead: true,
+          readAt: serverTimestamp()
+        })
+      );
+      
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      throw error;
+    }
+  },
+
+  // Delete notification
+  deleteNotification: async (notificationId) => {
+    try {
+      const docRef = doc(db, COLLECTIONS.NOTIFICATIONS, notificationId);
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
+    }
+  },
+
+  // Get unread notification count
+  getUnreadCount: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.NOTIFICATIONS),
+        where('userId', '==', userId),
+        where('isRead', '==', false)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.size;
+    } catch (error) {
+      console.error('Error getting unread count:', error);
+      return 0;
+    }
+  },
+
+  // Listen to user notifications
+  listenToUserNotifications: (userId, callback) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.NOTIFICATIONS),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+      );
+      
+      return onSnapshot(q, (querySnapshot) => {
+        const notifications = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        callback(notifications);
+      });
+    } catch (error) {
+      console.error('Error listening to user notifications:', error);
+      return null;
+    }
+  }
+};
+
 export default {
   profileService,
   postService,
@@ -698,5 +824,6 @@ export default {
   messageService,
   storageService,
   realtimeService,
-  typingService
+  typingService,
+  notificationService
 };
