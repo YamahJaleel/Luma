@@ -63,17 +63,17 @@ const CustomNavBar = () => {
   const getIconByRouteName = (routeName, color) => {
     switch (routeName) {
       case 'Home':
-        return <Feather name="home" size={18} color={color} />;
+        return <Feather name="home" size={22} color={color} />;
       case 'Search':
-        return <Feather name="search" size={18} color={color} />;
+        return <Feather name="search" size={22} color={color} />;
       case 'Messages':
-        return <Ionicons name="chatbubble-outline" size={18} color={color} />;
+        return <Ionicons name="chatbubble-outline" size={22} color={color} />;
       case 'Notifications':
-        return <Feather name="bell" size={18} color={color} />;
+        return <Feather name="bell" size={22} color={color} />;
       case 'Profile':
-        return <FontAwesome6 name="circle-user" size={18} color={color} />;
+        return <FontAwesome6 name="circle-user" size={22} color={color} />;
       default:
-        return <Feather name="home" size={18} color={color} />;
+        return <Feather name="home" size={22} color={color} />;
     }
   };
 
@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
   text: {
     marginLeft: 6,
     fontWeight: '500',
+    fontSize: 14,
   },
 });
 

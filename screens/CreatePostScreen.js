@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity, TextInput,
+  Alert, KeyboardAvoidingView, Platform, ScrollView,
+  ActivityIndicator, SafeAreaView, StatusBar
+} from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { postService } from '../services/postService';
@@ -7,7 +11,6 @@ import { auth } from '../config/firebase';
 import { useSettings } from '../components/SettingsContext';
 import notificationTriggerService from '../services/notificationTriggerService';
 
-// Category definitions (matching HomeScreen)
 const CATEGORIES = [
   { id: 'dating', label: 'Dating' },
   { id: 'red flags', label: 'Red Flags' },
@@ -30,12 +33,12 @@ const CreatePostScreen = ({ route, navigation }) => {
   const { communityId = 'dating' } = route.params || {};
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get category info
   const categoryData = CATEGORIES.find(c => c.id === communityId) || CATEGORIES[0];
   const categoryMeta = CATEGORY_META[communityId] || CATEGORY_META['dating'];
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(communityId || 'dating');
 
   const MAX_TITLE_LEN = 300;
   const MAX_CONTENT_LEN = 6000;
@@ -43,16 +46,6 @@ const CreatePostScreen = ({ route, navigation }) => {
   const handlePublish = async () => {
     if (!title.trim() || !content.trim()) {
       Alert.alert('Missing info', 'Please add a title and content.');
-      return;
-    }
-
-    if (title.length > MAX_TITLE_LEN) {
-      Alert.alert('Title too long', `Titles are limited to ${MAX_TITLE_LEN} characters.`);
-      return;
-    }
-
-    if (content.length > MAX_CONTENT_LEN) {
-      Alert.alert('Content too long', `Posts are limited to ${MAX_CONTENT_LEN} characters.`);
       return;
     }
 
@@ -64,51 +57,30 @@ const CreatePostScreen = ({ route, navigation }) => {
         return;
       }
 
-      // Derive a friendly author name
       const derivedAuthorName =
-        user.displayName && user.displayName.trim()
-          ? user.displayName.trim()
-          : (user.email ? user.email.split('@')[0] : 'User');
+        user.displayName?.trim() || user.email?.split('@')[0] || 'User';
 
       const postData = {
         title: title.trim(),
         text: content.trim(),
-        category: communityId,
+        category: selectedCategory,
         authorId: user.uid,
         authorName: derivedAuthorName,
-        type: 'general'
+        type: 'general',
       };
 
-      console.log('📝 Attempting to create post with data:', postData);
       const newPost = await postService.createPost(postData, user.uid);
-      
-      if (!newPost || !newPost.id) {
-        throw new Error('Failed to create post - no post ID returned');
-      }
-      
-      console.log('✅ Post created successfully:', newPost);
-      
-      // Trigger notification for new post
-      try {
-        await notificationTriggerService.triggerNewPostNotification({
-          id: newPost,
-          title: title.trim(),
-          text: content.trim()
-        }, communityId);
-      } catch (error) {
-        console.log('Error triggering post notification:', error);
-      }
-      
-      // Clear the form
+      if (!newPost?.id) throw new Error('Failed to create post');
+
+      await notificationTriggerService.triggerNewPostNotification({
+        id: newPost,
+        title: title.trim(),
+        text: content.trim()
+      }, selectedCategory);
+
       setTitle('');
       setContent('');
-      
-      // Navigate back to home with the new post
-      navigation.navigate('Home', { 
-        newPost,
-        screen: 'Home',
-        params: { refresh: true }
-      });
+      navigation.navigate('Home', { newPost, screen: 'Home', params: { refresh: true } });
     } catch (error) {
       console.error('Error creating post:', error);
       Alert.alert('Error', 'Failed to create post. Please try again.');
@@ -117,74 +89,85 @@ const CreatePostScreen = ({ route, navigation }) => {
     }
   };
 
-  const colors = {
-    background: darkModeEnabled ? '#1F2937' : '#FFFFFF',
-    surface: darkModeEnabled ? '#374151' : '#F9FAFB',
-    text: darkModeEnabled ? '#FFFFFF' : '#1F2937',
-    placeholder: darkModeEnabled ? '#9CA3AF' : '#6B7280',
-    primary: '#3E5F44',
-    border: darkModeEnabled ? '#4B5563' : '#E5E7EB',
-    accent: '#10B981',
-  };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={darkModeEnabled ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
-      <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        
-        {/* Modern Header */}
-        <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-          <TouchableOpacity 
-            style={[styles.backButton, { backgroundColor: colors.surface }]} 
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={20} color={colors.text} />
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <StatusBar barStyle="light-content" backgroundColor="#3E5F44" />
+
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
+            <Ionicons name="chevron-back" size={24} color="#fff" />
           </TouchableOpacity>
-          
-          <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Create Post</Text>
-            <View style={styles.categoryIndicator}>
-              <Ionicons name={categoryMeta.icon} size={14} color={categoryMeta.color} />
-              <Text style={[styles.categoryText, { color: colors.placeholder }]}>
-                {categoryData.label}
-              </Text>
-            </View>
-          </View>
-          
-          <TouchableOpacity 
-            style={[
-              styles.publishButton, 
-              { 
-                backgroundColor: colors.primary,
-                shadowColor: colors.primary
-              },
-              isLoading && styles.publishButtonDisabled
-            ]} 
+          <Text style={styles.headerTitle}>Create Post</Text>
+          <TouchableOpacity
             onPress={handlePublish}
             disabled={isLoading}
+            style={[styles.headerAction, isLoading && { opacity: 0.5 }]}
           >
             {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.publishText}>Publish</Text>
+              <Text style={styles.headerActionText}>Publish</Text>
             )}
           </TouchableOpacity>
         </View>
 
-        {/* Content Area */}
-        <ScrollView 
+        {/* Scrollable Content */}
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          
-          {/* Title Section */}
-          <View style={[styles.inputSection, { backgroundColor: colors.surface }]}>
+
+          {/* Community Selector */}
+          <View style={[styles.communitySection, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.communityHeader}>
+              <Ionicons name="people" size={16} color={theme.colors.primary} />
+              <Text style={[styles.communityLabel, { color: '#333' }]}>Community</Text>
+            </View>
+            <View style={styles.communityGrid}>
+              {CATEGORIES.map((category) => {
+                const meta = CATEGORY_META[category.id];
+                const isSelected = selectedCategory === category.id;
+                return (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.communityChip,
+                      { backgroundColor: isSelected ? `${meta.color}15` : '#fff' },
+                      { borderColor: isSelected ? meta.color : '#ddd' }
+                    ]}
+                    onPress={() => setSelectedCategory(category.id)}
+                    disabled={isLoading}
+                  >
+                    <Ionicons 
+                      name={meta.icon} 
+                      size={16} 
+                      color={isSelected ? meta.color : '#666'} 
+                    />
+                    <Text style={[
+                      styles.communityChipText,
+                      { color: isSelected ? meta.color : '#333' }
+                    ]}>
+                      {category.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Title Input */}
+          <View style={[styles.inputSection, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.inputHeader}>
-              <Ionicons name="text" size={16} color={colors.primary} />
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Title</Text>
-              <Text style={[styles.charCount, { color: colors.placeholder }]}>
+              <Ionicons name="text" size={16} color={theme.colors.primary} />
+              <Text style={[styles.inputLabel, { color: '#333' }]}>Title</Text>
+              <Text style={[styles.charCount, { color: '#888' }]}>
                 {title.length}/{MAX_TITLE_LEN}
               </Text>
             </View>
@@ -192,23 +175,19 @@ const CreatePostScreen = ({ route, navigation }) => {
               value={title}
               onChangeText={setTitle}
               placeholder="What's on your mind?"
-              placeholderTextColor={colors.placeholder}
-              style={[styles.titleInput, { 
-                color: colors.text, 
-                borderColor: colors.border,
-                backgroundColor: colors.background 
-              }]}
+              placeholderTextColor="#888"
+              style={[styles.titleInput, { color: '#111', borderColor: '#ddd' }]}
               maxLength={MAX_TITLE_LEN}
               editable={!isLoading}
             />
           </View>
 
-          {/* Content Section */}
-          <View style={[styles.inputSection, { backgroundColor: colors.surface }]}>
+          {/* Content Input */}
+          <View style={[styles.inputSection, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.inputHeader}>
-              <Ionicons name="document-text" size={16} color={colors.primary} />
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Content</Text>
-              <Text style={[styles.charCount, { color: colors.placeholder }]}>
+              <Ionicons name="document-text" size={16} color={theme.colors.primary} />
+              <Text style={[styles.inputLabel, { color: '#333' }]}>Content</Text>
+              <Text style={[styles.charCount, { color: '#888' }]}>
                 {content.length}/{MAX_CONTENT_LEN}
               </Text>
             </View>
@@ -216,12 +195,8 @@ const CreatePostScreen = ({ route, navigation }) => {
               value={content}
               onChangeText={setContent}
               placeholder="Share your story, ask for advice, or start a conversation..."
-              placeholderTextColor={colors.placeholder}
-              style={[styles.contentInput, { 
-                color: colors.text, 
-                borderColor: colors.border,
-                backgroundColor: colors.background 
-              }]}
+              placeholderTextColor="#888"
+              style={[styles.contentInput, { color: '#111', borderColor: '#ddd' }]}
               multiline
               numberOfLines={8}
               textAlignVertical="top"
@@ -231,173 +206,121 @@ const CreatePostScreen = ({ route, navigation }) => {
           </View>
 
           {/* Tips Section */}
-          <View style={[styles.tipsSection, { backgroundColor: colors.surface }]}>
+          <View style={[styles.tipsSection, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.tipsHeader}>
-              <Ionicons name="bulb" size={16} color={colors.accent} />
-              <Text style={[styles.tipsTitle, { color: colors.text }]}>Tips for great posts</Text>
+              <Ionicons name="bulb" size={16} color="#10B981" />
+              <Text style={[styles.tipsTitle, { color: '#333' }]}>Tips for great posts</Text>
             </View>
             <View style={styles.tipsList}>
-              <Text style={[styles.tip, { color: colors.placeholder }]}>• Be clear and specific in your title</Text>
-              <Text style={[styles.tip, { color: colors.placeholder }]}>• Share your personal experience</Text>
-              <Text style={[styles.tip, { color: colors.placeholder }]}>• Ask questions to encourage discussion</Text>
-              <Text style={[styles.tip, { color: colors.placeholder }]}>• Be respectful and supportive</Text>
+              <Text style={[styles.tip, { color: '#888' }]}>• Be clear and specific in your title</Text>
+              <Text style={[styles.tip, { color: '#888' }]}>• Share your personal experience</Text>
+              <Text style={[styles.tip, { color: '#888' }]}>• Ask questions to encourage discussion</Text>
+              <Text style={[styles.tip, { color: '#888' }]}>• Be respectful and supportive</Text>
             </View>
           </View>
 
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
+  container: { flex: 1, marginTop: 0 },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 12,
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
+    elevation: 4,
+  },
+  headerBack: { padding: 8 },
+  headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  headerAction: {
+    paddingHorizontal: 14, paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+  },
+  headerActionText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  scrollView: { flex: 1 },
+  content: { padding: 12, paddingBottom: 40 },
+
+  communitySection: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '400',
-  },
-  categoryIndicator: {
+  communityHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  communityLabel: { fontSize: 16, fontWeight: '600', marginLeft: 8 },
+  communityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  communityChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginLeft: 4,
-  },
-  publishButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 20,
-    minWidth: 80,
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderWidth: 1,
+    marginBottom: 8,
   },
-  publishButtonDisabled: {
-    opacity: 0.6,
-  },
-  publishText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+  communityChipText: { fontSize: 14, fontWeight: '600', marginLeft: 6 },
+
   inputSection: {
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 2,
   },
-  inputHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-    flex: 1,
-  },
-  charCount: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
+  inputHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  inputLabel: { fontSize: 16, fontWeight: '600', marginLeft: 8, flex: 1 },
+  charCount: { fontSize: 12, fontWeight: '500' },
   titleInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1.5,
-    fontSize: 16,
-    fontWeight: '500',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#111',
+    backgroundColor: '#fff',
     minHeight: 50,
   },
   contentInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1.5,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 15,
-    lineHeight: 22,
+    color: '#111',
+    backgroundColor: '#fff',
     minHeight: 200,
+    textAlignVertical: 'top',
   },
   tipsSection: {
     borderRadius: 16,
     padding: 20,
     marginTop: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 2,
   },
-  tipsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  tipsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  tipsList: {
-    paddingLeft: 4,
-  },
-  tip: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 6,
-  },
+  tipsHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  tipsTitle: { fontSize: 16, fontWeight: '600', marginLeft: 8 },
+  tipsList: { paddingLeft: 4 },
+  tip: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
 });
 
 export default CreatePostScreen;

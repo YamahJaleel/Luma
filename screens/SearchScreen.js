@@ -1066,16 +1066,11 @@ const SearchScreen = ({ navigation, route }) => {
     return { uri: withDataSaver(remoteUri) };
   };
 
-  const handleProfilePress = (profile) => {
-    navigation.navigate('ProfileDetail', { profile, fromScreen: 'Search' });
-  };
-
   // Render a profile square, allowing the grid to override the visual size to
   // enforce the established layout pattern (2 large, then 3 small)
   const renderProfileSquare = ({ item, overrideSize }) => (
     <TouchableOpacity 
       style={[styles.profileSquare, getSizeStyle(overrideSize || item.size)]} 
-      onPress={() => handleProfilePress(item)}
       activeOpacity={0.9}
     >
       <Image source={getAvatarSource((item.id || 1) - 1, item.avatar)} style={styles.profileImage} />
@@ -1380,8 +1375,9 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 120,
   },
   modalContent: {
     width: '80%',

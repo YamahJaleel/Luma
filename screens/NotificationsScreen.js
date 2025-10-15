@@ -323,6 +323,7 @@ const NotificationsScreen = ({ navigation }) => {
       : true;
     
     const isClickable = item.postId || item.communityId === 'system'; // System notifications are always clickable
+    const safeColor = typeof item.color === 'string' && item.color.length > 0 ? item.color : '#6B7280';
     
     return (
       <TouchableOpacity
@@ -336,14 +337,14 @@ const NotificationsScreen = ({ navigation }) => {
         <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
           <Card.Content style={styles.cardContent}>
             <View style={styles.notificationHeader}>
-              <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
-                <Ionicons name={item.icon} size={20} color={item.color} />
+              <View style={[styles.iconContainer, { backgroundColor: `${safeColor}15` }]}>
+                <Ionicons name={item.icon} size={20} color={safeColor} />
               </View>
               <View style={styles.notificationInfo}>
                 <Text style={[styles.notificationTitle, { color: theme.colors.text }]}>{item.title}</Text>
                 <Text style={[styles.notificationMessage, theme.dark && { color: theme.colors.text }]}>{item.message}</Text>
                 <View style={styles.notificationMeta}>
-                  <Chip style={[styles.communityChip, { backgroundColor: `${item.color}15` }]} textStyle={[styles.communityText, { color: item.color }]}>
+                  <Chip style={[styles.communityChip, { backgroundColor: `${safeColor}15` }]} textStyle={[styles.communityText, { color: safeColor }]}>
                     {item.community}
                   </Chip>
                   <Text style={styles.timestamp}>{item.timestamp}</Text>
@@ -391,7 +392,7 @@ const NotificationsScreen = ({ navigation }) => {
               style={[styles.checkBtn, { backgroundColor: theme.colors.surface }]}
               onPress={clearAllNotifications}
             >
-              <Ionicons name="checkmark" size={22} color="#3E5F44" />
+              <Ionicons name="checkmark" size={22} color={theme.colors.primary} />
             </TouchableOpacity>
           </View>
         </View>

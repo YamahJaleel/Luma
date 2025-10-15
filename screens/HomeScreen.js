@@ -420,14 +420,14 @@ const HomeScreen = () => {
                         style={[styles.headerIconSquare, { backgroundColor: colors.surface }]} 
                         onPress={() => setShowSortModal(true)}
                       >
-                        <Ionicons name="filter" size={18} color="#3E5F44" />
+                        <Ionicons name="filter" size={18} color={colors.primary} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.headerIconSquare, { backgroundColor: colors.surface, opacity: canCreate ? 1 : 0.5 }]}
                         onPress={canCreate ? () => navigation.navigate('CreatePost', { communityId: category }) : undefined}
                         disabled={!canCreate}
                       >
-                        <Ionicons name="add" size={18} color={canCreate ? '#3E5F44' : colors.placeholder} />
+                        <Ionicons name="add" size={18} color={canCreate ? colors.primary : colors.placeholder} />
                       </TouchableOpacity>
                     </View>
                   </View>
