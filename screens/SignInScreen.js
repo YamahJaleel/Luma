@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useOnboarding } from '../components/OnboardingContext';
+import { useFirebase } from '../contexts/FirebaseContext';
+import { useTabContext } from '../components/TabContext';
 
 const SignInScreen = ({ navigation, route }) => {
   const [formData, setFormData] = useState({
@@ -24,6 +25,8 @@ const SignInScreen = ({ navigation, route }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { setIsOnboarded } = useOnboarding();
+  const { signIn } = useFirebase();
+  const { setCurrentTab } = useTabContext();
   
   // Check if we're coming from onboarding (show back button) or returning user (hide back button)
   const isFromOnboarding = route?.params?.fromOnboarding || false;
@@ -63,30 +66,34 @@ const SignInScreen = ({ navigation, route }) => {
     setIsLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Check if user exists in AsyncStorage (in a real app, this would be a backend call)
-      const existingUserData = await AsyncStorage.getItem('userData');
+      // Use Firebase authentication
+      await signIn(formData.email, formData.password);
       
-      if (existingUserData) {
-        const userData = JSON.parse(existingUserData);
-        
-        // Simple validation (in a real app, you'd hash passwords and verify properly)
-        if (userData.email === formData.email && userData.password === formData.password) {
-          // Sign in successful
-          await AsyncStorage.setItem('isSignedIn', 'true');
-          Alert.alert('Welcome Back!', 'Successfully signed in to your account.');
-          setIsOnboarded(true);
-        } else {
-          Alert.alert('Sign In Failed', 'Invalid email or password. Please try again.');
-        }
-      } else {
-        Alert.alert('Account Not Found', 'No account found with this email. Please create an account first.');
-      }
+      // Sign in successful
+      Alert.alert('Welcome Back!', 'Successfully signed in to your account.');
+      setIsOnboarded(true);
+      
+      // Ensure the tab bar shows Home as selected
+      setCurrentTab('Home');
     } catch (error) {
       console.error('Error signing in:', error);
-      Alert.alert('Error', 'Failed to sign in. Please try again.');
+      
+      // Handle specific Firebase auth errors
+      let errorMessage = 'Failed to sign in. Please try again.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email. Please create an account first.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Invalid password. Please try again.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address. Please check your email.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection.';
+      }
+      
+      Alert.alert('Sign In Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }
