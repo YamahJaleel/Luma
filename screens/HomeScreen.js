@@ -265,6 +265,17 @@ const HomeScreen = () => {
   useFocusEffect(
     useCallback(() => {
       setTabHidden(false);
+      // If navigated back with a refresh flag or a deleted post id, refresh feed
+      if (route?.params?.refresh || route?.params?.deletedPostId) {
+        if (route.params.deletedPostId && Array.isArray(posts)) {
+          // Optimistically remove the deleted post from current state
+          setPosts(prev => (prev ? prev.filter(p => p.id !== route.params.deletedPostId) : prev));
+        }
+        // Reload posts to ensure consistency
+        loadPosts();
+        // Clear params so we don't reload again on next focus
+        navigation.setParams({ refresh: undefined, deletedPostId: undefined });
+      }
     }, [setTabHidden])
   );
 

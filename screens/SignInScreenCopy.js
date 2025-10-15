@@ -190,7 +190,7 @@ const SignInScreenCopy = ({ navigation, route }) => {
 
           {/* Forgot Password */}
           <View style={styles.forgotPasswordContainer}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>

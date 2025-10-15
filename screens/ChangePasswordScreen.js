@@ -15,14 +15,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../contexts/AuthContext';
+import { useFirebase } from '../contexts/FirebaseContext';
 import { authService } from '../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChangePasswordScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const [formData, setFormData] = useState({
     oldPassword: '',
     newPassword: '',

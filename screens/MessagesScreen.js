@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../contexts/AuthContext';
+import { useFirebase } from '../contexts/FirebaseContext';
 import { realtimeService } from '../services/firebaseService';
 import { db } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -15,7 +15,7 @@ import { matchesSearch } from '../utils/normalization';
 
 const MessagesScreen = ({ navigation, route }) => {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const [conversations, setConversations] = useState([]); // Start with empty array instead of mock data
   const [newChatRecipient, setNewChatRecipient] = useState(null);
   const [showSearchModal, setShowSearchModal] = useState(false);

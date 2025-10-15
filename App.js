@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import navigation from './navigation';
 import { createStackNavigator } from '@react-navigation/stack';
 import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
@@ -8,8 +9,8 @@ import * as Notifications from 'expo-notifications';
 import { SettingsProvider, useSettings } from './components/SettingsContext';
 import { TabProvider } from './components/TabContext';
 import { OnboardingProvider, useOnboarding } from './components/OnboardingContext';
-import { FirebaseProvider } from './contexts/FirebaseContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { FirebaseProvider, useFirebase } from './contexts/FirebaseContext';
+// AuthContext removed; use FirebaseContext instead
 import TabNavigator from './components/MainStackNavigator';
 import notificationService from './services/notificationService';
 
@@ -20,6 +21,8 @@ import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import LicenseVerificationScreen from './screens/VerificationScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
+import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import CongratsScreen from './screens/CongratsScreen';
 const Stack = createStackNavigator();
 
@@ -99,7 +102,7 @@ const AppContent = () => {
   const { darkModeEnabled, notificationsEnabled } = useSettings();
   const theme = darkModeEnabled ? darkTheme : lightTheme;
   const { isOnboarded } = useOnboarding();
-  const { user } = useAuth();
+  const { user } = useFirebase();
 
   React.useEffect(() => {
     const initializeNotifications = async () => {
@@ -123,8 +126,18 @@ const AppContent = () => {
 
   return (
     <PaperProvider theme={theme}>
-      <TabProvider>
-        <NavigationContainer>
+          <TabProvider>
+            <NavigationContainer
+              ref={navigation.navigationRef}
+              linking={{
+                prefixes: ['https://luma-app-c2412.firebaseapp.com', 'https://lumaapp.page.link', 'luma://'],
+                config: {
+                  screens: {
+                    ResetPassword: '__/auth/action',
+                  },
+                },
+              }}
+            >
           <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
             <StatusBar style={darkModeEnabled ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
             {!isOnboarded ? (
@@ -152,6 +165,8 @@ const AppContent = () => {
                   name="SignIn" 
                   component={SignInScreen}
                 />
+                <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
                 <Stack.Screen 
                   name="TermsOfService"
                   component={TermsOfServiceScreen}
@@ -170,6 +185,8 @@ const AppContent = () => {
                   name="SignIn" 
                   component={SignInScreen}
                 />
+                <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
                 <Stack.Screen 
                   name="CreateAccount" 
                   component={CreateAccountScreen}
@@ -210,7 +227,7 @@ const AppContent = () => {
               </Stack.Navigator>
             )}
           </View>
-        </NavigationContainer>
+            </NavigationContainer>
       </TabProvider>
     </PaperProvider>
   );
@@ -219,15 +236,13 @@ const AppContent = () => {
 export default function App() {
   return (
     <FirebaseProvider>
-      <AuthProvider>
-        <OnboardingProvider>
-          <SettingsProvider>
-            <TabProvider>
-              <AppContent />
-            </TabProvider>
-          </SettingsProvider>
-        </OnboardingProvider>
-      </AuthProvider>
+      <OnboardingProvider>
+        <SettingsProvider>
+          <TabProvider>
+            <AppContent />
+          </TabProvider>
+        </SettingsProvider>
+      </OnboardingProvider>
     </FirebaseProvider>
   );
 }

@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../components/SettingsContext';
 import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../contexts/AuthContext';
+import { useFirebase } from '../contexts/FirebaseContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notificationService from '../services/notificationService';
 import { notificationService as firebaseNotificationService } from '../services/firebaseService';
@@ -21,7 +21,7 @@ const NotificationsScreen = ({ navigation }) => {
   const theme = useTheme();
   const { notificationsEnabled, isCommunityNotificationEnabled } = useSettings();
   const { setTabHidden, setHasUnreadNotifications } = useTabContext();
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const scrollYRef = React.useRef(0);
   
   // Mock post data for navigation

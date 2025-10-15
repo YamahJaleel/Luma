@@ -11,7 +11,7 @@ import { Card, List, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useTabContext } from '../components/TabContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useFirebase } from '../contexts/FirebaseContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { authService } from '../services/authService';
@@ -19,7 +19,7 @@ import { authService } from '../services/authService';
 const UserScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const scrollYRef = React.useRef(0);
   const [userProfile, setUserProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);

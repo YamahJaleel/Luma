@@ -5,6 +5,7 @@ import {
   Image, Modal, FlatList, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
@@ -16,6 +17,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const theme = useTheme();
   const { setTabHidden } = useTabContext();
   const scrollYRef = useRef(0);
+  const MIN_ANIM_MS = 4000; // match publish button animation duration
 
   const [name, setName] = useState('');
   const [experience, setExperience] = useState('');
@@ -82,6 +84,8 @@ const CreateProfileScreen = ({ navigation }) => {
     }
     if (submitting) return;
     setSubmitting(true);
+    const startedAt = Date.now();
+    let shouldNavigate = false;
     try {
       const userId = auth.currentUser?.uid || null;
       let avatarUrl = '';
@@ -122,11 +126,19 @@ const CreateProfileScreen = ({ navigation }) => {
       setLocation('Toronto, ON');
       setLocationInput('Toronto, ON');
       setSelectedImage(null);
-      navigation.navigate('Search');
+      shouldNavigate = true;
     } catch (err) {
       console.error('Create profile error', err);
       Alert.alert('Error', 'Could not create profile.');
     } finally {
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, MIN_ANIM_MS - elapsed);
+      if (remaining > 0) {
+        await new Promise(resolve => setTimeout(resolve, remaining));
+      }
+      if (shouldNavigate) {
+        navigation.navigate('Search');
+      }
       setSubmitting(false);
     }
   };
@@ -145,10 +157,15 @@ const CreateProfileScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={handleCreate}
           disabled={submitting}
-          style={[styles.headerAction, submitting && { opacity: 0.5 }]}
+          style={[styles.headerAction, submitting && { opacity: 0.85 }]}
         >
           {submitting ? (
-            <ActivityIndicator color="#fff" />
+            <LottieView
+              source={require('../assets/animations/Sandy Loading.json')}
+              autoPlay
+              loop
+              style={styles.headerLottie}
+            />
           ) : (
             <Text style={styles.headerActionText}>Create</Text>
           )}
@@ -304,6 +321,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   headerActionText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  headerLottie: { width: 36, height: 36 },
 
   scrollContent: { padding: 16, paddingBottom: 40 },
   card: {

@@ -12,9 +12,11 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
-  getIdToken,
+  getIdToken as getIdTokenFn,
   reauthenticateWithCredential,
-  EmailAuthProvider
+  EmailAuthProvider,
+  verifyPasswordResetCode,
+  confirmPasswordReset
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -71,6 +73,36 @@ export const authService = {
       await signOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);
+      throw error;
+    }
+  },
+
+  // Request password reset email
+  resetPassword: async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw error;
+    }
+  },
+
+  // Verify password reset code
+  verifyPasswordResetCode: async (oobCode) => {
+    try {
+      return await verifyPasswordResetCode(auth, oobCode);
+    } catch (error) {
+      console.error('Error verifying reset code:', error);
+      throw error;
+    }
+  },
+
+  // Confirm password reset
+  confirmPasswordReset: async (oobCode, newPassword) => {
+    try {
+      await confirmPasswordReset(auth, oobCode, newPassword);
+    } catch (error) {
+      console.error('Error confirming password reset:', error);
       throw error;
     }
   },
@@ -164,17 +196,13 @@ export const authService = {
   // Get ID token for backend authentication
   getIdToken: async () => {
     try {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await getIdToken(user);
-        return token;
-      }
-      throw new Error('No user is currently signed in');
+      if (!auth.currentUser) return null;
+      return await getIdTokenFn(auth.currentUser, true);
     } catch (error) {
       console.error('Error getting ID token:', error);
       throw error;
     }
-  }
+  },
 };
 
 export default authService;

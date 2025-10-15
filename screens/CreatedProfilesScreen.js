@@ -4,12 +4,12 @@ import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { profileService } from '../services/firebaseService';
-import { useAuth } from '../contexts/AuthContext';
+import { useFirebase } from '../contexts/FirebaseContext';
 
 const CreatedProfilesScreen = ({ navigation }) => {
   const theme = useTheme();
   const route = useRoute();
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const [data, setData] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
 

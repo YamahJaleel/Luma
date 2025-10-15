@@ -271,28 +271,27 @@ class NotificationService {
   // Handle navigation based on notification data
   async handleNotificationNavigation(data) {
     try {
-      const { navigation } = await import('../components/MainStackNavigator');
-      
-      if (!data || !navigation) return;
+      const { navigate } = await import('../navigation');
+      if (!data) return;
 
       switch (data.type) {
         case NOTIFICATION_TYPES.NEW_POST:
           if (data.postId) {
-            navigation.navigate('PostDetail', { postId: data.postId });
+            navigate('PostDetail', { postId: data.postId });
           }
           break;
           
         case NOTIFICATION_TYPES.NEW_COMMENT:
           if (data.postId) {
-            navigation.navigate('PostDetail', { postId: data.postId });
+            navigate('PostDetail', { postId: data.postId });
           } else if (data.profileId) {
-            navigation.navigate('ProfileDetail', { profileId: data.profileId });
+            navigate('ProfileDetail', { profileId: data.profileId });
           }
           break;
           
         case NOTIFICATION_TYPES.NEW_MESSAGE:
           if (data.senderId) {
-            navigation.navigate('MessageThread', { 
+            navigate('MessageThread', { 
               recipientId: data.senderId,
               recipientName: data.senderName 
             });
@@ -300,7 +299,7 @@ class NotificationService {
           break;
           
         default:
-          navigation.navigate('Notifications');
+          navigate('Notifications');
       }
 
     } catch (error) {

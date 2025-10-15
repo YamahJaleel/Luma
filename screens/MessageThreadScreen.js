@@ -4,7 +4,7 @@ import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TypingIndicator from '../components/TypingIndicator';
-import { useAuth } from '../contexts/AuthContext';
+import { useFirebase } from '../contexts/FirebaseContext';
 import { messageService, realtimeService, typingService } from '../services/firebaseService';
 
 const initialMessages = [
@@ -33,7 +33,7 @@ const MessageBubble = ({ message, theme }) => {
 
 const MessageThreadScreen = ({ route, navigation }) => {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const { conversation } = route.params || {};
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');

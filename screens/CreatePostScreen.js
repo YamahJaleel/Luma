@@ -10,6 +10,7 @@ import { postService } from '../services/postService';
 import { auth } from '../config/firebase';
 import { useSettings } from '../components/SettingsContext';
 import notificationTriggerService from '../services/notificationTriggerService';
+import LottieView from 'lottie-react-native';
 
 const CATEGORIES = [
   { id: 'dating', label: 'Dating' },
@@ -32,6 +33,7 @@ const CreatePostScreen = ({ route, navigation }) => {
   const { darkModeEnabled } = useSettings();
   const { communityId = 'dating' } = route.params || {};
   const [isLoading, setIsLoading] = useState(false);
+  const MIN_ANIM_MS = 4000; // ensure loader stays visible for 4s
 
   const categoryData = CATEGORIES.find(c => c.id === communityId) || CATEGORIES[0];
   const categoryMeta = CATEGORY_META[communityId] || CATEGORY_META['dating'];
@@ -50,6 +52,9 @@ const CreatePostScreen = ({ route, navigation }) => {
     }
 
     setIsLoading(true);
+    const startedAt = Date.now();
+    let shouldNavigate = false;
+    let navigateParams = null;
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -80,11 +85,19 @@ const CreatePostScreen = ({ route, navigation }) => {
 
       setTitle('');
       setContent('');
-      navigation.navigate('Home', { newPost, screen: 'Home', params: { refresh: true } });
+      shouldNavigate = true;
+      navigateParams = { newPost, screen: 'Home', params: { refresh: true } };
     } catch (error) {
       console.error('Error creating post:', error);
       Alert.alert('Error', 'Failed to create post. Please try again.');
     } finally {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_ANIM_MS) {
+        await new Promise(resolve => setTimeout(resolve, MIN_ANIM_MS - elapsed));
+      }
+      if (shouldNavigate) {
+        navigation.navigate('Home', navigateParams);
+      }
       setIsLoading(false);
     }
   };
@@ -106,10 +119,15 @@ const CreatePostScreen = ({ route, navigation }) => {
           <TouchableOpacity
             onPress={handlePublish}
             disabled={isLoading}
-            style={[styles.headerAction, isLoading && { opacity: 0.5 }]}
+            style={[styles.headerAction, isLoading && { opacity: 0.85 }]}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <LottieView
+                source={require('../assets/animations/Sandy Loading.json')}
+                autoPlay
+                loop
+                style={styles.headerLottie}
+              />
             ) : (
               <Text style={styles.headerActionText}>Publish</Text>
             )}
@@ -321,6 +339,7 @@ const styles = StyleSheet.create({
   tipsTitle: { fontSize: 16, fontWeight: '600', marginLeft: 8 },
   tipsList: { paddingLeft: 4 },
   tip: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
+  headerLottie: { width: 36, height: 36 },
 });
 
 export default CreatePostScreen;

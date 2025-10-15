@@ -37,6 +37,8 @@ import ContactSupportScreen from '../screens/ContactSupportScreen';
 import ReportBugScreen from '../screens/ReportBugScreen';
 import SendFeedbackScreen from '../screens/SendFeedbackScreen';
 import NotificationTestScreen from '../screens/NotificationTestScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 
 const Stack = createStackNavigator();
 
@@ -108,6 +110,8 @@ const MainStackNavigator = () => {
         <Stack.Screen name="ReportBug" component={ReportBugScreen} />
         <Stack.Screen name="SendFeedback" component={SendFeedbackScreen} />
         <Stack.Screen name="NotificationTest" component={NotificationTestScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       </Stack.Navigator>
       <CustomNavBar />
     </View>

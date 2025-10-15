@@ -5,6 +5,7 @@ import { initializeAuth, getReactNativePersistence } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -22,23 +23,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services with proper persistence
-const analytics = getAnalytics(app);
+const analytics = Platform.OS === 'web' ? getAnalytics(app) : undefined;
 const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Enable offline persistence
-enableIndexedDbPersistence(db)
-  .catch((err) => {
-    if (err.code === 'failed-precondition') {
-      // Multiple tabs open, persistence can only be enabled in one tab at a time.
-      console.warn('Firebase persistence failed: Multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-      // The current browser doesn't support persistence
-      console.warn('Firebase persistence not supported in this environment');
-    }
-  });
+// Enable offline persistence (web only)
+if (Platform.OS === 'web') {
+  enableIndexedDbPersistence(db)
+    .catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Firebase persistence failed: Multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Firebase persistence not supported in this environment');
+      }
+    });
+}
 
 export { app, analytics, auth, db, storage };
