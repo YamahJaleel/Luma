@@ -2,27 +2,34 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
+import { profileService } from '../services/firebaseService';
+import { useAuth } from '../contexts/AuthContext';
 
 const CreatedProfilesScreen = ({ navigation }) => {
   const theme = useTheme();
   const route = useRoute();
+  const { user } = useAuth();
   const [data, setData] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const load = React.useCallback(async () => {
+    if (!user?.uid) {
+      setData([]);
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const raw = await AsyncStorage.getItem('userProfiles');
-      const profiles = raw ? JSON.parse(raw) : [];
+      const profiles = await profileService.getUserProfiles(user.uid);
       setData(Array.isArray(profiles) ? profiles : []);
     } catch (e) {
+      console.error('Error loading created profiles:', e);
       setData([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user?.uid]);
 
   // Handle deleted profile coming back from ProfileDetail
   React.useEffect(() => {

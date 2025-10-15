@@ -323,7 +323,6 @@ const NotificationsScreen = ({ navigation }) => {
       : true;
     
     const isClickable = item.postId || item.communityId === 'system'; // System notifications are always clickable
-    const safeColor = typeof item.color === 'string' && item.color.length > 0 ? item.color : '#6B7280';
     
     return (
       <TouchableOpacity
@@ -336,21 +335,11 @@ const NotificationsScreen = ({ navigation }) => {
       >
         <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
           <Card.Content style={styles.cardContent}>
-            <View style={styles.notificationHeader}>
-              <View style={[styles.iconContainer, { backgroundColor: `${safeColor}15` }]}>
-                <Ionicons name={item.icon} size={20} color={safeColor} />
-              </View>
-              <View style={styles.notificationInfo}>
-                <Text style={[styles.notificationTitle, { color: theme.colors.text }]}>{item.title}</Text>
-                <Text style={[styles.notificationMessage, theme.dark && { color: theme.colors.text }]}>{item.message}</Text>
-                <View style={styles.notificationMeta}>
-                  <Chip style={[styles.communityChip, { backgroundColor: `${safeColor}15` }]} textStyle={[styles.communityText, { color: safeColor }]}>
-                    {item.community}
-                  </Chip>
-                  <Text style={styles.timestamp}>{item.timestamp}</Text>
-                </View>
-              </View>
-              {!item.isRead && notificationsEnabled && <View style={styles.unreadDot} />}
+            <View style={styles.notificationTextContainer}>
+              <Text style={[styles.notificationTitle, { color: theme.colors.text }]}>{item.title}</Text>
+              <Text style={[styles.notificationMessage, { color: theme.colors.text }]}>{item.message}</Text>
+              <Text style={[styles.notificationCommunity, { color: theme.colors.text }]}>{item.community}</Text>
+              <Text style={[styles.timestamp, { color: theme.colors.text }]}>{item.timestamp}</Text>
             </View>
           </Card.Content>
         </Card>
@@ -478,33 +467,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   cardContent: { padding: 16 },
-  notificationHeader: { flexDirection: 'row', alignItems: 'flex-start' },
-  iconContainer: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  notificationInfo: { flex: 1 },
-  notificationTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 4 },
-  notificationMessage: { fontSize: 14, color: '#4B5563', lineHeight: 22, marginBottom: 8 },
-  notificationMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  communityChip: {
-    minHeight: 30,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignSelf: 'flex-start',
-  },
-  communityText: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '600',
-  },
-  timestamp: { fontSize: 13, color: '#9CA3AF' },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginLeft: 8, marginTop: 4 },
+  notificationTextContainer: { flex: 1 },
+  notificationTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 6 },
+  notificationMessage: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
+  notificationCommunity: { fontSize: 13, fontWeight: '600', marginBottom: 4 },
+  timestamp: { fontSize: 12, opacity: 0.7 },
   disabledText: { fontSize: 13, color: '#EF4444', fontStyle: 'italic' },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingTop: 100 },
   emptyTitle: { fontSize: 22, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },

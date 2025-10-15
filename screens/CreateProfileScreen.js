@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   KeyboardAvoidingView, Platform, Alert, ScrollView,
@@ -10,6 +10,7 @@ import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
 import { profileService, storageService, commentService } from '../services/firebaseService';
 import { auth } from '../config/firebase';
+import { useFocusEffect } from '@react-navigation/native';
 
 const CreateProfileScreen = ({ navigation }) => {
   const theme = useTheme();
@@ -36,6 +37,14 @@ const CreateProfileScreen = ({ navigation }) => {
       loc.toLowerCase().includes(q)
     ).slice(0, 10);
   }, [locationInput]);
+
+  // Hide tab bar when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [setTabHidden])
+  );
 
   const requestPermissions = async () => {
     try {

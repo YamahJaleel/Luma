@@ -76,11 +76,11 @@ const LikedPostsScreen = ({ navigation }) => {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={[styles.backBtn, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Liked Posts</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 24 }} />
       </View>
 
       <FlatList
@@ -105,7 +105,6 @@ const LikedPostsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 56 },
-  backBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 19, fontWeight: 'bold' },
   empty: { fontWeight: 'bold', textAlign: 'center', marginTop: 50, fontSize: 22 },
   emptyContainer: {
