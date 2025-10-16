@@ -11,6 +11,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [cooldownUntil, setCooldownUntil] = useState(0);
 
   const onSubmit = async () => {
     setError('');
@@ -21,12 +22,21 @@ const ForgotPasswordScreen = ({ navigation }) => {
       return;
     }
 
+    // Cooldown: prevent rapid resends (45s default)
+    const now = Date.now();
+    if (cooldownUntil && now < cooldownUntil) {
+      const remaining = Math.ceil((cooldownUntil - now) / 1000);
+      setError(`Please wait ${remaining}s before requesting another link.`);
+      return;
+    }
+
     setLoading(true);
     try {
       await resetPassword(email.trim());
       setSuccess('If an account exists for this email, a reset link was sent.');
       Alert.alert('Check your email', 'If an account exists, a password reset email has been sent.');
-      navigation.goBack();
+      // Start cooldown (45s)
+      setCooldownUntil(Date.now() + 45_000);
     } catch (e) {
       // Show generic message to avoid user enumeration
       console.warn('Forgot password error:', e);
@@ -58,9 +68,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
           {error ? <Text style={styles.error}>{error}</Text> : null}
           {success ? <Text style={styles.success}>{success}</Text> : null}
 
-          <TouchableOpacity disabled={loading} style={[styles.button, loading && styles.buttonDisabled]} onPress={onSubmit}>
+          <TouchableOpacity disabled={loading || (cooldownUntil && Date.now() < cooldownUntil)} style={[styles.button, (loading || (cooldownUntil && Date.now() < cooldownUntil)) && styles.buttonDisabled]} onPress={onSubmit}>
             <LinearGradient colors={['#3E5F44', '#4A7C59']} style={styles.buttonInner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-              <Text style={styles.buttonText}>{loading ? 'Sending…' : 'Send reset link'}</Text>
+              <Text style={styles.buttonText}>{loading ? 'Sending…' : (cooldownUntil && Date.now() < cooldownUntil ? 'Please wait…' : 'Send reset link')}</Text>
             </LinearGradient>
           </TouchableOpacity>
 

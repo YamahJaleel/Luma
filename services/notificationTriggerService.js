@@ -36,10 +36,10 @@ class NotificationTriggerService {
         priority: NOTIFICATION_PRIORITIES.NORMAL
       };
 
-      // Store in Firebase
+      // Store in Firebase (backend/Cloud Function should pick this up to send push)
       await firebaseNotificationService.createNotification(notificationData);
 
-      // Send local notification
+      // Optional: Local foreground toast
       await notificationService.sendLocalNotification({
         title: notificationData.title,
         body: notificationData.body,
@@ -77,10 +77,10 @@ class NotificationTriggerService {
         priority: NOTIFICATION_PRIORITIES.NORMAL
       };
 
-      // Store in Firebase
+      // Store in Firebase (backend/Cloud Function should pick this up to send push)
       await firebaseNotificationService.createNotification(notificationData);
 
-      // Send local notification
+      // Optional: Local foreground toast
       await notificationService.sendLocalNotification({
         title: notificationData.title,
         body: notificationData.body,
@@ -112,17 +112,10 @@ class NotificationTriggerService {
         priority: NOTIFICATION_PRIORITIES.HIGH
       };
 
-      // Store in Firebase
+      // Store in Firebase (backend/Cloud Function should pick this up to send push)
       await firebaseNotificationService.createNotification(notificationData);
 
-      // Send push notification
-      await notificationService.sendPushNotification({
-        userId: recipientId,
-        title: notificationData.title,
-        body: notificationData.body,
-        data: notificationData.data,
-        priority: notificationData.priority
-      });
+      // Do NOT send push from client; backend will deliver
 
       console.log('📱 New message notification triggered');
     } catch (error) {
