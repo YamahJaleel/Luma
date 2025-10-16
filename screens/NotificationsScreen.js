@@ -266,15 +266,23 @@ const NotificationsScreen = ({ navigation }) => {
   const clearAllNotifications = async () => {
     try {
       if (user) {
-        // Clear from Firebase
+        // Delete all user notifications from Firebase so they don't reappear on reload
         try {
-          await firebaseNotificationService.markAllNotificationsAsRead(user.uid);
+          const userNotifs = await firebaseNotificationService.getUserNotifications(user.uid, 100);
+          if (Array.isArray(userNotifs) && userNotifs.length > 0) {
+            await Promise.all(
+              userNotifs.map((n) => firebaseNotificationService.deleteNotification(n.id))
+            );
+          } else {
+            // Fallback: mark all as read if none fetched
+            await firebaseNotificationService.markAllNotificationsAsRead(user.uid);
+          }
         } catch (error) {
-          console.log('Error clearing Firebase notifications:', error);
+          console.log('Error deleting Firebase notifications:', error);
         }
       }
 
-      // Clear local notifications
+      // Clear local notifications and badge
       await notificationService.clearAllNotifications();
       setNotifications([]);
       setHasUnreadNotifications(false);
