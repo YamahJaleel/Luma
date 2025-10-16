@@ -124,7 +124,7 @@ Women aged 18-40 who use dating platforms and want to:
 - **Database**: Firebase Firestore
 - **Authentication**: Firebase Auth (Google Sign-In)
 - **Storage**: Firebase Storage
-- **Real-time**: Firebase Realtime Database
+- **Real-time**: Firestore onSnapshot listeners
 - **Push Notifications**: Expo Notifications
 
 ### Development Tools
@@ -158,15 +158,19 @@ App/
 │   ├── CustomButton.tsx
 │   ├── ExpandingSearchBox.js
 │   ├── MainStackNavigator.js
+│   ├── SettingsContext.js
+│   ├── TabContext.js
+│   ├── OnboardingContext.js
 │   └── [10+ other components]
 ├── contexts/                   # React Context providers
-│   ├── AuthContext.js
 │   └── FirebaseContext.js
 ├── services/                   # Service layer
 │   ├── authService.js
 │   ├── firebaseService.js
 │   ├── postService.js
-│   └── userProfileService.js
+│   ├── userProfileService.js
+│   ├── notificationService.js
+│   └── notificationTriggerService.js
 ├── config/                     # Configuration files
 │   └── firebase.js
 ├── data/                       # Static data
@@ -176,6 +180,65 @@ App/
     ├── profiles/               # Profile images
     └── [other assets]
 ```
+
+## ⚙️ Configuration
+
+- Firebase: update keys in `config/firebase.js`. The project uses `initializeAuth` with AsyncStorage persistence, Firestore, and Storage. Web enables IndexedDB persistence.
+- Expo config: `app.json` includes icons/splash, `plugins: ["expo-video"]`, and EAS `projectId` in `expo.extra.eas.projectId`.
+- Theming: Light/dark themes via React Native Paper; toggled with `SettingsContext`.
+
+## 🔗 Deep Linking & Password Reset
+
+- Flow:
+  - From `ForgotPasswordScreen`, we call Firebase `sendPasswordResetEmail`.
+  - The email link opens to configured domains and deep links into the app.
+  - In `App.js`, linking prefixes include `https://luma-app-c2412.firebaseapp.com`, `https://lumaapp.page.link`, and `luma://` with a route for `ResetPassword`.
+  - `ResetPasswordScreen` verifies `oobCode` via Firebase, lets the user set a new password, and handles errors/expired links.
+
+- Notes:
+  - Web and native are supported via React Navigation linking.
+  - Generic success messaging prevents account enumeration in the forgot flow.
+
+## 🔔 Notifications
+
+- Permissions and tokens handled by `services/notificationService.js` using `expo-notifications`.
+- Stores Expo push tokens in Firestore collection `userTokens` tied to the current user.
+- Sends push via Expo Push API; also provides local notifications and badge counting.
+- In-app notifications list uses Firestore (`services/firebaseService.js.notificationService`) with mark-read, delete, and unread count helpers.
+- `NotificationsScreen` supports per-community toggles (via `SettingsContext`) and a clear-all action that also clears the device badge.
+- `NotificationTestScreen` exists for development/testing.
+
+## 🧭 Navigation & Performance
+
+- Main app stack in `components/MainStackNavigator.js` with simplified, faster transitions and gestures disabled for snappier navigation.
+- Auth/onboarding and deep-link routing are configured in `App.js` using React Navigation and the global `navigationRef`.
+
+## 🧱 Additional Structure Notes
+
+- Contexts:
+  - `contexts/FirebaseContext.js` provides auth, profiles, posts, comments, messages, and notifications helpers.
+  - UI/Settings contexts live under `components/` (`SettingsContext.js`, `TabContext.js`, `OnboardingContext.js`).
+- Services:
+  - `services/firebaseService.js` groups Firestore CRUD and realtime listeners for profiles, posts, comments, messages, and notifications.
+  - `services/notificationService.js` manages device-level notifications and Expo push integration.
+
+### Changelog Version 2.1 - October 16th 2025
+
+#### 🔐 Authentication & Deep Linking
+- Added password reset flow with `ForgotPasswordScreen` and `ResetPasswordScreen`.
+- Configured deep linking to route Firebase action links into `ResetPassword` with `oobCode` handling.
+
+#### 🔔 Notifications
+- Implemented device push setup, token storage, channels, and badge updates.
+- Added clear-all action and unread state sync; integrated Firebase-backed notifications.
+
+#### 🧭 Navigation & UX
+- Faster stack transitions and disabled gestures for improved performance.
+- Unified header button sizing and styling across screens.
+
+#### 🧩 Architecture
+- Consolidated app state into `FirebaseContext`; removed legacy mock data.
+- Expanded `firebaseService` with notifications, messaging, and real-time listeners.
 
 ### Changelog Version 2.0 - October 8th 2025
 
@@ -365,4 +428,4 @@ This app showcases skills that many developers take years to develop. You've ess
 
 **Luma - Empowering women through community-driven safety** 💜
 
-*Last Updated: October 9th 2025*
+*Last Updated: October 16th 2025*
