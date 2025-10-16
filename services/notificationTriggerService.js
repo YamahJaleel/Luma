@@ -1,5 +1,6 @@
 import notificationService, { NOTIFICATION_TYPES, NOTIFICATION_PRIORITIES } from './notificationService';
 import { notificationService as firebaseNotificationService } from './firebaseService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../config/firebase';
 
 // Notification trigger service for automatic notifications
@@ -20,6 +21,12 @@ class NotificationTriggerService {
     try {
       const user = auth.currentUser;
       if (!user) return;
+
+      // Respect global and community notification settings
+      const allowed = await this.shouldSendForCommunity(communityId);
+      if (!allowed) {
+        return;
+      }
 
       // Create notification data
       const notificationData = {
@@ -61,6 +68,12 @@ class NotificationTriggerService {
 
       // Determine notification target
       const targetUserId = profileId ? profileId : postId; // Simplified for now
+
+      // Respect global notification settings (no community context here)
+      const allowed = await this.shouldSendForCommunity(null);
+      if (!allowed) {
+        return;
+      }
       
       const notificationData = {
         userId: targetUserId,
@@ -97,6 +110,12 @@ class NotificationTriggerService {
   // Trigger notification when a new message is received
   async triggerNewMessageNotification(messageData, recipientId) {
     try {
+      // Respect global notification settings
+      const allowed = await this.shouldSendForCommunity(null);
+      if (!allowed) {
+        return;
+      }
+
       const notificationData = {
         userId: recipientId,
         type: NOTIFICATION_TYPES.NEW_MESSAGE,
@@ -140,6 +159,30 @@ class NotificationTriggerService {
     };
     
     return communityNames[communityId] || 'Community';
+  }
+
+  // Check settings to decide if we should send notifications (global + per-community)
+  async shouldSendForCommunity(communityId) {
+    try {
+      const enabled = await AsyncStorage.getItem('settings.notificationsEnabled');
+      if (enabled === 'false') return false;
+
+      // Per-community settings: if key missing, default allow
+      if (communityId) {
+        const raw = await AsyncStorage.getItem('settings.communityNotificationSettings');
+        if (raw) {
+          try {
+            const map = JSON.parse(raw);
+            if (Object.prototype.hasOwnProperty.call(map, communityId)) {
+              return map[communityId] === true;
+            }
+          } catch {}
+        }
+      }
+      return true;
+    } catch {
+      return true;
+    }
   }
 
   // Schedule reminder notification

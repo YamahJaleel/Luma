@@ -49,7 +49,7 @@ const SettingsScreen = ({ navigation }) => {
       items: [
         {
           id: 'push_notifications',
-          title: 'Push Notifications',
+          title: 'Notifications',
           subtitle: 'Receive alerts for new posts and updates',
           icon: 'bell-outline',
           type: 'toggle',

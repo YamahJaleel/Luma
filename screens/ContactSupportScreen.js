@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Linking, Sc
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTabContext } from '../components/TabContext';
 
 const EMAIL = 'luma312003@gmail.com';
 
@@ -10,6 +12,14 @@ const ContactSupportScreen = ({ navigation }) => {
   const theme = useTheme();
   const [subject, setSubject] = React.useState('Support Request');
   const [message, setMessage] = React.useState('');
+  const { setTabHidden } = useTabContext();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [setTabHidden])
+  );
 
   const sendEmail = async () => {
     const body = encodeURIComponent(message.trim());
@@ -45,6 +55,9 @@ const ContactSupportScreen = ({ navigation }) => {
             <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>How can we help?</Text>
             <Text style={[styles.welcomeSubtitle, { color: theme.colors.text }]}>Tell us about your issue and we’ll assist you.</Text>
           </View>
+
+          {/* Note about email sending method */}
+          <Text style={[styles.infoNote, { color: theme.colors.placeholder }]}>Messages are sent via your device's default mail app.</Text>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -107,6 +120,7 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: { opacity: 0.7 },
   primaryBtnGradient: { paddingVertical: 16, paddingHorizontal: 24, borderRadius: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   primaryBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  infoNote: { fontSize: 13, textAlign: 'center', marginBottom: 8 },
 });
 
 export default ContactSupportScreen;

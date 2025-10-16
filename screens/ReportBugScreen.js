@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Linking, Sc
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTabContext } from '../components/TabContext';
 
 const EMAIL = 'luma312003@gmail.com';
 
@@ -12,6 +14,14 @@ const ReportBugScreen = ({ navigation }) => {
   const [steps, setSteps] = React.useState('');
   const [expected, setExpected] = React.useState('');
   const [actual, setActual] = React.useState('');
+  const { setTabHidden } = useTabContext();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [setTabHidden])
+  );
 
   const sendEmail = async () => {
     const parts = [
@@ -55,6 +65,9 @@ const ReportBugScreen = ({ navigation }) => {
             <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>Help us fix issues</Text>
             <Text style={[styles.welcomeSubtitle, { color: theme.colors.text }]}>Provide details so we can reproduce and resolve the bug.</Text>
           </View>
+
+          {/* Note about email sending method */}
+          <Text style={[styles.infoNote, { color: theme.colors.placeholder }]}>Messages are sent via your device's default mail app.</Text>
 
           <View style={styles.formContainer}>
             <Text style={[styles.label, { color: theme.colors.text }]}>Bug Title</Text>
@@ -110,6 +123,7 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: { opacity: 0.7 },
   primaryBtnGradient: { paddingVertical: 16, paddingHorizontal: 24, borderRadius: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   primaryBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  infoNote: { fontSize: 13, textAlign: 'center', marginBottom: 8 },
 });
 
 export default ReportBugScreen;

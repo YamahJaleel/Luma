@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Linking, Sc
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTabContext } from '../components/TabContext';
 
 const EMAIL = 'luma312003@gmail.com';
 
@@ -10,6 +12,14 @@ const SendFeedbackScreen = ({ navigation }) => {
   const theme = useTheme();
   const [category, setCategory] = React.useState('General Feedback');
   const [message, setMessage] = React.useState('');
+  const { setTabHidden } = useTabContext();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setTabHidden(true);
+      return () => setTabHidden(false);
+    }, [setTabHidden])
+  );
 
   const sendEmail = async () => {
     const body = encodeURIComponent(`Category: ${category.trim()}\n\n${message.trim()}`);
@@ -45,6 +55,9 @@ const SendFeedbackScreen = ({ navigation }) => {
             <Text style={[styles.welcomeTitle, { color: theme.colors.text }]}>We value your feedback</Text>
             <Text style={[styles.welcomeSubtitle, { color: theme.colors.text }]}>Share your thoughts to help improve Luma.</Text>
           </View>
+
+          {/* Note about email sending method */}
+          <Text style={[styles.infoNote, { color: theme.colors.placeholder }]}>Messages are sent via your device's default mail app.</Text>
 
           <View style={styles.formContainer}>
             <Text style={[styles.label, { color: theme.colors.text }]}>Category</Text>
@@ -90,6 +103,7 @@ const styles = StyleSheet.create({
   primaryBtnDisabled: { opacity: 0.7 },
   primaryBtnGradient: { paddingVertical: 16, paddingHorizontal: 24, borderRadius: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   primaryBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  infoNote: { fontSize: 13, textAlign: 'center', marginBottom: 8 },
 });
 
 export default SendFeedbackScreen;
