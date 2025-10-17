@@ -3,7 +3,6 @@
     "name": "Luma",
     "slug": "luma-dating-safety",
     "version": "1.0.0",
-    "projectId": "6ad1cc87-53bf-4ef9-8996-1d22d425ba2c",
     "orientation": "portrait",
     "icon": "./assets/AppIcon.png",
     "userInterfaceStyle": "light",
@@ -59,7 +58,8 @@
           "icon": "./assets/AppIcon.png",
           "color": "#3E5F44"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
