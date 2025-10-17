@@ -39,6 +39,7 @@ import SendFeedbackScreen from '../screens/SendFeedbackScreen';
 import NotificationTestScreen from '../screens/NotificationTestScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
+import SignInToDeleteScreen from '../screens/SignInToDeleteScreen';
 
 const Stack = createStackNavigator();
 
@@ -112,6 +113,7 @@ const MainStackNavigator = () => {
         <Stack.Screen name="NotificationTest" component={NotificationTestScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        <Stack.Screen name="SignInToDelete" component={SignInToDeleteScreen} />
       </Stack.Navigator>
       <CustomNavBar />
     </View>

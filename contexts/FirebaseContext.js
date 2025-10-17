@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '../services/authService';
-import { profileService, postService, commentService, messageService } from '../services/firebaseService';
+import { profileService, postService, commentService, messageService, accountService } from '../services/firebaseService';
 import notificationTriggerService from '../services/notificationTriggerService';
 
 const FirebaseContext = createContext();
@@ -137,6 +137,14 @@ export const FirebaseProvider = ({ children }) => {
     }
   };
 
+  const reauthenticateWithPassword = async (email, password) => {
+    try {
+      return await authService.reauthenticateWithPassword(email, password);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const resetPassword = async (email) => {
     try {
       await authService.resetPassword(email);
@@ -161,6 +169,31 @@ export const FirebaseProvider = ({ children }) => {
       return token;
     } catch (error) {
       throw error;
+    }
+  };
+
+  // Delete account and all related data
+  const deleteAccountAndData = async () => {
+    if (!user?.uid) throw new Error('No user is currently signed in');
+    setLoading(true);
+    try {
+      const dataSummary = await accountService.deleteAllUserData(user.uid);
+      let deletedAuthUser = false;
+      let reauthRequired = false;
+      try {
+        await authService.deleteCurrentUser();
+        deletedAuthUser = true;
+      } catch (e) {
+        if (e?.code === 'auth/requires-recent-login') {
+          reauthRequired = true;
+        } else {
+          throw e;
+        }
+      }
+
+      return { ...dataSummary, deletedAuthUser, reauthRequired };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -299,6 +332,8 @@ export const FirebaseProvider = ({ children }) => {
     signOut,
     resetPassword,
     getIdToken, // New: Backend authentication token
+    reauthenticateWithPassword,
+    deleteAccountAndData,
 
     // Data loading methods
     loadProfiles,

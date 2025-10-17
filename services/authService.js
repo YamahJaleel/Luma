@@ -203,6 +203,33 @@ export const authService = {
       throw error;
     }
   },
+  
+  // Reauthenticate with email and password for sensitive operations
+  reauthenticateWithPassword: async (email, password) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No user is currently signed in');
+      const credential = EmailAuthProvider.credential(email || user.email, password);
+      await reauthenticateWithCredential(user, credential);
+      return true;
+    } catch (error) {
+      console.error('Error reauthenticating user:', error);
+      throw error;
+    }
+  },
+  
+  // Delete currently signed-in user (requires recent auth)
+  deleteCurrentUser: async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No user is currently signed in');
+      await user.delete();
+      return true;
+    } catch (error) {
+      console.error('Error deleting current user:', error);
+      throw error;
+    }
+  },
 };
 
 export default authService;

@@ -817,6 +817,141 @@ export const notificationService = {
   }
 };
 
+// Account cleanup operations
+export const accountService = {
+  // Delete all Firestore data related to a user and remove likes
+  deleteAllUserData: async (userId) => {
+    const summary = {
+      profilesDeleted: 0,
+      postsDeleted: 0,
+      commentsDeleted: 0,
+      messagesDeleted: 0,
+      notificationsDeleted: 0,
+      tokensDeleted: 0,
+      likesRemoved: 0,
+      auxiliaryDocsDeleted: 0,
+    };
+
+    try {
+      // Delete profiles (and attempt to remove associated storage assets)
+      try {
+        const profilesQ = query(collection(db, COLLECTIONS.PROFILES), where('userId', '==', userId));
+        const profilesSnap = await getDocs(profilesQ);
+        await Promise.all(profilesSnap.docs.map(async (d) => {
+          try {
+            const data = d.data();
+            const possibleUrls = [];
+            if (data?.photoUrl) possibleUrls.push(data.photoUrl);
+            if (data?.imageUrl) possibleUrls.push(data.imageUrl);
+            if (Array.isArray(data?.images)) possibleUrls.push(...data.images);
+            if (Array.isArray(data?.gallery)) possibleUrls.push(...data.gallery);
+            const uniqueUrls = Array.from(new Set(possibleUrls.filter(Boolean)));
+            await Promise.all(uniqueUrls.map(async (url) => {
+              try { await deleteObject(ref(storage, url)); } catch {}
+            }));
+          } catch {}
+          await deleteDoc(doc(db, COLLECTIONS.PROFILES, d.id));
+        }));
+        summary.profilesDeleted = profilesSnap.size;
+      } catch (e) { console.warn('Error deleting user profiles:', e); }
+
+      // Delete posts by user (and attempt to remove associated storage assets)
+      try {
+        const postsQ = query(collection(db, COLLECTIONS.POSTS), where('userId', '==', userId));
+        const postsSnap = await getDocs(postsQ);
+        await Promise.all(postsSnap.docs.map(async (d) => {
+          try {
+            const data = d.data();
+            const possibleUrls = [];
+            if (data?.imageUrl) possibleUrls.push(data.imageUrl);
+            if (Array.isArray(data?.images)) possibleUrls.push(...data.images);
+            if (data?.videoUrl) possibleUrls.push(data.videoUrl);
+            const uniqueUrls = Array.from(new Set(possibleUrls.filter(Boolean)));
+            await Promise.all(uniqueUrls.map(async (url) => {
+              try { await deleteObject(ref(storage, url)); } catch {}
+            }));
+          } catch {}
+          await deleteDoc(doc(db, COLLECTIONS.POSTS, d.id));
+        }));
+        summary.postsDeleted = postsSnap.size;
+      } catch (e) { console.warn('Error deleting user posts:', e); }
+
+      // Delete comments by user
+      try {
+        const commentsQ = query(collection(db, COLLECTIONS.COMMENTS), where('userId', '==', userId));
+        const commentsSnap = await getDocs(commentsQ);
+        await Promise.all(commentsSnap.docs.map(async (d) => {
+          // If the comment targets a post, decrement comment count
+          try {
+            const data = d.data();
+            if (data?.postId) {
+              const postRef = doc(db, COLLECTIONS.POSTS, data.postId);
+              await updateDoc(postRef, { comments: increment(-1) });
+            }
+          } catch {}
+          await deleteDoc(doc(db, COLLECTIONS.COMMENTS, d.id));
+        }));
+        summary.commentsDeleted = commentsSnap.size;
+      } catch (e) { console.warn('Error deleting user comments:', e); }
+
+      // Delete messages where user is a participant
+      try {
+        const messagesQ = query(collection(db, COLLECTIONS.MESSAGES), where('participants', 'array-contains', userId));
+        const messagesSnap = await getDocs(messagesQ);
+        await Promise.all(messagesSnap.docs.map(d => deleteDoc(doc(db, COLLECTIONS.MESSAGES, d.id))));
+        summary.messagesDeleted = messagesSnap.size;
+      } catch (e) { console.warn('Error deleting user messages:', e); }
+
+      // Remove likes from posts (arrayRemove)
+      try {
+        const likedQ = query(collection(db, COLLECTIONS.POSTS), where('likedBy', 'array-contains', userId));
+        const likedSnap = await getDocs(likedQ);
+        await Promise.all(likedSnap.docs.map(d => updateDoc(doc(db, COLLECTIONS.POSTS, d.id), { likedBy: arrayRemove(userId) })));
+        summary.likesRemoved = likedSnap.size;
+      } catch (e) { console.warn('Error removing likes:', e); }
+
+      // Delete notifications for user
+      try {
+        const notifQ = query(collection(db, COLLECTIONS.NOTIFICATIONS), where('userId', '==', userId));
+        const notifSnap = await getDocs(notifQ);
+        await Promise.all(notifSnap.docs.map(d => deleteDoc(doc(db, COLLECTIONS.NOTIFICATIONS, d.id))));
+        summary.notificationsDeleted = notifSnap.size;
+      } catch (e) { console.warn('Error deleting notifications:', e); }
+
+      // Delete push tokens for user (userTokens collection)
+      try {
+        const tokensQ = query(collection(db, 'userTokens'), where('userId', '==', userId));
+        const tokensSnap = await getDocs(tokensQ);
+        await Promise.all(tokensSnap.docs.map(d => deleteDoc(doc(db, 'userTokens', d.id))));
+        summary.tokensDeleted = tokensSnap.size;
+      } catch (e) { console.warn('Error deleting user tokens:', e); }
+
+      // Cleanup auxiliary user collections if present
+      const auxCollections = [
+        COLLECTIONS.USER_PROFILES,
+        COLLECTIONS.USER_POSTS,
+        COLLECTIONS.USER_COMMENTS,
+        COLLECTIONS.LIKED_POSTS,
+      ];
+      for (const coll of auxCollections) {
+        try {
+          const qy = query(collection(db, coll), where('userId', '==', userId));
+          const snap = await getDocs(qy);
+          await Promise.all(snap.docs.map(d => deleteDoc(doc(db, coll, d.id))));
+          summary.auxiliaryDocsDeleted += snap.size;
+        } catch (e) {
+          // ignore if collection not used
+        }
+      }
+
+      return summary;
+    } catch (error) {
+      console.error('Error deleting all user data:', error);
+      throw error;
+    }
+  }
+};
+
 export default {
   profileService,
   postService,
@@ -825,5 +960,6 @@ export default {
   storageService,
   realtimeService,
   typingService,
-  notificationService
+  notificationService,
+  accountService
 };

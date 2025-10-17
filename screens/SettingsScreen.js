@@ -13,11 +13,13 @@ import { Card, List, Button, Divider, useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSettings } from '../components/SettingsContext';
+import { useFirebase } from '../contexts/FirebaseContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabContext } from '../components/TabContext';
 
 const SettingsScreen = ({ navigation }) => {
   const theme = useTheme();
+  const { deleteAccountAndData } = useFirebase();
   const { setTabHidden } = useTabContext();
   const scrollYRef = React.useRef(0);
   const {
@@ -35,9 +37,9 @@ const SettingsScreen = ({ navigation }) => {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert('Delete Account', 'This action cannot be undone. All your data will be permanently deleted.', [
+    Alert.alert('Delete Account', 'To permanently delete your account, please confirm your identity first.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { Alert.alert('Account Deleted', 'Your account has been deleted.'); } },
+      { text: 'Continue', style: 'destructive', onPress: () => navigation.navigate('SignInToDelete') },
     ]);
   };
 
