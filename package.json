@@ -7,7 +7,13 @@
     "start": "EXPO_NO_TYPESCRIPT_SETUP=true expo start",
     "android": "EXPO_NO_TYPESCRIPT_SETUP=true expo start --android",
     "ios": "EXPO_NO_TYPESCRIPT_SETUP=true expo start --ios",
-    "web": "EXPO_NO_TYPESCRIPT_SETUP=true expo start --web"
+    "web": "EXPO_NO_TYPESCRIPT_SETUP=true expo start --web",
+    "build:dev": "eas build --profile development",
+    "build:preview": "eas build --profile preview",
+    "build:prod": "eas build --profile production",
+    "submit": "eas submit",
+    "submit:ios": "eas submit --platform ios",
+    "submit:android": "eas submit --platform android"
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",

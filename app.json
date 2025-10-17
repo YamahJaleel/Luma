@@ -3,7 +3,7 @@
     "name": "Luma",
     "slug": "luma-dating-safety",
     "version": "1.0.0",
-    "projectId": "your-project-id-here",
+    "projectId": "6ad1cc87-53bf-4ef9-8996-1d22d425ba2c",
     "orientation": "portrait",
     "icon": "./assets/AppIcon.png",
     "userInterfaceStyle": "light",
@@ -15,7 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.luma.dating"
+      "bundleIdentifier": "com.luma.dating",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Luma needs camera access to take profile photos and verify identities.",
+        "NSPhotoLibraryUsageDescription": "Luma needs photo library access to select profile photos.",
+        "NSLocationWhenInUseUsageDescription": "Luma uses location to help you find nearby community members and safety resources.",
+        "NSMicrophoneUsageDescription": "Luma needs microphone access for video features and safety reporting."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,13 +30,36 @@
         "backgroundColor": "#FDF8F3"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.luma.dating"
+      "package": "com.luma.dating",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.VIBRATE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-video"
+      "expo-video",
+      "expo-camera",
+      "expo-image-picker",
+      "expo-location",
+      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/AppIcon.png",
+          "color": "#3E5F44"
+        }
+      ]
     ],
     "extra": {
       "eas": {
