@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { authService } from '../services/authService';
 import { profileService, postService, commentService, messageService, accountService } from '../services/firebaseService';
 import notificationTriggerService from '../services/notificationTriggerService';
+import encryptionService from '../services/encryptionService';
 
 const FirebaseContext = createContext();
 
@@ -25,6 +26,7 @@ export const FirebaseProvider = ({ children }) => {
   const [userComments, setUserComments] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [encryptionInitialized, setEncryptionInitialized] = useState(false);
 
   // Handle user state changes
   const handleAuthStateChanged = useCallback((user) => {
@@ -44,6 +46,7 @@ export const FirebaseProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       loadUserData();
+      initializeEncryption();
     } else {
       // Clear user data when signed out
       setUserProfiles([]);
@@ -51,8 +54,30 @@ export const FirebaseProvider = ({ children }) => {
       setUserComments([]);
       setLikedPosts([]);
       setMessages([]);
+      setEncryptionInitialized(false);
     }
   }, [user]);
+
+  // Initialize encryption for the user
+  const initializeEncryption = async () => {
+    try {
+      if (!user) return;
+      
+      // Check if encryption is already initialized
+      const isInitialized = await encryptionService.isEncryptionInitialized(user.uid);
+      
+      if (!isInitialized) {
+        // Initialize with simple method (using user ID as key)
+        await encryptionService.initializeSimple(user.uid);
+        console.log('✅ Encryption initialized for user:', user.uid);
+      }
+      
+      setEncryptionInitialized(true);
+    } catch (error) {
+      console.error('❌ Error initializing encryption:', error);
+      setEncryptionInitialized(false);
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -323,6 +348,7 @@ export const FirebaseProvider = ({ children }) => {
     userComments,
     likedPosts,
     messages,
+    encryptionInitialized,
 
     // Auth methods
     signIn,

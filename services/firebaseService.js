@@ -24,6 +24,7 @@ import {
   deleteObject 
 } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
+import encryptionService from './encryptionService';
 
 // Collection names
 const COLLECTIONS = {
@@ -410,8 +411,23 @@ export const messageService = {
   // Create a new message
   createMessage: async (messageData) => {
     try {
+      // Encrypt the message text
+      let encryptedText = messageData.text;
+      let isEncrypted = false;
+      
+      try {
+        encryptedText = await encryptionService.encryptMessage(messageData.text, messageData.recipientId);
+        isEncrypted = true;
+        console.log('✅ Message encrypted before storing');
+      } catch (encryptError) {
+        console.warn('⚠️ Encryption failed, storing as plain text:', encryptError);
+        // Continue with plain text if encryption fails
+      }
+
       const docRef = await addDoc(collection(db, COLLECTIONS.MESSAGES), {
         ...messageData,
+        text: encryptedText, // Store encrypted text
+        isEncrypted: isEncrypted, // Flag to indicate encryption
         unreadBy: arrayUnion(messageData.recipientId),
         createdAt: serverTimestamp()
       });
@@ -449,11 +465,30 @@ export const messageService = {
         orderBy('createdAt', 'asc')
       );
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(message => 
-          message.participants.includes(userId2)
-        );
+      
+      const messages = [];
+      for (const doc of querySnapshot.docs) {
+        const message = { id: doc.id, ...doc.data() };
+        
+        // Only include messages between these two users
+        if (message.participants.includes(userId2)) {
+          // Decrypt message if it's encrypted
+          if (message.isEncrypted && message.text) {
+            try {
+              const decryptedText = await encryptionService.decryptMessage(message.text, message.senderId);
+              message.text = decryptedText;
+              console.log('✅ Message decrypted for display');
+            } catch (decryptError) {
+              console.warn('⚠️ Decryption failed:', decryptError);
+              message.text = '[Encrypted message - decryption failed]';
+            }
+          }
+          
+          messages.push(message);
+        }
+      }
+      
+      return messages;
     } catch (error) {
       console.error('Error getting messages:', error);
       throw error;

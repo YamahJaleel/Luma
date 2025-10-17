@@ -17,6 +17,7 @@ To create a truly protected space in the dating world where women can share expe
 
 ### 💬 Messaging System
 - **Secure Messaging**: Direct messaging between community members
+- **End-to-End Encryption**: Messages are encrypted using AES-256 encryption
 - **Real-time Chat**: Firebase-powered instant messaging
 - **Message Threads**: Organized conversation management
 - **User Search**: Find and message other community members
@@ -126,6 +127,7 @@ Women aged 18-40 who use dating platforms and want to:
 - **Storage**: Firebase Storage
 - **Real-time**: Firestore onSnapshot listeners
 - **Push Notifications**: Expo Notifications
+- **Encryption**: AES-256 message encryption
 
 ### Development Tools
 - **Package Manager**: npm
