@@ -1,0 +1,31 @@
+{
+  "name": "screen-protection",
+  "version": "1.0.0",
+  "description": "Screen protection module for Luma app - prevents screenshots and screen recording",
+  "main": "modules/ScreenProtectionModule.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react-native",
+    "screen-protection",
+    "screenshot",
+    "security",
+    "privacy"
+  ],
+  "author": "Luma Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": ">=0.60.0"
+  },
+  "react-native": {
+    "android": {
+      "sourceDir": "./android",
+      "packageImportPath": "com.luma.dating.screenprotection"
+    },
+    "ios": {
+      "sourceDir": "./ios",
+      "podspecPath": "./ios/ScreenProtection.podspec"
+    }
+  }
+}

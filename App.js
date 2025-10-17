@@ -13,6 +13,7 @@ import { FirebaseProvider, useFirebase } from './contexts/FirebaseContext';
 // AuthContext removed; use FirebaseContext instead
 import TabNavigator from './components/MainStackNavigator';
 import notificationService from './services/notificationService';
+import ScreenProtectionModule from './modules/ScreenProtectionModule';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import CreateAccountScreen from './screens/CreateAccountScreen';
@@ -103,6 +104,30 @@ const AppContent = () => {
   const theme = darkModeEnabled ? darkTheme : lightTheme;
   const { isOnboarded } = useOnboarding();
   const { user } = useFirebase();
+
+  // Initialize screen protection when app starts
+  React.useEffect(() => {
+    const initializeScreenProtection = async () => {
+      try {
+        // Check if screen protection is supported on this platform
+        if (ScreenProtectionModule.isSupported()) {
+          // Enable screen protection globally
+          const enabled = await ScreenProtectionModule.enable();
+          if (enabled) {
+            console.log('✅ Screen Protection enabled globally');
+          } else {
+            console.log('⚠️ Screen Protection failed to enable');
+          }
+        } else {
+          console.log('⚠️ Screen Protection not supported on this platform');
+        }
+      } catch (error) {
+        console.error('❌ Error initializing Screen Protection:', error);
+      }
+    };
+
+    initializeScreenProtection();
+  }, []);
 
   React.useEffect(() => {
     const initializeNotifications = async () => {
