@@ -243,31 +243,79 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [messageText, setMessageText] = useState('');
   const [messageRecipient, setMessageRecipient] = useState(null);
   
-  // Flag state
-  const getSimulatedVoteCounts = (profileId) => {
-    const voteCounts = {
-      1: { green: 12, red: 8 },    // Tyler Bradshaw - mixed reviews
-      2: { green: 25, red: 3 },    // Jake Thompson - mostly positive
-      3: { green: 2, red: 18 },    // Mike Johnson - mostly negative
-      4: { green: 28, red: 1 },    // Ryan Miller - very positive
-      5: { green: 15, red: 6 },    // Brian Ochieng - mixed
-      6: { green: 32, red: 2 },    // Chris Anderson - very positive
-      7: { green: 8, red: 12 },    // Raj Patel - mixed negative
-      8: { green: 1, red: 22 },    // Brandon Green - very negative
-      9: { green: 19, red: 4 },    // James Brown - positive
-      10: { green: 11, red: 9 },   // Kevin Davis - mixed
-    };
-    return voteCounts[profileId] || { green: 0, red: 0 };
-  };
-
-  const simulatedCounts = getSimulatedVoteCounts(profile?.id);
-  const [greenFlagCount, setGreenFlagCount] = useState(simulatedCounts.green);
-  const [redFlagCount, setRedFlagCount] = useState(simulatedCounts.red);
+  // Voting state
+  const [positiveVoteCount, setPositiveVoteCount] = useState(profile?.positiveVoteCount || 0);
+  const [negativeVoteCount, setNegativeVoteCount] = useState(profile?.negativeVoteCount || 0);
+  const [userVote, setUserVote] = useState(null); // 'positive', 'negative', or null
+  const [isVoting, setIsVoting] = useState(false);
   const [thumbAnimations, setThumbAnimations] = useState({}); // Track thumb animations for each comment
-  const [userGreenFlag, setUserGreenFlag] = useState(false);
-  const [userRedFlag, setUserRedFlag] = useState(false);
   // Play intro thumb animations once on screen load
   const [hasPlayedIntroThumbs, setHasPlayedIntroThumbs] = useState(false);
+
+  // Load user's vote when component mounts
+  useEffect(() => {
+    const loadUserVote = async () => {
+      if (!profile?.id || !auth.currentUser) return;
+      
+      try {
+        const vote = await profileService.getUserVote(profile.id, auth.currentUser.uid);
+        setUserVote(vote);
+      } catch (error) {
+        console.error('Error loading user vote:', error);
+      }
+    };
+
+    loadUserVote();
+  }, [profile?.id]);
+
+  // Handle voting on profile
+  const handleVote = async (voteType) => {
+    if (!profile?.id || !auth.currentUser || isVoting) return;
+
+    setIsVoting(true);
+    
+    try {
+      const result = await profileService.voteProfile(profile.id, auth.currentUser.uid, voteType);
+      
+      // Update local state based on result
+      if (result.action === 'added') {
+        setUserVote(voteType);
+        if (voteType === 'positive') {
+          setPositiveVoteCount(prev => prev + 1);
+        } else {
+          setNegativeVoteCount(prev => prev + 1);
+        }
+      } else if (result.action === 'removed') {
+        setUserVote(null);
+        if (voteType === 'positive') {
+          setPositiveVoteCount(prev => prev - 1);
+        } else {
+          setNegativeVoteCount(prev => prev - 1);
+        }
+      } else if (result.action === 'changed') {
+        setUserVote(voteType);
+        if (voteType === 'positive') {
+          setPositiveVoteCount(prev => prev + 1);
+          setNegativeVoteCount(prev => prev - 1);
+        } else {
+          setPositiveVoteCount(prev => prev - 1);
+          setNegativeVoteCount(prev => prev + 1);
+        }
+      }
+
+      // Trigger animation
+      setThumbAnimations(prev => ({
+        ...prev,
+        [voteType]: Date.now()
+      }));
+
+    } catch (error) {
+      console.error('Error voting on profile:', error);
+      Alert.alert('Error', 'Failed to vote. Please try again.');
+    } finally {
+      setIsVoting(false);
+    }
+  };
 
   useEffect(() => {
     if (!hasPlayedIntroThumbs) {
@@ -536,42 +584,16 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleGreenFlag = () => {
-    if (userGreenFlag) {
-      // Remove green flag
-      setUserGreenFlag(false);
-      setGreenFlagCount(prev => Math.max(0, prev - 1));
-    } else {
-      // Add green flag
-      setUserGreenFlag(true);
-      setGreenFlagCount(prev => prev + 1);
-      // Play thumb up animation
-      thumbUpAnimationRef.current?.play();
-      // Remove red flag if it was set
-      if (userRedFlag) {
-        setUserRedFlag(false);
-        setRedFlagCount(prev => Math.max(0, prev - 1));
-      }
-    }
+  const handlePositiveVote = () => {
+    handleVote('positive');
+    // Play thumb up animation
+    thumbUpAnimationRef.current?.play();
   };
 
-  const handleRedFlag = () => {
-    if (userRedFlag) {
-      // Remove red flag
-      setUserRedFlag(false);
-      setRedFlagCount(prev => Math.max(0, prev - 1));
-    } else {
-      // Add red flag
-      setUserRedFlag(true);
-      setRedFlagCount(prev => prev + 1);
-      // Play thumb down animation
-      thumbDownAnimationRef.current?.play();
-      // Remove green flag if it was set
-      if (userGreenFlag) {
-        setUserGreenFlag(false);
-        setGreenFlagCount(prev => Math.max(0, prev - 1));
-      }
-    }
+  const handleNegativeVote = () => {
+    handleVote('negative');
+    // Play thumb down animation
+    thumbDownAnimationRef.current?.play();
   };
 
   const toggleDropdown = (commentId) => {
@@ -937,9 +959,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                   <TouchableOpacity 
                     style={[
                       styles.flagButton, 
-                      styles.greenFlagButton
+                      styles.greenFlagButton,
+                      userVote === 'positive' && styles.activeVoteButton
                     ]} 
-                    onPress={handleGreenFlag}
+                    onPress={handlePositiveVote}
+                    disabled={isVoting}
                   >
                     <LottieView
                       ref={thumbUpAnimationRef}
@@ -953,7 +977,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                     styles.flagCountText,
                     { color: theme.colors.primary }
                   ]}>
-                    {greenFlagCount}
+                    {positiveVoteCount}
                   </Text>
                 </View>
                 
@@ -961,9 +985,11 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                   <TouchableOpacity 
                     style={[
                       styles.flagButton, 
-                      styles.redFlagButton
+                      styles.redFlagButton,
+                      userVote === 'negative' && styles.activeVoteButton
                     ]} 
-                    onPress={handleRedFlag}
+                    onPress={handleNegativeVote}
+                    disabled={isVoting}
                   >
                     <LottieView
                       ref={thumbDownAnimationRef}
@@ -977,7 +1003,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                     styles.flagCountText,
                     { color: theme.colors.primary }
                   ]}>
-                    {redFlagCount}
+                    {negativeVoteCount}
                   </Text>
                 </View>
               </View>
@@ -1519,6 +1545,11 @@ const styles = StyleSheet.create({
   },
   flagButtonActive: {
     // This will be overridden by specific button styles
+  },
+  activeVoteButton: {
+    backgroundColor: 'rgba(62, 95, 68, 0.1)',
+    borderColor: '#3E5F44',
+    borderWidth: 2,
   },
   flagButtonText: {
     fontSize: 14,

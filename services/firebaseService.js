@@ -36,7 +36,8 @@ const COLLECTIONS = {
   USER_PROFILES: 'userProfiles',
   USER_POSTS: 'userPosts',
   USER_COMMENTS: 'userComments',
-  LIKED_POSTS: 'likedPosts'
+  LIKED_POSTS: 'likedPosts',
+  PROFILE_VOTES: 'profileVotes'
 };
 
 // Profile operations
@@ -46,6 +47,9 @@ export const profileService = {
     try {
       const docRef = await addDoc(collection(db, COLLECTIONS.PROFILES), {
         ...profileData,
+        // Initialize voting fields
+        positiveVoteCount: 0,
+        negativeVoteCount: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -99,18 +103,137 @@ export const profileService = {
     }
   },
 
-  // Atomically increment/decrement flag counts
-  incrementFlags: async (profileId, deltaGreen = 0, deltaRed = 0) => {
+  // Atomically increment/decrement vote counts
+  incrementVotes: async (profileId, deltaPositive = 0, deltaNegative = 0) => {
     try {
       const docRef = doc(db, COLLECTIONS.PROFILES, profileId);
       const update = {};
-      if (deltaGreen !== 0) update.greenFlagCount = increment(deltaGreen);
-      if (deltaRed !== 0) update.redFlagCount = increment(deltaRed);
+      if (deltaPositive !== 0) update.positiveVoteCount = increment(deltaPositive);
+      if (deltaNegative !== 0) update.negativeVoteCount = increment(deltaNegative);
       if (Object.keys(update).length > 0) {
         await updateDoc(docRef, update);
       }
     } catch (error) {
-      console.error('Error incrementing flags:', error);
+      console.error('Error incrementing votes:', error);
+      throw error;
+    }
+  },
+
+  // Vote on a profile (positive or negative)
+  voteProfile: async (profileId, userId, voteType) => {
+    try {
+      const voteId = `${profileId}_${userId}`;
+      const voteRef = doc(db, COLLECTIONS.PROFILE_VOTES, voteId);
+      const profileRef = doc(db, COLLECTIONS.PROFILES, profileId);
+
+      // Check if user already voted
+      const existingVote = await getDoc(voteRef);
+      
+      if (existingVote.exists()) {
+        const currentVote = existingVote.data().voteType;
+        
+        // If same vote type, remove the vote
+        if (currentVote === voteType) {
+          await deleteDoc(voteRef);
+          
+          // Decrement the appropriate counter
+          if (voteType === 'positive') {
+            await updateDoc(profileRef, { positiveVoteCount: increment(-1) });
+          } else {
+            await updateDoc(profileRef, { negativeVoteCount: increment(-1) });
+          }
+          
+          return { action: 'removed', voteType: null };
+        } else {
+          // Change vote type
+          await updateDoc(voteRef, { 
+            voteType, 
+            updatedAt: serverTimestamp() 
+          });
+          
+          // Update counters
+          if (currentVote === 'positive') {
+            await updateDoc(profileRef, { 
+              positiveVoteCount: increment(-1),
+              negativeVoteCount: increment(1)
+            });
+          } else {
+            await updateDoc(profileRef, { 
+              positiveVoteCount: increment(1),
+              negativeVoteCount: increment(-1)
+            });
+          }
+          
+          return { action: 'changed', voteType };
+        }
+      } else {
+        // Create new vote
+        await setDoc(voteRef, {
+          profileId,
+          userId,
+          voteType,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        // Increment the appropriate counter
+        if (voteType === 'positive') {
+          await updateDoc(profileRef, { positiveVoteCount: increment(1) });
+        } else {
+          await updateDoc(profileRef, { negativeVoteCount: increment(1) });
+        }
+        
+        return { action: 'added', voteType };
+      }
+    } catch (error) {
+      console.error('Error voting on profile:', error);
+      throw error;
+    }
+  },
+
+  // Get user's vote on a profile
+  getUserVote: async (profileId, userId) => {
+    try {
+      const voteId = `${profileId}_${userId}`;
+      const voteRef = doc(db, COLLECTIONS.PROFILE_VOTES, voteId);
+      const voteDoc = await getDoc(voteRef);
+      
+      if (voteDoc.exists()) {
+        return voteDoc.data().voteType;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user vote:', error);
+      throw error;
+    }
+  },
+
+  // Get all votes for a profile
+  getProfileVotes: async (profileId) => {
+    try {
+      const votesQuery = query(
+        collection(db, COLLECTIONS.PROFILE_VOTES),
+        where('profileId', '==', profileId)
+      );
+      const votesSnapshot = await getDocs(votesQuery);
+      
+      const votes = {
+        positive: [],
+        negative: []
+      };
+      
+      votesSnapshot.docs.forEach(doc => {
+        const voteData = doc.data();
+        votes[voteData.voteType].push({
+          id: doc.id,
+          userId: voteData.userId,
+          createdAt: voteData.createdAt?.toDate()
+        });
+      });
+      
+      return votes;
+    } catch (error) {
+      console.error('Error getting profile votes:', error);
       throw error;
     }
   },
@@ -145,6 +268,26 @@ export const profileService = {
       } catch (commentError) {
         console.warn('⚠️ Failed to delete profile comments:', commentError);
         // Continue with profile deletion even if comment deletion fails
+      }
+
+      // Delete all votes related to this profile
+      try {
+        const votesQuery = query(
+          collection(db, COLLECTIONS.PROFILE_VOTES),
+          where('profileId', '==', profileId)
+        );
+        const votesSnapshot = await getDocs(votesQuery);
+        
+        // Delete all votes in parallel
+        const deleteVotePromises = votesSnapshot.docs.map(voteDoc => 
+          deleteDoc(doc(db, COLLECTIONS.PROFILE_VOTES, voteDoc.id))
+        );
+        await Promise.all(deleteVotePromises);
+        
+        console.log(`✅ Deleted ${votesSnapshot.docs.length} votes for profile ${profileId}`);
+      } catch (voteError) {
+        console.warn('⚠️ Failed to delete profile votes:', voteError);
+        // Continue with profile deletion even if vote deletion fails
       }
 
       // Delete the profile document
