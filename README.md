@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/AppIcon.png" alt="Luma App Icon" width="200" height="200">
+  <img src="assets/AppIcon.png" alt="Luma App Icon" width="300" height="300">
 </div>
 
 # Luma - Safety-First Dating
@@ -442,4 +442,4 @@ This app showcases skills that many developers take years to develop. You've ess
 
 **Luma - Empowering women through community-driven safety** 💜
 
-*Last Updated: October 17th 2025*
+*Last Updated: October 20th, 2025*
