@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/AppIcon.png" alt="Luma App Icon" width="120" height="120">
+  <img src="assets/AppIcon.png" alt="Luma App Icon" width="200" height="200">
 </div>
 
 # Luma - Safety-First Dating
