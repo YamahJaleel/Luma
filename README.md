@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="assets/AppIcon.png" alt="Luma App Icon" width="120" height="120">
+</div>
+
 # Luma - Safety-First Dating
 
 Luma is a comprehensive safety-focused platform that empowers women to share experiences, verify concerns, and navigate the dating world with confidence through community-driven insights and anonymous reporting.
