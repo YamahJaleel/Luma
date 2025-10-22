@@ -1,9 +1,10 @@
 <div align="center">
+  <h2>App Icon</h2>
   <img src="assets/AppIcon.png" alt="Luma App Icon" width="300" height="300">
 </div>
 
 <div align="center">
-  <h3>App Preview</h3>
+  <h2>App Preview</h2>
   <img src="assets/Preview 1.png" alt="Luma App Preview 1" width="200" height="400" style="margin: 10px;">
   <img src="assets/Preview 2.png" alt="Luma App Preview 2" width="200" height="400" style="margin: 10px;">
   <img src="assets/Preview 3.png" alt="Luma App Preview 3" width="200" height="400" style="margin: 10px;">
