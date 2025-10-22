@@ -2,6 +2,15 @@
   <img src="assets/AppIcon.png" alt="Luma App Icon" width="300" height="300">
 </div>
 
+<div align="center">
+  <h3>App Preview</h3>
+  <img src="assets/Preview 1.png" alt="Luma App Preview 1" width="200" height="400" style="margin: 10px;">
+  <img src="assets/Preview 2.png" alt="Luma App Preview 2" width="200" height="400" style="margin: 10px;">
+  <img src="assets/Preview 3.png" alt="Luma App Preview 3" width="200" height="400" style="margin: 10px;">
+  <img src="assets/Preview 4.png" alt="Luma App Preview 4" width="200" height="400" style="margin: 10px;">
+  <img src="assets/Preview 5.png" alt="Luma App Preview 5" width="200" height="400" style="margin: 10px;">
+</div>
+
 # Luma - Safety-First Dating
 
 Luma is a comprehensive safety-focused platform that empowers women to share experiences, verify concerns, and navigate the dating world with confidence through community-driven insights and anonymous reporting.
