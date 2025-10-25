@@ -11,13 +11,13 @@
   <img src="assets/Preview 4.png" alt="Luma App Preview 4" width="200" height="400" style="margin: 10px;">
 </div>
 
-# Luma - Safety-First Dating
+# Luma
 
-Luma is a comprehensive safety-focused platform that empowers women to share experiences, verify concerns, and navigate the dating world with confidence through community-driven insights and anonymous reporting.
+Luma is a comprehensive safety-focused platform that empowers people to share experiences, verify concerns, and navigate the dating world with confidence through community-driven insights and anonymous reporting.
 
 ## 🛡️ Mission
 
-To create a truly protected space in the dating world where women can share experiences, verify concerns, and feel empowered without fear of exposure. We believe in community-driven safety through anonymous experience sharing and verification.
+To create a truly protected space in the dating world where people can share experiences, verify concerns, and feel empowered without fear of exposure. We believe in community-driven safety through anonymous experience sharing and verification.
 
 ## ✨ Core Features
 
@@ -69,7 +69,7 @@ To create a truly protected space in the dating world where women can share expe
 
 ## 🎯 Target Audience
 
-Women aged 18-40 who use dating platforms and want to:
+People aged 18-40 who use dating platforms and want to:
 - Verify potential partners before meeting
 - Share experiences safely and anonymously
 - Access community-driven safety insights
@@ -449,6 +449,6 @@ This app showcases skills that many developers take years to develop. You've ess
 
 ---
 
-**Luma - Empowering women through community-driven safety** 💜
+**Luma - Empowering people through community-driven safety** 💜
 
 *Last Updated: October 20th, 2025*
