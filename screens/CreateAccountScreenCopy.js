@@ -131,9 +131,11 @@ const CreateAccountScreenCopy = ({ navigation }) => {
 
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
 
-      // After account creation, navigate to license verification
+      // After account creation, navigate to main app
       const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-      navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
+      Alert.alert('Account Created!', 'Welcome to Luma! Your account has been created successfully.');
+      setIsOnboarded(true);
+      setCurrentTab('Home');
       
       // Clear form after successful account creation
       setFormData({
@@ -234,9 +236,8 @@ const CreateAccountScreenCopy = ({ navigation }) => {
           <TouchableOpacity
             style={styles.skipButton}
             onPress={() => {
-              // Skip account creation and go to license verification
-              const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
-              navigation.navigate('LicenseVerification', { signupName: fullName || formData.pseudonym });
+              // Skip account creation and go to sign in
+              navigation.navigate('SignIn');
             }}
           >
             <Text style={styles.skipButtonText}>Skip</Text>

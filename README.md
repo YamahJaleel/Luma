@@ -17,11 +17,11 @@ Luma is a comprehensive safety-focused platform that empowers people to share ex
 
 ## 🛡️ Mission
 
-To create a truly protected space in the dating world where people can share experiences, verify concerns, and feel empowered without fear of exposure. We believe in community-driven safety through anonymous experience sharing and verification.
+To create a truly protected space in the dating world where people can share experiences and feel empowered without fear of exposure. We believe in community-driven safety through anonymous experience sharing.
 
 ## ✨ Core Features
 
-### 🔍 Profile Search & Verification
+### 🔍 Profile Search & Community Insights
 - **Advanced Profile Search**: Search for names to see community experiences and reports
 - **Risk Assessment**: Comprehensive risk level indicators (Green, Yellow, Red flags)
 - **Community Insights**: AI-powered overviews summarizing community feedback
@@ -49,7 +49,7 @@ To create a truly protected space in the dating world where people can share exp
 - **Push Notifications**: Stay updated with important community activity
 
 ### 👤 User Management
-- **Profile Management**: Comprehensive user profiles with verification
+- **Profile Management**: Comprehensive user profiles
 - **Activity Tracking**: View your created posts, profiles, and comments
 - **Settings & Privacy**: Granular privacy controls and preferences
 - **Authentication**: Secure Firebase authentication with Google Sign-In
@@ -98,7 +98,7 @@ People aged 18-40 who use dating platforms and want to:
 - **OnboardingScreen**: Welcome flow and app introduction
 - **SignInScreen**: User authentication
 - **CreateAccountScreen**: Account creation
-- **VerificationScreen**: Phone/email verification
+- **VerificationScreen**: Account verification
 
 ### Settings & Management Screens
 
@@ -321,13 +321,13 @@ App/
 - **Anonymous Posting**: Complete anonymity for community posts
 - **Data Encryption**: Secure data handling and storage
 - **Privacy Controls**: Granular privacy settings
-- **User Verification**: Account verification system
+- **User Authentication**: Secure account system
 
 ## 🔮 Future Roadmap
 
 ### Phase 3 - Advanced Features
 - **AI-Powered Insights**: Enhanced AI analysis of community data
-- **Video Verification**: Video-based profile verification
+- **Video Features**: Video-based profile features
 - **Location Safety**: Location-based safety alerts and features
 - **Emergency Integration**: Emergency contact and safety features
 
@@ -351,7 +351,7 @@ For support and questions:
 - **No Personal Data**: No personal information is stored or shared
 - **End-to-End Encryption**: All data is encrypted in transit and at rest
 - **Optional Location**: Location services are optional and require explicit consent
-- **User Verification**: Multi-layer verification prevents abuse
+- **User Authentication**: Multi-layer authentication prevents abuse
 - **Data Control**: Users have complete control over their data
 
 ---

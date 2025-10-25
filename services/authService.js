@@ -7,7 +7,6 @@ import {
   updateProfile,
   updatePassword,
   sendPasswordResetEmail,
-  sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
@@ -33,9 +32,8 @@ export const authService = {
         displayName: displayName
       });
       
-      // Send email verification
-      await sendEmailVerification(user);
-      console.log("✅ Verification email sent to:", user.email);
+      // Account created successfully
+      console.log("✅ Account created for:", user.email);
       
       return user;
     } catch (error) {
@@ -142,19 +140,6 @@ export const authService = {
     }
   },
 
-  // Send email verification
-  sendEmailVerification: async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        await sendEmailVerification(user);
-      }
-      throw new Error('No user is currently signed in');
-    } catch (error) {
-      console.error('Error sending email verification:', error);
-      throw error;
-    }
-  },
 
   // Anonymous sign-in
   signInAnonymously: async () => {

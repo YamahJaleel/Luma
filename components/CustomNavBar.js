@@ -45,7 +45,6 @@ const CustomNavBar = () => {
           route?.name === 'ProfileDetail' ||
           route?.name === 'SignInCopy' ||
           route?.name === 'CreateAccountCopy' ||
-          route?.name === 'LicenseVerification' ||
           route?.name === 'Congrats' ||
           route?.name === 'CreatePost' ||
           route?.name === 'CreateProfile'

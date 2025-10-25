@@ -120,26 +120,17 @@ const CreateAccountScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      // Save form data temporarily - Firebase account will be created after gender verification
-      const userData = {
-        ...formData,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        isVerified: false,
-        pendingVerification: true, // Flag to indicate account creation is pending verification
-      };
-
-      await AsyncStorage.setItem('pendingUserData', JSON.stringify(userData));
-      
-      console.log('📝 Form data saved temporarily, proceeding to gender verification');
-
-      // Navigate to gender verification - Firebase account will be created after verification passes
-      navigation.navigate('LicenseVerification', { 
-        signupName: formData.pseudonym,
-        pendingUserData: userData 
+      // Create Firebase account directly
+      await createAccount(formData.email, formData.password, {
+        displayName: formData.pseudonym,
+        dateOfBirth: formData.dateOfBirth,
       });
       
-      // Clear form after navigation
+      Alert.alert('Account Created!', 'Welcome to Luma! Your account has been created successfully.');
+      setIsOnboarded(true);
+      setCurrentTab('Home');
+      
+      // Clear form after successful creation
       setFormData({
         email: '',
         password: '',
@@ -148,8 +139,22 @@ const CreateAccountScreen = ({ navigation }) => {
         dateOfBirth: '',
       });
     } catch (error) {
-      console.error('Error saving form data:', error);
-      Alert.alert('Error', 'Failed to save data. Please try again.');
+      console.error('Error creating account:', error);
+      
+      // Handle specific Firebase auth errors
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address. Please check your email.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection.';
+      }
+      
+      Alert.alert('Account Creation Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -237,8 +242,8 @@ const CreateAccountScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.skipButton}
             onPress={() => {
-              // Skip account creation and go to gender verification  
-              navigation.navigate('LicenseVerification', { signupName: formData.pseudonym });
+              // Skip account creation and go to sign in
+              navigation.navigate('SignIn');
             }}
           >
             <Text style={styles.skipButtonText}>Skip</Text>

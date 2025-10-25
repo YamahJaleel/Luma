@@ -103,7 +103,6 @@ const UserScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Verification removed: already performed during sign-up */}
 
       {/* Activity link (hidden, merged into Quick Links) */}
       {false && (

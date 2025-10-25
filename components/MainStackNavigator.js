@@ -23,7 +23,6 @@ import CreateCommunityScreen from '../screens/CreateCommunityScreen';
 import ProfileDetailScreen from '../screens/ProfileDetailScreen';
 import CommunityNotificationSettingsScreen from '../screens/CommunityNotificationSettingsScreen';
 import VideoScrollScreen from '../screens/VideoScrollScreen';
-import LicenseVerificationScreen from '../screens/VerificationScreen';
 import LumaAIScreen from '../screens/LumaAIScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
@@ -97,7 +96,6 @@ const MainStackNavigator = () => {
         <Stack.Screen name="MessageThread" component={MessageThreadScreen} />
         <Stack.Screen name="CreateCommunity" component={CreateCommunityScreen} />
         <Stack.Screen name="CommunityNotificationSettings" component={CommunityNotificationSettingsScreen} />
-        <Stack.Screen name="LicenseVerification" component={LicenseVerificationScreen} />
         <Stack.Screen name="LumaAI" component={LumaAIScreen} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />

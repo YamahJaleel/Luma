@@ -20,7 +20,6 @@ import SignInScreen from './screens/SignInScreen';
 import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import ProfileDetailScreen from './screens/ProfileDetailScreen';
-import LicenseVerificationScreen from './screens/VerificationScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import CongratsScreen from './screens/CongratsScreen';
@@ -154,10 +153,6 @@ const AppContent = () => {
                   component={CreateAccountScreen}
                 />
                 <Stack.Screen 
-                  name="LicenseVerification" 
-                  component={LicenseVerificationScreen}
-                />
-                <Stack.Screen 
                   name="Congrats" 
                   component={CongratsScreen}
                 />
@@ -190,10 +185,6 @@ const AppContent = () => {
                 <Stack.Screen 
                   name="CreateAccount" 
                   component={CreateAccountScreen}
-                />
-                <Stack.Screen 
-                  name="LicenseVerification" 
-                  component={LicenseVerificationScreen}
                 />
                 <Stack.Screen 
                   name="TermsOfService"
