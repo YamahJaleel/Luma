@@ -200,9 +200,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     return s.length <= maxLen ? s : s.slice(0, maxLen - 1) + '…';
   };
 
-  const [aiOverview, setAiOverview] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState(null);
 
   // Simple AI overview text synthesized from profile signals
   const overviewText = (() => {
@@ -243,149 +240,15 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [messageText, setMessageText] = useState('');
   const [messageRecipient, setMessageRecipient] = useState(null);
   
-  // Voting state
-  const [positiveVoteCount, setPositiveVoteCount] = useState(profile?.positiveVoteCount || 0);
-  const [negativeVoteCount, setNegativeVoteCount] = useState(profile?.negativeVoteCount || 0);
-  const [userVote, setUserVote] = useState(null); // 'positive', 'negative', or null
-  const [isVoting, setIsVoting] = useState(false);
-  const [thumbAnimations, setThumbAnimations] = useState({}); // Track thumb animations for each comment
-  // Play intro thumb animations once on screen load
-  const [hasPlayedIntroThumbs, setHasPlayedIntroThumbs] = useState(false);
 
-  // Load user's vote when component mounts
-  useEffect(() => {
-    const loadUserVote = async () => {
-      if (!profile?.id || !auth.currentUser) return;
-      
-      try {
-        const vote = await profileService.getUserVote(profile.id, auth.currentUser.uid);
-        setUserVote(vote);
-      } catch (error) {
-        console.error('Error loading user vote:', error);
-      }
-    };
 
-    loadUserVote();
-  }, [profile?.id]);
-
-  // Handle voting on profile
-  const handleVote = async (voteType) => {
-    if (!profile?.id || !auth.currentUser || isVoting) return;
-
-    setIsVoting(true);
-    
-    try {
-      const result = await profileService.voteProfile(profile.id, auth.currentUser.uid, voteType);
-      
-      // Update local state based on result
-      if (result.action === 'added') {
-        setUserVote(voteType);
-        if (voteType === 'positive') {
-          setPositiveVoteCount(prev => prev + 1);
-        } else {
-          setNegativeVoteCount(prev => prev + 1);
-        }
-      } else if (result.action === 'removed') {
-        setUserVote(null);
-        if (voteType === 'positive') {
-          setPositiveVoteCount(prev => prev - 1);
-        } else {
-          setNegativeVoteCount(prev => prev - 1);
-        }
-      } else if (result.action === 'changed') {
-        setUserVote(voteType);
-        if (voteType === 'positive') {
-          setPositiveVoteCount(prev => prev + 1);
-          setNegativeVoteCount(prev => prev - 1);
-        } else {
-          setPositiveVoteCount(prev => prev - 1);
-          setNegativeVoteCount(prev => prev + 1);
-        }
-      }
-
-      // Trigger animation
-      setThumbAnimations(prev => ({
-        ...prev,
-        [voteType]: Date.now()
-      }));
-
-    } catch (error) {
-      console.error('Error voting on profile:', error);
-      Alert.alert('Error', 'Failed to vote. Please try again.');
-    } finally {
-      setIsVoting(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!hasPlayedIntroThumbs) {
-      const timer = setTimeout(() => {
-        try {
-          thumbUpAnimationRef.current?.reset?.();
-          thumbUpAnimationRef.current?.play?.();
-          thumbDownAnimationRef.current?.reset?.();
-          thumbDownAnimationRef.current?.play?.();
-        } catch (_) {}
-        setHasPlayedIntroThumbs(true);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [hasPlayedIntroThumbs]);
-  
-  // Lottie animation refs
-  const thumbUpAnimationRef = useRef(null);
-  const thumbDownAnimationRef = useRef(null);
-  
   // Animation values
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-  const aiBoxWidth = useSharedValue(200);
-  const aiBoxHeight = useSharedValue(80);
-  const aiBoxX = useSharedValue(0);
-  const aiBoxY = useSharedValue(0);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const smallAICardRef = useRef(null);
-  const [inlineAICardLayout, setInlineAICardLayout] = useState(null);
   const flatComments = useMemo(() => {
     // Only use Firebase comments - no mock data
       return firebaseComments.map(comment => ({ node: comment, depth: 0 }));
   }, [firebaseComments]);
 
-  // Build AI prompt and fetch overview from first 6 top-level comments
-  const requestAiOverview = async () => {
-    try {
-      setAiError(null);
-      setAiLoading(true);
-
-      // Gather first up to 6 top-level comments (exclude owner-note)
-      const topLevel = (comments || []).filter((c) => c.id !== 'owner-note').slice(0, 6);
-      // Require at least 6 posts to generate an overview
-      if (topLevel.length < 6) {
-        setAiOverview('');
-        setAiError('Looks a little quiet right now, come back after more activity');
-        setAiLoading(false);
-        return;
-      }
-
-      const summaries = topLevel.map((c, idx) => `${idx + 1}. ${shortenText(c.text, 200)}`);
-      const prompt = `You are Luma AI. Read the comments and extract ONLY the 4-7 most important, distinct bullet points.\n- Output format: one line per bullet, no numbering, no emojis, no bold, no preface or conclusion.\n- Each bullet must be short (max 120 chars), clear, neutral, and safety-focused.\n- Capture themes, risks, and any positives.\n\nComments:\n${summaries.join('\n')}\n\nBullets:`;
-
-      const contents = [
-        {
-          role: 'user',
-          parts: [{ text: prompt }],
-        },
-      ];
-
-      const res = await axios.post(BACKEND_URL, { contents });
-      const reply = cleanResponse(res?.data?.reply || '');
-      setAiOverview(reply);
-    } catch (e) {
-      console.error('AI overview error:', e?.response?.data || e?.message);
-      setAiError('Failed to load AI overview');
-    } finally {
-      setAiLoading(false);
-    }
-  };
 
   const handleSend = async () => {
     const text = replyText.trim();
@@ -538,63 +401,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     setSelectedComment(null);
   };
 
-  const handleAIBoxPress = () => {
-    if (!aiOverview && !aiLoading) {
-      requestAiOverview();
-    }
-    if (!isExpanded) {
-      // Measure inline card to animate from its exact position
-      smallAICardRef.current?.measure?.((x, y, width, height, pageX, pageY) => {
-        setInlineAICardLayout({ x: pageX, y: pageY, width, height });
 
-        // Set starting values to match the inline card for a seamless start
-        aiBoxWidth.value = width || 200;
-        aiBoxHeight.value = height || 80;
-        aiBoxX.value = pageX || 0;
-        aiBoxY.value = pageY || 0;
-
-        // Show overlay at the measured position first
-        runOnJS(setIsExpanded)(true);
-
-        // Then animate smoothly to the centered square
-        const profilePictureSize = screenWidth - 40;
-        const targetX = (screenWidth - profilePictureSize) / 2;
-        const targetY = screenHeight * 0.6 - profilePictureSize / 2;
-
-        aiBoxWidth.value = withTiming(profilePictureSize, { duration: 260, easing: Easing.inOut(Easing.cubic) });
-        aiBoxHeight.value = withTiming(profilePictureSize, { duration: 260, easing: Easing.inOut(Easing.cubic) });
-        aiBoxX.value = withTiming(targetX, { duration: 260, easing: Easing.inOut(Easing.cubic) });
-        aiBoxY.value = withTiming(targetY, { duration: 260, easing: Easing.inOut(Easing.cubic) });
-      });
-    } else {
-      // Animate back smoothly to the inline card's position
-      const toX = inlineAICardLayout ? inlineAICardLayout.x : 0;
-      const toY = inlineAICardLayout ? inlineAICardLayout.y : 0;
-      const toW = inlineAICardLayout ? inlineAICardLayout.width : 200;
-      const toH = inlineAICardLayout ? inlineAICardLayout.height : 80;
-
-      aiBoxWidth.value = withTiming(toW, { duration: 260, easing: Easing.inOut(Easing.cubic) });
-      aiBoxHeight.value = withTiming(toH, { duration: 260, easing: Easing.inOut(Easing.cubic) });
-      aiBoxX.value = withTiming(toX, { duration: 260, easing: Easing.inOut(Easing.cubic) });
-      aiBoxY.value = withTiming(toY, { duration: 260, easing: Easing.inOut(Easing.cubic) }, (finished) => {
-        if (finished) {
-          runOnJS(setIsExpanded)(false);
-        }
-      });
-    }
-  };
-
-  const handlePositiveVote = () => {
-    handleVote('positive');
-    // Play thumb up animation
-    thumbUpAnimationRef.current?.play();
-  };
-
-  const handleNegativeVote = () => {
-    handleVote('negative');
-    // Play thumb down animation
-    thumbDownAnimationRef.current?.play();
-  };
 
   const toggleDropdown = (commentId) => {
     setDropdownVisible(dropdownVisible === commentId ? null : commentId);
@@ -905,109 +712,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           </View>
         </View>
         
-        {/* What People Are Saying and Flag Buttons */}
-        <View style={styles.feedbackContainer}>
-          {!isExpanded && (
-            <TouchableOpacity onPress={handleAIBoxPress} style={{ flex: 1 }}>
-              <View 
-                style={[
-                  styles.whatPeopleSayingBox, 
-                  { 
-                    backgroundColor: theme.colors.surface,
-                    width: '100%'
-                  }
-                ]}
-                ref={smallAICardRef}
-                onLayout={() => {
-                  try {
-                    smallAICardRef.current?.measure?.((x, y, width, height, pageX, pageY) => {
-                      setInlineAICardLayout({ x: pageX, y: pageY, width, height });
-                    });
-                  } catch {}
-                }}
-              >
-                <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>Luma AI</Text>
-                {aiLoading ? (
-                  <LottieView
-                    source={require('../assets/animations/Loading Dots Blue.json')}
-                    autoPlay
-                    loop
-                    style={{ width: 60, height: 24, alignSelf: 'flex-start' }}
-                  />
-                ) : aiError ? (
-                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>{aiError}</Text>
-                ) : !!aiOverview ? (
-                  <View>
-                    {aiOverview.split(/\r?\n/).filter(Boolean).slice(0, 4).map((line, idx) => (
-                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
-                        <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>• </Text>
-                        <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text, flex: 1 }]} numberOfLines={1}>
-                          {line.trim()}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                ) : (
-                  <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>Illuminate</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-          )}
-          
-            <View style={styles.flagButtonsContainerRight}>
-                <View style={styles.flagButtonWrapper}>
-                  <TouchableOpacity 
-                    style={[
-                      styles.flagButton, 
-                      styles.greenFlagButton,
-                      userVote === 'positive' && styles.activeVoteButton
-                    ]} 
-                    onPress={handlePositiveVote}
-                    disabled={isVoting}
-                  >
-                    <LottieView
-                      ref={thumbUpAnimationRef}
-                      source={require('../assets/animations/Thumb.json')}
-                      autoPlay={false}
-                      loop={false}
-                      style={styles.lottieAnimation}
-                    />
-                  </TouchableOpacity>
-                  <Text style={[
-                    styles.flagCountText,
-                    { color: theme.colors.primary }
-                  ]}>
-                    {positiveVoteCount}
-                  </Text>
-                </View>
-                
-                <View style={[styles.flagButtonWrapper, { marginLeft: -15 }]}>
-                  <TouchableOpacity 
-                    style={[
-                      styles.flagButton, 
-                      styles.redFlagButton,
-                      userVote === 'negative' && styles.activeVoteButton
-                    ]} 
-                    onPress={handleNegativeVote}
-                    disabled={isVoting}
-                  >
-                    <LottieView
-                      ref={thumbDownAnimationRef}
-                      source={require('../assets/animations/Thumb.json')}
-                      autoPlay={false}
-                      loop={false}
-                      style={[styles.lottieAnimation, { transform: [{ scaleX: -1 }, { scaleY: -1 }] }]}
-                    />
-                  </TouchableOpacity>
-                  <Text style={[
-                    styles.flagCountText,
-                    { color: theme.colors.primary }
-                  ]}>
-                    {negativeVoteCount}
-                  </Text>
-                </View>
-              </View>
-        </View>
 
 
         {/* Discussion */}
@@ -1035,50 +739,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
 
-      {/* Fullscreen overlay for expanded AI Overview */}
-      {isExpanded && (
-        <Animated.View
-          pointerEvents="auto"
-          style={[
-            styles.expandedAIOverlay,
-            {
-              width: aiBoxWidth,
-              height: aiBoxHeight,
-              transform: [
-                { translateX: aiBoxX },
-                { translateY: aiBoxY }
-              ]
-            }
-          ]}
-        >
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleAIBoxPress}>
-            <View style={[styles.expandedAIContent, { backgroundColor: theme.colors.surface }] }>
-               <Text style={[styles.whatPeopleSayingTitle, { color: theme.colors.text }]}>Luma AI</Text>
-              {aiLoading ? (
-                <LottieView
-                  source={require('../assets/animations/Loading Dots Blue.json')}
-                  autoPlay
-                  loop
-                  style={{ width: 100, height: 40, alignSelf: 'flex-start' }}
-                />
-              ) : aiError ? (
-                <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>{aiError}</Text>
-              ) : !!aiOverview ? (
-                <View>
-                  {aiOverview.split(/\r?\n/).filter(Boolean).map((line, idx) => (
-                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}>
-                      <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text }]}>• </Text>
-                      <Text style={[styles.whatPeopleSayingText, { color: theme.colors.text, flex: 1 }]}>
-                        {line.trim()}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
 
       <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
         {replyTarget && (
