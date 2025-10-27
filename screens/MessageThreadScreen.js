@@ -48,6 +48,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
   const [autoReplyTimeout, setAutoReplyTimeout] = useState(null);
   const [threadKey, setThreadKey] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+  const lastTypingUpdateRef = useRef(0);
 
   // Mark conversation as viewed when screen is focused
   useFocusEffect(
@@ -328,11 +329,18 @@ const MessageThreadScreen = ({ route, navigation }) => {
     // Optional: remove auto-reply simulation when using Firestore
   };
 
-  // Publish typing status when user types
+  // Publish typing status when user types (throttled to reduce Firebase writes)
   const onChangeDraft = (text) => {
     setDraft(text);
     if (!threadKey || !user?.uid) return;
-    typingService.setTyping(threadKey, user.uid, true);
+    
+    const now = Date.now();
+    // Only update Firebase at most once per 2 seconds while typing
+    if (now - lastTypingUpdateRef.current > 2000) {
+      typingService.setTyping(threadKey, user.uid, true);
+      lastTypingUpdateRef.current = now;
+    }
+    
     if (typingTimeout) clearTimeout(typingTimeout);
     const t = setTimeout(() => {
       typingService.setTyping(threadKey, user.uid, false);
