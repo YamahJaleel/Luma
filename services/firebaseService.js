@@ -66,10 +66,12 @@ export const profileService = {
   getProfiles: async () => {
     try {
       const querySnapshot = await getDocs(collection(db, COLLECTIONS.PROFILES));
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      return querySnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        .filter(profile => !profile.isHidden); // Filter out hidden profiles
     } catch (error) {
       console.error('Error getting profiles:', error);
       throw error;

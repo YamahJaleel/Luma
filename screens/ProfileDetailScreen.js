@@ -434,32 +434,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     );
   };
 
-  // Handle block user
-  const handleBlockUser = async () => {
-    Alert.alert(
-      'Block User',
-      'Are you sure you want to block this user? You won\'t see their content anymore.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Block', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await blockService.blockUser(auth.currentUser.uid, profile?.userId);
-              Alert.alert('User Blocked', 'This user has been blocked.', [
-                { text: 'OK', onPress: () => navigation.goBack() }
-              ]);
-            } catch (error) {
-              console.error('Error blocking user:', error);
-              Alert.alert('Error', 'Failed to block user. Please try again.');
-            }
-          }
-        }
-      ]
-    );
-  };
-
   const toggleDropdown = (commentId) => {
     setDropdownVisible(dropdownVisible === commentId ? null : commentId);
   };
@@ -741,13 +715,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                       <Ionicons name="flag-outline" size={16} color={theme.colors.primary} />
                       <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Report Profile</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
-                      onPress={handleBlockUser}
-                    >
-                      <Ionicons name="person-remove-outline" size={16} color="#EF4444" />
-                      <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Block User</Text>
-                    </TouchableOpacity>
                   </>
                 )}
               </View>
@@ -759,8 +726,6 @@ const ProfileDetailScreen = ({ route, navigation }) => {
       <ScrollView 
         style={styles.content} 
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!isExpanded}
-        {...(Platform.OS === 'ios' ? { bounces: !isExpanded } : {})}
         keyboardShouldPersistTaps="handled"
         // Web-specific scrolling fix
         {...(Platform.OS === 'web' && {
@@ -811,16 +776,19 @@ const ProfileDetailScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
 
-
-      <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
-        {replyTarget && (
+      {/* Replying to indicator above the input bar */}
+      {replyTarget && (
+        <View style={styles.replyingToContainer}>
           <View style={styles.replyingTo}>
             <Text style={[styles.replyingText, { color: theme.colors.text }]}>Replying to {replyTarget.author}</Text>
             <TouchableOpacity onPress={() => setReplyTarget(null)}>
               <Ionicons name="close" size={16} color={theme.colors.placeholder} />
             </TouchableOpacity>
           </View>
-        )}
+        </View>
+      )}
+
+      <View style={[styles.inputBar, { backgroundColor: theme.colors.surface }]}> 
         <TextInput
           style={[styles.input, { color: theme.colors.text }]}
           placeholder={replyTarget ? 'Write a reply...' : 'Share your experience'}
@@ -999,7 +967,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.1)',
   },
-  replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  replyingToContainer: { backgroundColor: '#F3F4F6', paddingHorizontal: 20, paddingVertical: 8 },
+  replyingTo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   replyingText: { fontSize: 13, fontWeight: '600' },
   input: { 
     flex: 1, 

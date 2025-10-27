@@ -1068,19 +1068,33 @@ const SearchScreen = ({ navigation, route }) => {
 
   // Render a profile square, allowing the grid to override the visual size to
   // enforce the established layout pattern (2 large, then 3 small)
-  const renderProfileSquare = ({ item, overrideSize }) => (
-    <TouchableOpacity 
-      style={[styles.profileSquare, getSizeStyle(overrideSize || item.size)]} 
-      activeOpacity={0.9}
-    >
-      <Image source={getAvatarSource((item.id || 1) - 1, item.avatar)} style={styles.profileImage} />
-    </TouchableOpacity>
-  );
+  const renderProfileSquare = ({ item, overrideSize }) => {
+    const isOriginalProfile = item.id >= 1 && item.id <= 10;
+    
+    return (
+      <TouchableOpacity 
+        style={[styles.profileSquare, getSizeStyle(overrideSize || item.size)]} 
+        activeOpacity={0.9}
+        onPress={() => {
+          // Only navigate if it's NOT one of the original 10 profiles
+          if (!isOriginalProfile) {
+            navigation.navigate('ProfileDetail', { profile: item });
+          }
+        }}
+      >
+        <Image source={getAvatarSource((item.id || 1) - 1, item.avatar)} style={styles.profileImage} />
+      </TouchableOpacity>
+    );
+  };
 
   // Apply location filter first, then search filter
   const locationFiltered = React.useMemo(() => {
     const current = (location || '').toLowerCase();
-    return profiles.filter((p) => (p.location || '').toLowerCase() === current);
+    return profiles.filter((p) => {
+      // Filter by location
+      const locationMatch = (p.location || '').toLowerCase() === current;
+      return locationMatch;
+    });
   }, [profiles, location]);
 
   const listAfterSearch = searchQuery.trim() === '' ? locationFiltered : filteredProfiles.filter((p) => (p.location || '').toLowerCase() === (location || '').toLowerCase());
