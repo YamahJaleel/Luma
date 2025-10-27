@@ -37,7 +37,9 @@ const COLLECTIONS = {
   USER_POSTS: 'userPosts',
   USER_COMMENTS: 'userComments',
   LIKED_POSTS: 'likedPosts',
-  PROFILE_VOTES: 'profileVotes'
+  PROFILE_VOTES: 'profileVotes',
+  REPORTS: 'reports',
+  BLOCKS: 'blocks'
 };
 
 // Profile operations
@@ -571,7 +573,6 @@ export const messageService = {
         ...messageData,
         text: encryptedText, // Store encrypted text
         isEncrypted: isEncrypted, // Flag to indicate encryption
-        unreadBy: arrayUnion(messageData.recipientId),
         createdAt: serverTimestamp()
       });
       return docRef.id;
@@ -583,20 +584,8 @@ export const messageService = {
 
   // Mark all messages in a thread as read for a user
   markThreadRead: async (threadKey, userId) => {
-    try {
-      const q = query(
-        collection(db, COLLECTIONS.MESSAGES),
-        where('threadKey', '==', threadKey),
-        where('unreadBy', 'array-contains', userId)
-      );
-      const snapshot = await getDocs(q);
-      const updates = snapshot.docs.map(d => updateDoc(doc(db, COLLECTIONS.MESSAGES, d.id), {
-        unreadBy: arrayRemove(userId)
-      }));
-      await Promise.all(updates);
-    } catch (error) {
-      console.error('Error marking thread read:', error);
-    }
+    // No-op: we removed unreadBy functionality
+    return;
   },
 
   // Get messages between two users
@@ -793,8 +782,11 @@ export const realtimeService = {
       orderBy('createdAt', 'desc')
     );
 
-    return onSnapshot(q, (querySnapshot) => {
-      const messages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return onSnapshot(q, async (querySnapshot) => {
+      const messages = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        // Additional client-side filter: ensure user is a participant
+        .filter(message => message.participants && message.participants.includes(userId));
 
       // Aggregate latest message and unread count per other participant
       const conversationMap = {};
@@ -813,21 +805,40 @@ export const realtimeService = {
           // no-op
         }
 
+        // Decrypt message text if encrypted
+        let messageText = message.text || '';
+        if (message.isEncrypted) {
+          try {
+            // Get the encryption service
+            const encryptionService = (await import('./encryptionService')).default;
+            // For your messages, decrypt as if you're the recipient
+            // For others' messages, use sender ID
+            const decryptWithId = message.senderId === userId ? otherUserId : message.senderId;
+            const decrypted = await encryptionService.decryptMessage(messageText, decryptWithId);
+            messageText = decrypted;
+          } catch (err) {
+            console.warn('Failed to decrypt message in conversation list:', err);
+            messageText = '[Encrypted message]';
+          }
+        }
+
         // Initialize conversation if not existing or keep existing latest
         if (!conversationMap[otherUserId]) {
+          // Format last message: "You: [text]" if you sent it, otherwise just the text
+          const isYourMessage = message.senderId === userId;
+          const lastMessage = isYourMessage ? `You: ${messageText}` : messageText;
+          
           conversationMap[otherUserId] = {
             id: otherUserId,
             name: otherUserName,
-            lastMessage: message.text || '',
+            lastMessage,
             time,
             unread: 0
           };
         }
 
-        // Increment unread if message not from current user and marked unread for user
-        if (message.senderId !== userId && Array.isArray(message.unreadBy) && message.unreadBy.includes(userId)) {
-          conversationMap[otherUserId].unread += 1;
-        }
+        // Unread count not implemented
+        conversationMap[otherUserId].unread = 0;
       }
 
       callback(Object.values(conversationMap));
@@ -835,10 +846,11 @@ export const realtimeService = {
   },
 
   // Listen to messages within a thread by threadKey (sorted uid1_uid2)
-  listenToThreadMessages: (threadKey, callback) => {
+  listenToThreadMessages: (threadKey, userId, callback) => {
     const q = query(
       collection(db, COLLECTIONS.MESSAGES),
       where('threadKey', '==', threadKey),
+      where('participants', 'array-contains', userId),
       orderBy('createdAt', 'asc')
     );
 
@@ -1130,6 +1142,132 @@ export const accountService = {
   }
 };
 
+// Report operations
+export const reportService = {
+  // Submit a report
+  submitReport: async (reportData) => {
+    try {
+      const docRef = await addDoc(collection(db, COLLECTIONS.REPORTS), {
+        ...reportData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        status: 'pending',
+        reportCount: 1
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      throw error;
+    }
+  },
+
+  // Get reports for an item
+  getItemReports: async (itemType, itemId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.REPORTS),
+        where('itemType', '==', itemType),
+        where('itemId', '==', itemId)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting reports:', error);
+      throw error;
+    }
+  },
+
+  // Auto-hide item after 25 reports
+  checkAndAutoHide: async (itemType, itemId) => {
+    try {
+      const reports = await reportService.getItemReports(itemType, itemId);
+      if (reports.length >= 25) {
+        // Auto-hide the item by adding isHidden field
+        let collection;
+        if (itemType === 'profile') collection = COLLECTIONS.PROFILES;
+        else if (itemType === 'post') collection = COLLECTIONS.POSTS;
+        else if (itemType === 'comment') collection = COLLECTIONS.COMMENTS;
+        else return;
+
+        const itemRef = doc(db, collection, itemId);
+        await updateDoc(itemRef, { 
+          isHidden: true,
+          autoHiddenAt: serverTimestamp()
+        });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking auto-hide:', error);
+      throw error;
+    }
+  }
+};
+
+// Block operations
+export const blockService = {
+  // Block a user
+  blockUser: async (blockerId, blockedUserId) => {
+    try {
+      const blockId = `${blockerId}_${blockedUserId}`;
+      const blockRef = doc(db, COLLECTIONS.BLOCKS, blockId);
+      await setDoc(blockRef, {
+        blockerId,
+        blockedUserId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return blockId;
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      throw error;
+    }
+  },
+
+  // Unblock a user
+  unblockUser: async (blockerId, blockedUserId) => {
+    try {
+      const blockId = `${blockerId}_${blockedUserId}`;
+      const blockRef = doc(db, COLLECTIONS.BLOCKS, blockId);
+      await deleteDoc(blockRef);
+    } catch (error) {
+      console.error('Error unblocking user:', error);
+      throw error;
+    }
+  },
+
+  // Check if user is blocked
+  isUserBlocked: async (viewerId, targetId) => {
+    try {
+      const blockId = `${viewerId}_${targetId}`;
+      const blockRef = doc(db, COLLECTIONS.BLOCKS, blockId);
+      const blockDoc = await getDoc(blockRef);
+      return blockDoc.exists();
+    } catch (error) {
+      console.error('Error checking block status:', error);
+      throw error;
+    }
+  },
+
+  // Get all blocked users
+  getBlockedUsers: async (userId) => {
+    try {
+      const q = query(
+        collection(db, COLLECTIONS.BLOCKS),
+        where('blockerId', '==', userId)
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => doc.data().blockedUserId);
+    } catch (error) {
+      console.error('Error getting blocked users:', error);
+      throw error;
+    }
+  }
+};
+
 export default {
   profileService,
   postService,
@@ -1139,5 +1277,7 @@ export default {
   realtimeService,
   typingService,
   notificationService,
-  accountService
+  accountService,
+  reportService,
+  blockService
 };

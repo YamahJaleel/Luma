@@ -17,7 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { commentService, postService, messageService } from '../services/firebaseService';
+import { commentService, postService, messageService, reportService, blockService } from '../services/firebaseService';
 import { auth } from '../config/firebase';
 import { db } from '../config/firebase';
 import { collection, query as fsQuery, where, orderBy, onSnapshot, getDocs, writeBatch, doc } from 'firebase/firestore';
@@ -617,6 +617,65 @@ const PostDetailScreen = ({ route, navigation }) => {
     setShowMessageModal(true);
   };
 
+  // Handle report comment
+  const handleReportComment = (comment) => {
+    setDropdownVisible(null);
+    Alert.alert(
+      'Report Comment',
+      'Are you sure you want to report this comment?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Report', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reportService.submitReport({
+                itemType: 'comment',
+                itemId: comment.id,
+                itemOwnerId: comment.userId,
+                reporterId: auth.currentUser.uid,
+                reason: 'inappropriate_content',
+                description: `Reported comment by ${comment.author}`
+              });
+              // Check for auto-hide
+              await reportService.checkAndAutoHide('comment', comment.id);
+              Alert.alert('Report Submitted', 'Thank you for your report. We will review it.');
+            } catch (error) {
+              console.error('Error reporting comment:', error);
+              Alert.alert('Error', 'Failed to submit report. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Handle block user from comment
+  const handleBlockCommentUser = (comment) => {
+    setDropdownVisible(null);
+    Alert.alert(
+      'Block User',
+      'Are you sure you want to block this user? You won\'t see their content anymore.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Block', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockService.blockUser(auth.currentUser.uid, comment.userId);
+              Alert.alert('User Blocked', 'This user has been blocked.');
+            } catch (error) {
+              console.error('Error blocking user:', error);
+              Alert.alert('Error', 'Failed to block user. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleSendMessage = async () => {
     if (!messageText.trim() || !messageRecipient) return;
     
@@ -734,6 +793,65 @@ const PostDetailScreen = ({ route, navigation }) => {
             }
           },
         },
+      ]
+    );
+  };
+
+  // Handle report post
+  const handleReportPost = () => {
+    Alert.alert(
+      'Report Post',
+      'Are you sure you want to report this post?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Report', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reportService.submitReport({
+                itemType: 'post',
+                itemId: post?.id,
+                itemOwnerId: post?.authorId,
+                reporterId: auth.currentUser.uid,
+                reason: 'inappropriate_content',
+                description: `Reported post: ${post?.title}`
+              });
+              // Check for auto-hide
+              await reportService.checkAndAutoHide('post', post?.id);
+              Alert.alert('Report Submitted', 'Thank you for your report. We will review it.');
+            } catch (error) {
+              console.error('Error reporting post:', error);
+              Alert.alert('Error', 'Failed to submit report. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Handle block user from post
+  const handleBlockPostUser = () => {
+    Alert.alert(
+      'Block User',
+      'Are you sure you want to block this user? You won\'t see their content anymore.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Block', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockService.blockUser(auth.currentUser.uid, post?.authorId);
+              Alert.alert('User Blocked', 'This user has been blocked.', [
+                { text: 'OK', onPress: () => navigation.goBack() }
+              ]);
+            } catch (error) {
+              console.error('Error blocking user:', error);
+              Alert.alert('Error', 'Failed to block user. Please try again.');
+            }
+          }
+        }
       ]
     );
   };
@@ -865,16 +983,32 @@ const PostDetailScreen = ({ route, navigation }) => {
                     <Text style={[styles.postDropdownText, { color: '#EF4444', marginLeft: 8 }]}>Delete</Text>
                   </TouchableOpacity>
                 ) : (
-                  <TouchableOpacity 
-                    style={styles.postDropdownItem}
-                    onPress={() => {
-                      closeDropdown();
-                      handleDirectMessage(c);
-                    }}
-                  >
-                    <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
-                    <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Message</Text>
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity 
+                      style={styles.postDropdownItem}
+                      onPress={() => {
+                        closeDropdown();
+                        handleDirectMessage(c);
+                      }}
+                    >
+                      <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
+                      <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Message</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.postDropdownItem}
+                      onPress={() => handleReportComment(c)}
+                    >
+                      <Ionicons name="flag-outline" size={16} color={theme.colors.primary} />
+                      <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Report</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.postDropdownItem}
+                      onPress={() => handleBlockCommentUser(c)}
+                    >
+                      <Ionicons name="person-remove-outline" size={16} color="#EF4444" />
+                      <Text style={[styles.postDropdownText, { color: '#EF4444', marginLeft: 8 }]}>Block</Text>
+                    </TouchableOpacity>
+                  </>
                 )}
               </View>
             </>
@@ -932,19 +1066,43 @@ const PostDetailScreen = ({ route, navigation }) => {
                   <Ionicons name="trash-outline" size={16} color="#EF4444" />
                   <Text style={[styles.postDropdownText, { color: '#EF4444', marginLeft: 8 }]}>Delete Post</Text>
                 </TouchableOpacity>
-              ) : canMessagePostAuthor ? (
-                <TouchableOpacity 
-                  style={styles.postDropdownItem}
-                  onPress={() => {
-                    setShowPostDropdown(false);
-                    setMessageRecipient({ id: post.authorId, author: post.authorName || displayAuthor, userId: post.authorId });
-                    setShowMessageModal(true);
-                  }}
-                >
-                  <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
-                  <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Message</Text>
-                </TouchableOpacity>
-              ) : null}
+              ) : (
+                <>
+                  {canMessagePostAuthor && (
+                    <TouchableOpacity 
+                      style={styles.postDropdownItem}
+                      onPress={() => {
+                        setShowPostDropdown(false);
+                        setMessageRecipient({ id: post.authorId, author: post.authorName || displayAuthor, userId: post.authorId });
+                        setShowMessageModal(true);
+                      }}
+                    >
+                      <Ionicons name="chatbubble-outline" size={16} color={theme.colors.primary} />
+                      <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Message</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.postDropdownItem}
+                    onPress={() => {
+                      setShowPostDropdown(false);
+                      handleReportPost();
+                    }}
+                  >
+                    <Ionicons name="flag-outline" size={16} color={theme.colors.primary} />
+                    <Text style={[styles.postDropdownText, { color: theme.colors.text, marginLeft: 8 }]}>Report</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.postDropdownItem}
+                    onPress={() => {
+                      setShowPostDropdown(false);
+                      handleBlockPostUser();
+                    }}
+                  >
+                    <Ionicons name="person-remove-outline" size={16} color="#EF4444" />
+                    <Text style={[styles.postDropdownText, { color: '#EF4444', marginLeft: 8 }]}>Block</Text>
+                  </TouchableOpacity>
+                </>
+              )}
               </View>
             </>
           )}

@@ -1,8 +1,7 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Modal, TextInput } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { AntDesign } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -19,6 +18,7 @@ const MessagesScreen = ({ navigation, route }) => {
   const [conversations, setConversations] = useState([]); // Start with empty array instead of mock data
   const [newChatRecipient, setNewChatRecipient] = useState(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [viewedConversations, setViewedConversations] = useState(new Set());
 
   // Real-time conversations from Firestore
   useEffect(() => {
@@ -29,6 +29,33 @@ const MessagesScreen = ({ navigation, route }) => {
     const unsubscribe = realtimeService.listenToConversations(user.uid, setConversations);
     return unsubscribe;
   }, [user?.uid]);
+
+  // Track previous messages to detect new ones
+  const prevMessagesRef = useRef(new Map());
+
+  // Clear viewed status when a new message arrives from someone else
+  useEffect(() => {
+    conversations.forEach(conversation => {
+      const lastMessageNotFromYou = conversation.lastMessage && !conversation.lastMessage.startsWith('You:');
+      const previousMessage = prevMessagesRef.current.get(conversation.id);
+      
+      // Check if message actually changed
+      const messageChanged = previousMessage !== conversation.lastMessage;
+      
+      if (lastMessageNotFromYou && messageChanged && viewedConversations.has(conversation.id)) {
+        // New message arrived from other person, clear viewed status
+        setViewedConversations(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(conversation.id);
+          return newSet;
+        });
+      }
+      
+      // Update previous message
+      prevMessagesRef.current.set(conversation.id, conversation.lastMessage);
+    });
+  }, [conversations, viewedConversations]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -115,8 +142,8 @@ const MessagesScreen = ({ navigation, route }) => {
     setSearchQuery('');
     setSearchResults([]);
     
-    // Create a new conversation
-    const newConversation = {
+    // Navigate to the conversation (which will create the first message when user sends)
+    const conversation = {
       id: user.id,
       name: user.name,
       lastMessage: 'Start a conversation...',
@@ -128,10 +155,13 @@ const MessagesScreen = ({ navigation, route }) => {
       unread: 0,
     };
     
-    setConversations(prev => [newConversation, ...prev]);
-    
-    // Navigate to the new conversation
-    navigation.navigate('MessageThread', { conversation: newConversation });
+    // Don't add to conversations list - they will appear naturally when they send a message
+    navigation.navigate('MessageThread', { 
+      conversation,
+      onMarkViewed: (conversationId) => {
+        setViewedConversations(prev => new Set(prev).add(conversationId));
+      }
+    });
   };
 
   const handleStartNewChat = () => {
@@ -145,10 +175,15 @@ const MessagesScreen = ({ navigation, route }) => {
         unread: 0,
       };
       
-      setConversations(prev => [newConversation, ...prev]);
+      // Don't add to conversations list - they will appear naturally when they send a message
       
       // Navigate to the new conversation
-      navigation.navigate('MessageThread', { conversation: newConversation });
+      navigation.navigate('MessageThread', { 
+        conversation: newConversation,
+        onMarkViewed: (conversationId) => {
+          setViewedConversations(prev => new Set(prev).add(conversationId));
+        }
+      });
       
       // Clear the recipient
       setNewChatRecipient(null);
@@ -171,9 +206,27 @@ const MessagesScreen = ({ navigation, route }) => {
   );
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={[styles.row, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.navigate('MessageThread', { conversation: item })}>
+    <TouchableOpacity 
+      style={[styles.row, { backgroundColor: theme.colors.surface }]} 
+      onPress={() => {
+        // Mark conversation as viewed
+        setViewedConversations(prev => new Set(prev).add(item.id));
+        navigation.navigate('MessageThread', { 
+          conversation: item,
+          onMarkViewed: (conversationId) => {
+            setViewedConversations(prev => new Set(prev).add(conversationId));
+          }
+        });
+      }}
+    >
       <View style={styles.rowText}>
-        <Text style={[styles.name, { color: theme.colors.text }]} numberOfLines={1}>{item.name}</Text>
+          <View style={styles.nameContainer}>
+            <Text style={[styles.name, { color: theme.colors.text }]} numberOfLines={1}>{item.name}</Text>
+            {/* Show red dot if last message is not from you and conversation hasn't been viewed yet */}
+            {item.lastMessage && !item.lastMessage.startsWith('You:') && !viewedConversations.has(item.id) && (
+              <View style={styles.redDot} />
+            )}
+          </View>
         <Text style={styles.preview} numberOfLines={1}>{item.lastMessage}</Text>
       </View>
       <View style={styles.meta}>
@@ -191,12 +244,6 @@ const MessagesScreen = ({ navigation, route }) => {
         <View style={styles.headerContent}>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Messages</Text>
           <View style={styles.headerButtons}>
-            <TouchableOpacity 
-              style={styles.robotButton}
-              onPress={() => navigation.navigate('LumaAI')}
-            >
-              <AntDesign name="robot" size={24} color={theme.colors.primary} />
-            </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.addBtn, { backgroundColor: theme.colors.surface }]}
               onPress={handleStartNewChat}
@@ -314,11 +361,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 4,
   },
-  robotButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(62, 95, 68, 0.1)',
-  },
   newChatBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -359,7 +401,14 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   rowText: { flex: 1 },
+  nameContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 17, fontWeight: 'bold' },
+  redDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+  },
   preview: { fontSize: 14, color: '#6B7280' },
   meta: { alignItems: 'flex-end' },
   time: { fontSize: 13, color: '#9CA3AF', marginBottom: 4 },

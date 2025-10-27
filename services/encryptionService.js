@@ -181,7 +181,8 @@ class EncryptionService {
   // Encrypt message
   async encryptMessage(text, recipientId) {
     try {
-      const conversationKey = await this.getConversationKey(recipientId);
+      // Use simple encryption for consistency
+      const conversationKey = await this.getSimpleConversationKey(recipientId);
       // Use deterministic key+iv to avoid RNG in Expo Go
       const { key, iv } = this.getDeterministicKeyAndIv(conversationKey);
       const encrypted = CryptoJS.AES.encrypt(text, key, {
@@ -200,21 +201,38 @@ class EncryptionService {
   // Decrypt message
   async decryptMessage(encryptedText, senderId) {
     try {
-      const conversationKey = await this.getConversationKey(senderId);
-      const { key, iv } = this.getDeterministicKeyAndIv(conversationKey);
-      const decrypted = CryptoJS.AES.decrypt(encryptedText, key, {
-        iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7,
-      }).toString(CryptoJS.enc.Utf8);
-      
-      if (!decrypted) {
-        console.warn('⚠️ Failed to decrypt message from:', senderId);
-        return '[Encrypted message - decryption failed]';
+      // Try simple encryption first
+      try {
+        const conversationKey = await this.getSimpleConversationKey(senderId);
+        const { key, iv } = this.getDeterministicKeyAndIv(conversationKey);
+        const decrypted = CryptoJS.AES.decrypt(encryptedText, key, {
+          iv,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7,
+        }).toString(CryptoJS.enc.Utf8);
+        
+        if (decrypted) {
+          console.log('✅ Message decrypted from:', senderId);
+          return decrypted;
+        }
+      } catch (simpleErr) {
+        // Fall back to full encryption if simple fails
+        const conversationKey = await this.getConversationKey(senderId);
+        const { key, iv } = this.getDeterministicKeyAndIv(conversationKey);
+        const decrypted = CryptoJS.AES.decrypt(encryptedText, key, {
+          iv,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7,
+        }).toString(CryptoJS.enc.Utf8);
+        
+        if (decrypted) {
+          console.log('✅ Message decrypted from:', senderId);
+          return decrypted;
+        }
       }
       
-      console.log('✅ Message decrypted from:', senderId);
-      return decrypted;
+      console.warn('⚠️ Failed to decrypt message from:', senderId);
+      return '[Encrypted message - decryption failed]';
     } catch (error) {
       console.error('❌ Error decrypting message:', error);
       return '[Encrypted message - decryption failed]';
@@ -243,6 +261,7 @@ class EncryptionService {
       // For now, use a simple key derived from user ID
       const simpleKey = CryptoJS.SHA256(userId + 'luma_salt').toString();
       this.masterKey = simpleKey;
+      this.currentUserId = userId; // Store current user ID for deterministic keys
       
       // Store in secure storage
       await this.secureSet('luma_master_key', userId, simpleKey);
@@ -255,31 +274,16 @@ class EncryptionService {
     }
   }
 
-  // Get conversation key for simple implementation
+  // Get conversation key for simple implementation - deterministic based on participants
   async getSimpleConversationKey(recipientId) {
     try {
-      // Check if key exists locally
-      if (this.conversationKeys.has(recipientId)) {
-        return this.conversationKeys.get(recipientId);
-      }
-
-      // Try to get from secure storage
-      const keychainData = await this.secureGet(`conv_${recipientId}`);
-      if (keychainData && keychainData.password) {
-        const key = keychainData.password;
-        this.conversationKeys.set(recipientId, key);
-        return key;
-      }
-
-      // Generate new conversation key
-      const newKey = CryptoJS.lib.WordArray.random(256/8).toString();
-      this.conversationKeys.set(recipientId, newKey);
-
-      // Store in secure storage
-      await this.secureSet(`conv_${recipientId}`, recipientId, newKey);
-
-      console.log('✅ Generated new conversation key for:', recipientId);
-      return newKey;
+      // Use deterministic key based on participant IDs
+      // Sort IDs to ensure both parties generate the same key
+      const sortedIds = [recipientId, this.currentUserId].sort();
+      const deterministicKey = CryptoJS.SHA256(sortedIds[0] + '_' + sortedIds[1] + '_luma_conv').toString();
+      
+      console.log('✅ Using deterministic conversation key for:', sortedIds);
+      return deterministicKey;
     } catch (error) {
       console.error('❌ Error getting conversation key:', error);
       throw error;

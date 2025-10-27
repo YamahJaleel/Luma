@@ -1,21 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from '../config/firebase';
+import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const UserCommentsScreen = ({ navigation }) => {
   const theme = useTheme();
-  const [comments, setComments] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [comments, setComments] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const load = React.useCallback(async () => {
+    if (!auth.currentUser) {
+      setComments([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const raw = await AsyncStorage.getItem('userCommunityComments');
-      const items = raw ? JSON.parse(raw) : [];
-      setComments(Array.isArray(items) ? items : []);
+      // Get user's comments from Firebase
+      const commentsQuery = query(
+        collection(db, 'comments'),
+        where('userId', '==', auth.currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const commentsSnapshot = await getDocs(commentsQuery);
+      const commentsData = [];
+
+      // For each comment, fetch the associated post
+      for (const commentDoc of commentsSnapshot.docs) {
+        const commentData = { id: commentDoc.id, ...commentDoc.data() };
+        
+        // Try to get the associated post
+        if (commentData.postId) {
+          try {
+            const postRef = doc(db, 'posts', commentData.postId);
+            const postSnapshot = await getDoc(postRef);
+            
+            if (postSnapshot.exists()) {
+              const postData = { id: postSnapshot.id, ...postSnapshot.data() };
+              commentsData.push({
+                id: commentData.id,
+                text: commentData.text || commentData.content,
+                timestamp: commentData.createdAt?.toDate?.()?.toLocaleDateString() || '',
+                post: postData,
+                userId: commentData.userId
+              });
+            }
+          } catch (error) {
+            console.warn(`Post ${commentData.postId} not found or deleted`);
+          }
+        }
+      }
+
+      setComments(commentsData);
     } catch (e) {
+      console.error('Error loading user comments:', e);
       setComments([]);
     } finally {
       setIsLoading(false);

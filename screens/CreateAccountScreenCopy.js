@@ -21,7 +21,7 @@ import { useTabContext } from '../components/TabContext';
 const CreateAccountScreenCopy = ({ navigation }) => {
   const { setIsOnboarded } = useOnboarding();
   const theme = useTheme();
-  const { setTabHidden } = useTabContext();
+  const { setTabHidden, setCurrentTab } = useTabContext();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',

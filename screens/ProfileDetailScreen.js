@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { realtimeService, profileService, storageService, commentService } from '../services/firebaseService';
+import { realtimeService, profileService, storageService, commentService, reportService, blockService } from '../services/firebaseService';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, FlatList, Modal, Dimensions, Alert } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -233,7 +233,7 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   const [selectedComment, setSelectedComment] = useState(null); // for long-press selection
   const [dropdownVisible, setDropdownVisible] = useState(null); // Track which comment's dropdown is visible
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false); // three-dots in header
-  const isUserCreatedProfile = true; // All profiles are created by someone else
+  const isUserCreatedProfile = auth.currentUser?.uid === liveProfile?.userId;
   
   // Message modal state
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -401,7 +401,64 @@ const ProfileDetailScreen = ({ route, navigation }) => {
     setSelectedComment(null);
   };
 
+  // Handle report profile
+  const handleReportProfile = () => {
+    Alert.alert(
+      'Report Profile',
+      'Are you sure you want to report this profile?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Report', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reportService.submitReport({
+                itemType: 'profile',
+                itemId: profile?.id,
+                itemOwnerId: profile?.userId,
+                reporterId: auth.currentUser.uid,
+                reason: 'inappropriate_content',
+                description: `Reported profile: ${profile?.name}`
+              });
+              // Check for auto-hide
+              await reportService.checkAndAutoHide('profile', profile?.id);
+              Alert.alert('Report Submitted', 'Thank you for your report. We will review it.');
+            } catch (error) {
+              console.error('Error reporting profile:', error);
+              Alert.alert('Error', 'Failed to submit report. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
+  // Handle block user
+  const handleBlockUser = async () => {
+    Alert.alert(
+      'Block User',
+      'Are you sure you want to block this user? You won\'t see their content anymore.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Block', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockService.blockUser(auth.currentUser.uid, profile?.userId);
+              Alert.alert('User Blocked', 'This user has been blocked.', [
+                { text: 'OK', onPress: () => navigation.goBack() }
+              ]);
+            } catch (error) {
+              console.error('Error blocking user:', error);
+              Alert.alert('Error', 'Failed to block user. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const toggleDropdown = (commentId) => {
     setDropdownVisible(dropdownVisible === commentId ? null : commentId);
@@ -651,23 +708,23 @@ const ProfileDetailScreen = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{liveProfile?.name}</Text>
-        {isUserCreatedProfile ? (
-          <View style={styles.menuContainer}>
-            <TouchableOpacity 
-              style={styles.menuButton}
-              onPress={() => setHeaderMenuOpen((v) => !v)}
-            >
-              <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
-            </TouchableOpacity>
-            {headerMenuOpen && (
-              <>
-                {/* Touchable overlay to close dropdown when tapping outside */}
-                <TouchableOpacity 
-                  style={styles.dropdownOverlay}
-                  onPress={() => setHeaderMenuOpen(false)}
-                  activeOpacity={1}
-                />
-                <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}> 
+        <View style={styles.menuContainer}>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => setHeaderMenuOpen((v) => !v)}
+          >
+            <Ionicons name="ellipsis-vertical" size={16} color={theme.colors.placeholder} />
+          </TouchableOpacity>
+          {headerMenuOpen && (
+            <>
+              {/* Touchable overlay to close dropdown when tapping outside */}
+              <TouchableOpacity 
+                style={styles.dropdownOverlay}
+                onPress={() => setHeaderMenuOpen(false)}
+                activeOpacity={1}
+              />
+              <View style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}> 
+                {isUserCreatedProfile ? (
                   <TouchableOpacity 
                     style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
                     onPress={handleDeleteProfile}
@@ -675,13 +732,28 @@ const ProfileDetailScreen = ({ route, navigation }) => {
                     <Ionicons name="trash-outline" size={16} color="#EF4444" />
                     <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Delete Profile</Text>
                   </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        ) : (
-          <View style={styles.placeholder} />
-        )}
+                ) : (
+                  <>
+                    <TouchableOpacity 
+                      style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                      onPress={handleReportProfile}
+                    >
+                      <Ionicons name="flag-outline" size={16} color={theme.colors.primary} />
+                      <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Report Profile</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.dropdownItem, { backgroundColor: theme.colors.surface }]}
+                      onPress={handleBlockUser}
+                    >
+                      <Ionicons name="person-remove-outline" size={16} color="#EF4444" />
+                      <Text style={[styles.dropdownText, { color: theme.colors.text }]}>Block User</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </>
+          )}
+        </View>
       </View>
 
       <ScrollView 

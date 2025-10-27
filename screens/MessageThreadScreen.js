@@ -5,7 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TypingIndicator from '../components/TypingIndicator';
 import { useFirebase } from '../contexts/FirebaseContext';
-import { messageService, realtimeService, typingService } from '../services/firebaseService';
+import { messageService, realtimeService, typingService, reportService, blockService } from '../services/firebaseService';
+import { auth } from '../config/firebase';
+import { Alert } from 'react-native';
+import encryptionService from '../services/encryptionService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const initialMessages = [
   { id: 'm1', from: 'them', text: 'Hey! How are you?', time: '2:15 PM' },
@@ -34,7 +38,7 @@ const MessageBubble = ({ message, theme }) => {
 const MessageThreadScreen = ({ route, navigation }) => {
   const theme = useTheme();
   const { user } = useFirebase();
-  const { conversation } = route.params || {};
+  const { conversation, onMarkViewed } = route.params || {};
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const listRef = useRef(null);
@@ -43,6 +47,85 @@ const MessageThreadScreen = ({ route, navigation }) => {
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [autoReplyTimeout, setAutoReplyTimeout] = useState(null);
   const [threadKey, setThreadKey] = useState(null);
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Mark conversation as viewed when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      if (conversation?.id && onMarkViewed) {
+        onMarkViewed(conversation.id);
+      }
+    }, [conversation?.id, onMarkViewed])
+  );
+
+  // Get the other participant's ID (not the current user)
+  const getOtherUserId = () => {
+    if (!conversation?.participants || !auth.currentUser) return null;
+    return conversation.participants.find(id => id !== auth.currentUser.uid);
+  };
+
+  const otherUserId = getOtherUserId();
+
+  // Handle report user
+  const handleReportUser = () => {
+    setShowMenu(false);
+    Alert.alert(
+      'Report User',
+      'Are you sure you want to report this user?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Report', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reportService.submitReport({
+                itemType: 'profile',
+                itemId: otherUserId,
+                itemOwnerId: otherUserId,
+                reporterId: auth.currentUser.uid,
+                reason: 'inappropriate_content',
+                description: `Reported user from messages: ${conversation?.name}`
+              });
+              // Check for auto-hide
+              await reportService.checkAndAutoHide('profile', otherUserId);
+              Alert.alert('Report Submitted', 'Thank you for your report. We will review it.');
+            } catch (error) {
+              console.error('Error reporting user:', error);
+              Alert.alert('Error', 'Failed to submit report. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Handle block user
+  const handleBlockUser = () => {
+    setShowMenu(false);
+    Alert.alert(
+      'Block User',
+      'Are you sure you want to block this user? You won\'t see their messages anymore.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Block', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockService.blockUser(auth.currentUser.uid, otherUserId);
+              Alert.alert('User Blocked', 'This user has been blocked.', [
+                { text: 'OK', onPress: () => navigation.goBack() }
+              ]);
+            } catch (error) {
+              console.error('Error blocking user:', error);
+              Alert.alert('Error', 'Failed to block user. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
 
   const sendAutoReply = async () => {
@@ -86,11 +169,23 @@ const MessageThreadScreen = ({ route, navigation }) => {
       setMessages([]);
       return;
     }
+    
+    // Initialize encryption for the conversation
+    (async () => {
+      try {
+        await encryptionService.initializeUser(user.uid, user.uid); // Use simple init
+        await encryptionService.initializeSimple(user.uid);
+        console.log('✅ Encryption initialized for user:', user.uid);
+      } catch (err) {
+        console.warn('⚠️ Encryption initialization failed:', err);
+      }
+    })();
+    
     const participantsSorted = [user.uid, conversation.id].sort();
     const tk = `${participantsSorted[0]}_${participantsSorted[1]}`;
     setThreadKey(tk);
-    const unsubscribe = realtimeService.listenToThreadMessages(tk, (docs) => {
-      const formatted = docs.map((m) => {
+    const unsubscribe = realtimeService.listenToThreadMessages(tk, user.uid, async (docs) => {
+      const formatted = await Promise.all(docs.map(async (m) => {
         let time = '';
         try {
           if (m.createdAt?.toDate) {
@@ -98,14 +193,68 @@ const MessageThreadScreen = ({ route, navigation }) => {
             time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
           }
         } catch {}
+        
+        let text = m.text || '';
+        // Decrypt all encrypted messages (both yours and others)
+        if (m.isEncrypted) {
+          try {
+            // For your own messages, use the recipient ID to get the conversation key
+            // For others' messages, use the sender ID
+            const keyForDecryption = m.senderId === user.uid ? conversation.id : m.senderId;
+            const decrypted = await encryptionService.decryptMessage(text, keyForDecryption);
+            text = decrypted;
+            console.log('✅ Message decrypted:', decrypted);
+          } catch (err) {
+            console.warn('❌ Failed to decrypt message:', err);
+            text = '[Encrypted message - decryption failed]';
+          }
+        }
+        // For your own messages: if it's encrypted but you sent it, 
+        // it will show the encrypted text until we find the local version
+        // The issue is that your messages get replaced by encrypted ones
+        
         return {
           id: m.id,
           from: m.senderId === user.uid ? 'me' : 'them',
-          text: m.text || '',
+          text,
           time
         };
+      }));
+      
+      setMessages((prev) => {
+        // On initial load (prev is empty), include all messages from Firestore
+        if (prev.length === 0) {
+          return formatted;
+        }
+        
+        // Filter out local messages that have been synced to Firestore (by checking text match)
+        // Keep only truly new local messages (just sent, not yet in Firestore)
+        const firestoreTexts = new Set(formatted.map(m => m.text));
+        const newLocalMessages = prev.filter(m => {
+          if (m.from === 'me') {
+            // Only keep if this text isn't in Firestore yet
+            return !firestoreTexts.has(m.text);
+          }
+          return false; // Remove old local messages from others
+        });
+        
+        // Combine new local messages with Firestore messages
+        const firestoreIds = new Set(formatted.map(m => m.id));
+        const combined = [
+          ...newLocalMessages.filter(m => !firestoreIds.has(m.id)), // Local messages not in Firestore
+          ...formatted // All Firestore messages
+        ];
+        
+        // Remove duplicates by text and timestamp
+        const seen = new Map();
+        return combined.filter(m => {
+          const key = `${m.text}_${m.time}`;
+          if (seen.has(key)) return false;
+          seen.set(key, true);
+          return true;
+        });
       });
-      setMessages(formatted);
+      
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
     });
 
@@ -133,6 +282,16 @@ const MessageThreadScreen = ({ route, navigation }) => {
     const text = draft.trim();
     if (!text) return;
     
+    // Clear the input FIRST, before anything else
+    setDraft('');
+    
+    // Also clear the ref to ensure the input clears
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.setNativeProps({ text: '' });
+      }
+    }, 0);
+    
     const now = new Date();
     const time = now.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
@@ -143,8 +302,6 @@ const MessageThreadScreen = ({ route, navigation }) => {
     
     // Add to local state immediately for UI responsiveness
     setMessages((prev) => [...prev, newMessage]);
-    setDraft('');
-    inputRef.current?.clear();
     
     // Persist to Firestore
     try {
@@ -185,12 +342,45 @@ const MessageThreadScreen = ({ route, navigation }) => {
 
   return (
     <KeyboardAvoidingView style={[styles.container, { backgroundColor: theme.colors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.header}>
-        <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>{conversation?.name || 'Chat'}</Text>
-        <View style={{ width: 40 }} />
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.colors.surface }]} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.colors.text, flex: 1 }]} numberOfLines={1}>{conversation?.name || 'Chat'}</Text>
+          <TouchableOpacity 
+            style={styles.postThreeDotsButton}
+            onPress={() => setShowMenu(!showMenu)}
+          >
+            <Ionicons name="ellipsis-vertical" size={20} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
+        
+        {showMenu && (
+          <>
+            <TouchableOpacity 
+              style={styles.fullScreenOverlay}
+              onPress={() => setShowMenu(false)}
+              activeOpacity={1}
+            />
+            <View style={[styles.menuContainer, { backgroundColor: theme.colors.surface, borderColor: '#E5E7EB' }]}>
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={handleReportUser}
+              >
+                <Ionicons name="flag-outline" size={16} color={theme.colors.primary} />
+                <Text style={[styles.menuItemText, { color: theme.colors.text, marginLeft: 8 }]}>Report</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={handleBlockUser}
+              >
+                <Ionicons name="person-remove-outline" size={16} color="#EF4444" />
+                <Text style={[styles.menuItemText, { color: '#EF4444', marginLeft: 8 }]}>Block</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
 
       <FlatList
@@ -235,6 +425,7 @@ const MessageThreadScreen = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  headerContainer: { position: 'relative', zIndex: 10 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 56 },
   iconButton: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   clearButton: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
@@ -277,6 +468,41 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     paddingHorizontal: 0,
     minHeight: 12,
+  },
+  postThreeDotsButton: {
+    padding: 4,
+    borderRadius: 4,
+  },
+  fullScreenOverlay: {
+    position: 'absolute',
+    top: -1000,
+    left: -1000,
+    right: -1000,
+    bottom: -1000,
+    zIndex: 1000,
+    backgroundColor: 'transparent',
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    zIndex: 1001,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  menuItemText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

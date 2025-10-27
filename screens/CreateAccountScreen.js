@@ -14,10 +14,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useOnboarding } from '../components/OnboardingContext';
+import { useTabContext } from '../components/TabContext';
+import { authService } from '../services/authService';
+import { db } from '../config/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreateAccountScreen = ({ navigation }) => {
   const { setIsOnboarded } = useOnboarding();
+  const { setCurrentTab } = useTabContext();
   const theme = useTheme();
   const [formData, setFormData] = useState({
     email: '',
@@ -121,10 +126,23 @@ const CreateAccountScreen = ({ navigation }) => {
 
     try {
       // Create Firebase account directly
-      await createAccount(formData.email, formData.password, {
-        displayName: formData.pseudonym,
-        dateOfBirth: formData.dateOfBirth,
-      });
+      const user = await authService.createUser(formData.email, formData.password, formData.pseudonym);
+      
+      // Create user profile in Firestore
+      try {
+        await setDoc(doc(db, 'userProfiles', user.uid), {
+          userId: user.uid,
+          email: formData.email,
+          displayName: formData.pseudonym,
+          dateOfBirth: formData.dateOfBirth,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        console.log('✅ User profile created in Firestore');
+      } catch (profileError) {
+        console.error('Error creating user profile:', profileError);
+        // Don't fail the whole signup process if profile creation fails
+      }
       
       Alert.alert('Account Created!', 'Welcome to Luma! Your account has been created successfully.');
       setIsOnboarded(true);
@@ -145,7 +163,7 @@ const CreateAccountScreen = ({ navigation }) => {
       let errorMessage = 'Failed to create account. Please try again.';
       
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'An account with this email already exists. Please sign in instead.';
+        errorMessage = 'This email is already being used. Please sign in instead.';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Invalid email address. Please check your email.';
       } else if (error.code === 'auth/weak-password') {
@@ -239,15 +257,7 @@ const CreateAccountScreen = ({ navigation }) => {
             <Ionicons name="arrow-back" size={24} color="#3E5F44" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create Account</Text>
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => {
-              // Skip account creation and go to sign in
-              navigation.navigate('SignIn');
-            }}
-          >
-            <Text style={styles.skipButtonText}>Skip</Text>
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
         </View>
 
         <ScrollView
