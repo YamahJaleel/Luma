@@ -2,20 +2,70 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFirebase } from '../contexts/FirebaseContext';
+import { auth, db } from '../config/firebase';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { postService } from '../services/postService';
 
 const LikedPostsScreen = ({ navigation }) => {
   const theme = useTheme();
+  const { user } = useFirebase();
   const [data, setData] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const load = React.useCallback(async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser?.uid) {
+      setData([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const raw = await AsyncStorage.getItem('likedPosts');
-      const arr = raw ? JSON.parse(raw) : [];
-      setData(arr);
-    } catch (e) {
+      // Get all likes for the current user
+      const likesQuery = query(
+        collection(db, 'likes'),
+        where('userId', '==', currentUser.uid)
+      );
+      
+      const likesSnapshot = await getDocs(likesQuery);
+      
+      // Extract postIds from likes
+      const postIds = [];
+      likesSnapshot.forEach((doc) => {
+        const likeData = doc.data();
+        if (likeData.postId) {
+          postIds.push(likeData.postId);
+        }
+      });
+
+      // Fetch the actual posts
+      const posts = [];
+      for (const postId of postIds) {
+        const postRef = doc(db, 'posts', postId);
+        const postDoc = await getDoc(postRef);
+        if (postDoc.exists()) {
+          const postData = postDoc.data();
+          posts.push({
+            id: postDoc.id,
+            ...postData,
+            liked: true, // Mark as liked
+            createdAt: postData.createdAt?.toDate?.() || postData.createdAt
+          });
+        }
+      }
+
+      // Sort by creation date, newest first
+      posts.sort((a, b) => {
+        const aDate = a.createdAt || new Date(0);
+        const bDate = b.createdAt || new Date(0);
+        return bDate - aDate;
+      });
+
+      setData(posts);
+    } catch (error) {
+      console.error('Error loading liked posts:', error);
       setData([]);
     } finally {
       setIsLoading(false);
@@ -29,21 +79,18 @@ const LikedPostsScreen = ({ navigation }) => {
   }, [navigation, load]);
 
   const toggleLike = React.useCallback(async (post) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser?.uid) return;
+
     try {
-      const liked = !post.liked;
-      const updated = { ...post, liked, likes: Math.max(0, (post.likes || 0) + (liked ? 1 : -1)) };
-      const raw = await AsyncStorage.getItem('likedPosts');
-      const current = raw ? JSON.parse(raw) : [];
-      const exists = current.some((x) => x.id === updated.id);
-      let nextArr = current;
-      if (updated.liked && !exists) {
-        nextArr = [{ ...updated }, ...current].slice(0, 200);
-      } else if (!updated.liked && exists) {
-        nextArr = current.filter((x) => x.id !== updated.id);
-      }
-      await AsyncStorage.setItem('likedPosts', JSON.stringify(nextArr));
-      setData(nextArr);
-    } catch (e) {}
+      // Actually unlike the post in Firebase
+      await postService.unlikePost(post.id, currentUser.uid);
+      
+      // Remove the post from local list
+      setData(prevData => prevData.filter(p => p.id !== post.id));
+    } catch (error) {
+      console.error('Error unliking post:', error);
+    }
   }, []);
 
   const renderItem = ({ item }) => (

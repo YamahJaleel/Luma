@@ -4,6 +4,9 @@ import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
+import { useFirebase } from '../contexts/FirebaseContext';
+import { auth, db } from '../config/firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 // Mock posts IDs to identify user-created posts (moved outside component)
 const MOCK_POSTS = [
@@ -16,18 +19,42 @@ const mockPostIds = new Set(MOCK_POSTS.map(p => p.id));
 const CreatedPostsScreen = ({ navigation }) => {
   const theme = useTheme();
   const route = useRoute();
+  const { user } = useFirebase();
   const [data, setData] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      // Load created posts from AsyncStorage
-      const createdPostsRaw = await AsyncStorage.getItem('createdPosts');
-      const createdPosts = createdPostsRaw ? JSON.parse(createdPostsRaw) : [];
+      const currentUser = auth.currentUser;
+      if (!currentUser?.uid) {
+        setData([]);
+        return;
+      }
+
+      // Fetch posts from Firebase where authorId matches current user
+      const postsRef = collection(db, 'posts');
+      const q = query(
+        postsRef, 
+        where('authorId', '==', currentUser.uid)
+      );
       
-      setData(createdPosts);
+      const querySnapshot = await getDocs(q);
+      const posts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Sort by creation date, newest first
+      posts.sort((a, b) => {
+        const aDate = a.createdAt?.toDate?.() || new Date(0);
+        const bDate = b.createdAt?.toDate?.() || new Date(0);
+        return bDate - aDate;
+      });
+      
+      setData(posts);
     } catch (e) {
+      console.error('Error loading created posts:', e);
       setData([]);
     } finally {
       setIsLoading(false);
@@ -54,35 +81,41 @@ const CreatedPostsScreen = ({ navigation }) => {
     return unsub;
   }, [navigation, load]);
 
-  const PostItem = ({ item }) => (
-    <TouchableOpacity 
-      style={[styles.postCard, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB' }]}
-      onPress={() => navigation.navigate('PostDetail', { post: item })}
-    >
-      <View style={styles.postHeaderRow}>
-        <View style={{ flex: 1 }} />
-        <Text style={[styles.postMeta, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>{item.created || item.timestamp || ''}</Text>
-      </View>
-      
-      <Text style={[styles.postTitle, { color: theme.colors.text }]} numberOfLines={2}>{item.title}</Text>
-      {item.text?.length ? (
-        <Text style={[styles.postBody, theme.dark && { color: theme.colors.text }]} numberOfLines={3}>{item.text}</Text>
-      ) : null}
-      
-      <View style={styles.postFooter}>
-        <View style={styles.postActions}>
-          <TouchableOpacity style={styles.postActionBtn} onPress={() => navigation.navigate('PostDetail', { post: item })}>
-            <Ionicons name="chatbubble-outline" size={16} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
-            <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{item.comments || 0}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.postActionBtn}>
-            <Ionicons name={item.liked ? 'heart' : 'heart-outline'} size={16} color={item.liked ? '#EF4444' : (theme.dark ? '#9CA3AF' : '#6B7280')} />
-            <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{item.likes || 0}</Text>
-          </TouchableOpacity>
+  const PostItem = ({ item }) => {
+    const formatDate = (timestamp) => {
+      if (!timestamp) return '';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    return (
+      <TouchableOpacity 
+        style={[styles.postCard, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB' }]}
+        onPress={() => navigation.navigate('PostDetail', { post: item })}
+      >
+        <View style={styles.postHeaderRow}>
+          <View style={{ flex: 1 }} />
+          <Text style={[styles.postMeta, { color: theme.dark ? theme.colors.text : '#9CA3AF' }]}>
+            {formatDate(item.createdAt)}
+          </Text>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+        
+        <Text style={[styles.postTitle, { color: theme.colors.text }]} numberOfLines={2}>{item.title}</Text>
+        {item.text?.length ? (
+          <Text style={[styles.postBody, theme.dark && { color: theme.colors.text }]} numberOfLines={3}>{item.text}</Text>
+        ) : null}
+        
+        <View style={styles.postFooter}>
+          <View style={styles.postActions}>
+            <TouchableOpacity style={styles.postActionBtn} onPress={() => navigation.navigate('PostDetail', { post: item })}>
+              <Ionicons name="chatbubble-outline" size={16} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
+              <Text style={[styles.actionText, theme.dark && { color: theme.colors.text }]}>{item.comments || 0}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading) {
     return (

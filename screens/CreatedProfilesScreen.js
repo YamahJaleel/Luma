@@ -3,66 +3,86 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react
 import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
-import { profileService } from '../services/firebaseService';
 import { useFirebase } from '../contexts/FirebaseContext';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const CreatedProfilesScreen = ({ navigation }) => {
   const theme = useTheme();
   const route = useRoute();
   const { user } = useFirebase();
   const [data, setData] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const load = React.useCallback(async () => {
     if (!user?.uid) {
       setData([]);
+      setIsLoading(false);
       return;
     }
     
     setIsLoading(true);
     try {
-      const profiles = await profileService.getUserProfiles(user.uid);
-      setData(Array.isArray(profiles) ? profiles : []);
-    } catch (e) {
-      console.error('Error loading created profiles:', e);
+      const q = query(
+        collection(db, 'profiles'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const profiles = [];
+      
+      querySnapshot.forEach((doc) => {
+        profiles.push({ id: doc.id, ...doc.data() });
+      });
+      
+      setData(profiles);
+    } catch (error) {
+      console.error('Error loading profiles:', error);
       setData([]);
     } finally {
       setIsLoading(false);
     }
   }, [user?.uid]);
 
-  // Handle deleted profile coming back from ProfileDetail
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
   React.useEffect(() => {
     if (route.params?.deletedProfileId) {
-      const deletedId = route.params.deletedProfileId;
-      setData((prev) => (Array.isArray(prev) ? prev.filter((p) => p.id !== deletedId) : prev));
+      setData((currentData) => {
+        if (!Array.isArray(currentData)) return [];
+        return currentData.filter((p) => p.id !== route.params.deletedProfileId);
+      });
       navigation.setParams({ deletedProfileId: undefined });
     }
   }, [route.params?.deletedProfileId, navigation]);
 
-  React.useEffect(() => {
-    const unsub = navigation.addListener('focus', load);
-    load();
-    return unsub;
-  }, [navigation, load]);
-
-  const ProfileItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB' }]}
-      onPress={() => navigation.navigate('ProfileDetail', { profile: item, fromScreen: 'CreatedProfiles' })}
-    >
-      <View style={styles.row}>
-        <Image source={{ uri: item.avatar }} style={styles.avatar} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.name, { color: theme.colors.text }]} numberOfLines={1}>{item.name}</Text>
-          {item.location ? (
-            <Text style={[styles.meta, { color: theme.dark ? theme.colors.text : '#6B7280' }]} numberOfLines={1}>{item.location}</Text>
-          ) : null}
+  const renderItem = ({ item }) => {
+    if (!item || !item.id) return null;
+    
+    return (
+      <TouchableOpacity
+        style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.dark ? '#374151' : '#E5E7EB' }]}
+        onPress={() => navigation.navigate('ProfileDetail', { profile: item, fromScreen: 'CreatedProfiles' })}
+      >
+        <View style={styles.row}>
+          <Image 
+            source={item.avatar ? { uri: item.avatar } : require('../assets/profiles/pexels-albert-bilousov-210750737-12471262.jpg')} 
+            style={styles.avatar} 
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.name, { color: theme.colors.text }]} numberOfLines={1}>{item.name || 'Untitled'}</Text>
+            {item.location && (
+              <Text style={[styles.meta, { color: theme.dark ? theme.colors.text : '#6B7280' }]} numberOfLines={1}>{item.location}</Text>
+            )}
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
         </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.dark ? '#9CA3AF' : '#6B7280'} />
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -100,8 +120,8 @@ const CreatedProfilesScreen = ({ navigation }) => {
       ) : (
         <FlatList
           data={data}
-          renderItem={({ item }) => <ProfileItem item={item} />}
-          keyExtractor={(item, index) => String(item.id) || `created-profile-${index}`}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => item?.id || `profile-${index}`}
           contentContainerStyle={{ paddingBottom: 12 }}
           refreshing={isLoading}
           onRefresh={load}
@@ -128,5 +148,3 @@ const styles = StyleSheet.create({
 });
 
 export default CreatedProfilesScreen;
-
-

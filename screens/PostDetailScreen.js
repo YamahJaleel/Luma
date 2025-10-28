@@ -17,7 +17,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { commentService, postService, messageService, reportService, blockService } from '../services/firebaseService';
+import { commentService, messageService, reportService, blockService } from '../services/firebaseService';
+import { postService } from '../services/postService';
 import { auth } from '../config/firebase';
 import { db } from '../config/firebase';
 import { collection, query as fsQuery, where, orderBy, onSnapshot, getDocs, writeBatch, doc } from 'firebase/firestore';
@@ -168,20 +169,20 @@ const PostDetailScreen = ({ route, navigation }) => {
   const isOwnPost = !!(auth.currentUser && post?.authorId && auth.currentUser.uid === post.authorId);
   const canMessagePostAuthor = !isOwnPost && !!post?.authorId;
 
-  // Load like status from AsyncStorage on mount
+  // Load like status from Firebase on mount
   React.useEffect(() => {
     const loadLikeStatus = async () => {
-      if (!post.id) return;
+      if (!post.id || !auth.currentUser?.uid) return;
       
       try {
-        const likedPostsData = await AsyncStorage.getItem('likedPosts');
-        const likedPosts = likedPostsData ? JSON.parse(likedPostsData) : [];
-        const isLiked = likedPosts.some(likedPost => likedPost.id === post.id);
-        setLiked(isLiked);
+        // Check if post is liked in Firebase
+        const { doc, getDoc } = await import('firebase/firestore');
+        const likeRef = doc(db, 'likes', `${post.id}_${auth.currentUser.uid}`);
+        const likeDoc = await getDoc(likeRef);
+        const isLiked = likeDoc.exists();
         
-        // Update like count based on current status
-        const baseLikes = post.likes || 0;
-        setLikeCount(baseLikes + (isLiked ? 1 : 0));
+        setLiked(isLiked);
+        setLikeCount(post.likes || 0);
       } catch (error) {
         console.error('Error loading like status:', error);
       }
@@ -294,37 +295,36 @@ const PostDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  // Handle like toggle and save to AsyncStorage
+  // Handle like toggle using Firebase
   const handleLikeToggle = async () => {
+    if (!auth.currentUser?.uid) return;
+    
     const newLiked = !liked;
-    const newLikeCount = Math.max(0, likeCount + (newLiked ? 1 : -1));
     
     // Update local state immediately
     setLiked(newLiked);
-    setLikeCount(newLikeCount);
+    setLikeCount(Math.max(0, likeCount + (newLiked ? 1 : -1)));
     
-    // Save to AsyncStorage (matching HomeScreen format)
+    // Save to Firebase
     try {
-      const likedPostsData = await AsyncStorage.getItem('likedPosts');
-      const likedPosts = likedPostsData ? JSON.parse(likedPostsData) : [];
-      
       if (newLiked) {
-        // Add to liked posts if not already there
-        const exists = likedPosts.some(likedPost => likedPost.id === post.id);
-        if (!exists) {
-          const updatedPost = { ...post, liked: true, likes: newLikeCount };
-          likedPosts.unshift(updatedPost); // Add to beginning
-        }
+        await postService.likePost(post.id, auth.currentUser.uid);
       } else {
-        // Remove from liked posts
-        const filteredPosts = likedPosts.filter(likedPost => likedPost.id !== post.id);
-        likedPosts.length = 0; // Clear array
-        likedPosts.push(...filteredPosts); // Add back filtered posts
+        await postService.unlikePost(post.id, auth.currentUser.uid);
       }
       
-      await AsyncStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+      // Reload like count from Firebase
+      const postRef = doc(db, 'posts', post.id);
+      const postDoc = await getDoc(postRef);
+      if (postDoc.exists()) {
+        const postData = postDoc.data();
+        setLikeCount(postData.likes || 0);
+      }
     } catch (error) {
-      console.error('Error saving like status:', error);
+      console.error('Error toggling like:', error);
+      // Revert local state on error
+      setLiked(!newLiked);
+      setLikeCount(likeCount);
     }
   };
   

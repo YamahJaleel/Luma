@@ -66,6 +66,7 @@ export const profileService = {
   getProfiles: async () => {
     try {
       const querySnapshot = await getDocs(collection(db, COLLECTIONS.PROFILES));
+      if (!querySnapshot || !querySnapshot.docs) return [];
       return querySnapshot.docs
         .map(doc => ({
           id: doc.id,
@@ -74,7 +75,7 @@ export const profileService = {
         .filter(profile => !profile.isHidden); // Filter out hidden profiles
     } catch (error) {
       console.error('Error getting profiles:', error);
-      throw error;
+      return [];
     }
   },
 
@@ -312,13 +313,23 @@ export const profileService = {
         where('userId', '==', userId)
       );
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      
+      // Safety check: ensure querySnapshot and docs exist
+      if (!querySnapshot || !querySnapshot.docs) {
+        console.warn('⚠️ querySnapshot or docs is undefined');
+        return [];
+      }
+      
+      const profiles = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      console.log('✅ getUserProfiles returning:', profiles.length, 'profiles');
+      return Array.isArray(profiles) ? profiles : [];
     } catch (error) {
-      console.error('Error getting user profiles:', error);
-      throw error;
+      console.error('❌ Error getting user profiles:', error);
+      return [];
     }
   }
 };
@@ -446,19 +457,25 @@ export const commentService = {
   // Create a new comment
   createComment: async (commentData) => {
     try {
+      console.log('📝 Creating comment with data:', commentData);
       const docRef = await addDoc(collection(db, COLLECTIONS.COMMENTS), {
         ...commentData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      console.log('✅ Comment created with ID:', docRef.id);
+      
       // If this is a post comment, increment post.comments counter
       if (commentData.postId) {
+        console.log('📈 Incrementing post comments counter for post:', commentData.postId);
         const postRef = doc(db, COLLECTIONS.POSTS, commentData.postId);
         await updateDoc(postRef, { comments: increment(1) });
+        console.log('✅ Post comments counter incremented');
       }
       return docRef.id;
     } catch (error) {
-      console.error('Error creating comment:', error);
+      console.error('❌ Error creating comment:', error);
+      console.error('❌ Error code:', error.code);
       throw error;
     }
   },
@@ -785,7 +802,7 @@ export const realtimeService = {
     );
 
     return onSnapshot(q, async (querySnapshot) => {
-      const messages = querySnapshot.docs
+      const messages = (querySnapshot?.docs || [])
         .map(doc => ({ id: doc.id, ...doc.data() }))
         // Additional client-side filter: ensure user is a participant
         .filter(message => message.participants && message.participants.includes(userId));

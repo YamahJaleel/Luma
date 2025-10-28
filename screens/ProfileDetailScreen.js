@@ -204,8 +204,9 @@ const ProfileDetailScreen = ({ route, navigation }) => {
   // Simple AI overview text synthesized from profile signals
   const overviewText = (() => {
     const risk = getRiskLevelText(profile.riskLevel || 'green'); // Default to green if not specified
-    const positives = profile.flags.filter((f) => ['trustworthy','responsive','genuine','verified','helpful','community_leader','trusted','friendly','active','new_user'].includes(f));
-    const cautions = profile.flags.filter((f) => ['inconsistent','ghosting','unreliable','catfish','fake_profile','harassment','aggressive','inappropriate'].includes(f));
+    const flags = Array.isArray(profile.flags) ? profile.flags : [];
+    const positives = flags.filter((f) => ['trustworthy','responsive','genuine','verified','helpful','community_leader','trusted','friendly','active','new_user'].includes(f));
+    const cautions = flags.filter((f) => ['inconsistent','ghosting','unreliable','catfish','fake_profile','harassment','aggressive','inappropriate'].includes(f));
     const posPart = positives.length ? `Positive signals: ${positives.map((f) => f.replace('_',' ')).join(', ')}.` : '';
     const cauPart = cautions.length ? ` Cautionary signals: ${cautions.map((f) => f.replace('_',' ')).join(', ')}.` : '';
     return `Overview: ${risk} overall. ${posPart}${cauPart}`.trim();

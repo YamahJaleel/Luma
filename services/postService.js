@@ -181,24 +181,33 @@ export const postService = {
   // Like a post
   likePost: async (postId, userId) => {
     try {
+      console.log('👍 Attempting to like post:', postId, 'userId:', userId);
       const postRef = doc(db, COLLECTIONS.POSTS, postId);
       const likeRef = doc(db, COLLECTIONS.LIKES, `${postId}_${userId}`);
 
       const likeDoc = await getDoc(likeRef);
-      if (likeDoc.exists()) return false;
+      if (likeDoc.exists()) {
+        console.log('⚠️ Like already exists');
+        return false;
+      }
 
       // Create like document with deterministic ID
+      console.log('📝 Creating like document...');
       await setDoc(likeRef, {
         postId,
         userId,
         createdAt: serverTimestamp()
       });
+      console.log('✅ Like document created');
 
       // Increment likes counter atomically
+      console.log('📈 Incrementing likes counter...');
       await updateDoc(postRef, { likes: increment(1) });
+      console.log('✅ Like completed');
       return true;
     } catch (error) {
-      console.error('Error liking post:', error);
+      console.error('❌ Error liking post:', error);
+      console.error('❌ Error code:', error.code);
       throw error;
     }
   },
@@ -206,18 +215,27 @@ export const postService = {
   // Unlike a post
   unlikePost: async (postId, userId) => {
     try {
+      console.log('👎 Attempting to unlike post:', postId, 'userId:', userId);
       const postRef = doc(db, COLLECTIONS.POSTS, postId);
       const likeRef = doc(db, COLLECTIONS.LIKES, `${postId}_${userId}`);
 
       const likeDoc = await getDoc(likeRef);
-      if (!likeDoc.exists()) return false;
+      if (!likeDoc.exists()) {
+        console.log('⚠️ Like does not exist');
+        return false;
+      }
 
-      // Delete like document and decrement counter
+      console.log('🗑️ Deleting like document...');
       await deleteDoc(likeRef);
+      console.log('✅ Like document deleted');
+
+      console.log('📉 Decrementing likes counter...');
       await updateDoc(postRef, { likes: increment(-1) });
+      console.log('✅ Unlike completed');
       return true;
     } catch (error) {
-      console.error('Error unliking post:', error);
+      console.error('❌ Error unliking post:', error);
+      console.error('❌ Error code:', error.code);
       throw error;
     }
   },
