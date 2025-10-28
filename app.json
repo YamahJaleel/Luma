@@ -59,7 +59,8 @@
           "color": "#3E5F44"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-build-properties"
     ],
     "extra": {
       "eas": {
