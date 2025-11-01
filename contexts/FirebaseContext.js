@@ -3,6 +3,7 @@ import { authService } from '../services/authService';
 import { profileService, postService, commentService, messageService, accountService } from '../services/firebaseService';
 import notificationTriggerService from '../services/notificationTriggerService';
 import encryptionService from '../services/encryptionService';
+import cacheService from '../services/cacheService';
 
 const FirebaseContext = createContext();
 
@@ -156,6 +157,8 @@ export const FirebaseProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
+      // Clear cache on logout
+      await cacheService.clear();
       await authService.signOut();
     } catch (error) {
       throw error;

@@ -17,7 +17,7 @@ import { useTheme } from 'react-native-paper';
 import { useTabContext } from '../components/TabContext';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { profileService } from '../services/firebaseService';
+import { cachedProfileService } from '../services/cachedServices';
 import LottieView from 'lottie-react-native';
 import { generateUsername, matchesSearch } from '../utils/normalization';
 
@@ -418,10 +418,11 @@ const SearchScreen = ({ navigation, route }) => {
     });
   }, []);
 
-  // Pull fetch helper
-  const fetchProfiles = React.useCallback(async () => {
+  // Pull fetch helper with caching
+  const fetchProfiles = React.useCallback(async (forceRefresh = false) => {
     try {
-      const remote = await profileService.getProfiles();
+      // Use cached service - automatically uses cache if available
+      const remote = await cachedProfileService.getProfiles(forceRefresh);
       const normalized = (remote || []).map((p) => ({
         id: p.id,
         name: p.name || 'Unknown',
@@ -1127,7 +1128,8 @@ const SearchScreen = ({ navigation, route }) => {
     const REFRESH_MIN_MS = 2000; // ensure the animation is visible long enough
     const startedAt = Date.now();
     try {
-      await fetchProfiles();
+      // Force refresh - bypasses cache
+      await fetchProfiles(true);
     } finally {
       const elapsed = Date.now() - startedAt;
       const remaining = Math.max(0, REFRESH_MIN_MS - elapsed);

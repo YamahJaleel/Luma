@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTabContext } from '../components/TabContext';
-import { postService } from '../services/postService';
+import { cachedPostService } from '../services/cachedServices';
 import LottieView from 'lottie-react-native';
 import { auth } from '../config/firebase';
 import { normalizeForSearch } from '../utils/normalization';
@@ -188,18 +188,21 @@ const HomeScreen = () => {
   const [searchInput, setSearchInput] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Load posts from Firebase
+  // Load posts from Firebase with caching
   const loadPosts = useCallback(async () => {
     try {
-      const fetchedPosts = await postService.getPosts(
+      // Use cached service - automatically uses cache if available
+      const fetchedPosts = await cachedPostService.getPosts(
         category,
-        selectedSort
+        selectedSort,
+        50, // limitCount
+        false // forceRefresh = false (use cache)
       );
 
-      // Get current user's likes
+      // Get current user's likes (also cached)
       const user = auth.currentUser;
       if (user) {
-        const likedPosts = await postService.getLikedPosts(user.uid);
+        const likedPosts = await cachedPostService.getLikedPosts(user.uid, false);
         const likedPostIds = new Set(likedPosts.map(post => post.id));
         
         // Mark liked posts
@@ -243,11 +246,11 @@ const HomeScreen = () => {
         })
       );
 
-      // Update in Firebase
+      // Update in Firebase (cached service handles cache invalidation)
       if (post.isLiked) {
-        await postService.unlikePost(postId, user.uid);
+        await cachedPostService.unlikePost(postId, user.uid);
       } else {
-        await postService.likePost(postId, user.uid);
+        await cachedPostService.likePost(postId, user.uid);
       }
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -279,14 +282,33 @@ const HomeScreen = () => {
     }, [setTabHidden])
   );
 
-  // Custom pull-to-refresh handlers
+  // Custom pull-to-refresh handlers - force refresh to bypass cache
   const onTriggerRefresh = useCallback(async () => {
     if (isLoading) return;
     const REFRESH_MIN_MS = 2000;
     const startedAt = Date.now();
     setIsLoading(true);
     try {
-      await loadPosts();
+      // Force refresh - bypasses cache
+      const fetchedPosts = await cachedPostService.getPosts(
+        category,
+        selectedSort,
+        50,
+        true // forceRefresh = true (bypass cache)
+      );
+
+      // Get fresh liked posts
+      const user = auth.currentUser;
+      if (user) {
+        const likedPosts = await cachedPostService.getLikedPosts(user.uid, true);
+        const likedPostIds = new Set(likedPosts.map(post => post.id));
+        
+        fetchedPosts.forEach(post => {
+          post.isLiked = likedPostIds.has(post.id);
+        });
+      }
+
+      setPosts(fetchedPosts);
     } finally {
       const elapsed = Date.now() - startedAt;
       const remaining = Math.max(0, REFRESH_MIN_MS - elapsed);
@@ -297,7 +319,7 @@ const HomeScreen = () => {
         });
       }, remaining);
     }
-  }, [isLoading, loadPosts, pullY]);
+  }, [isLoading, category, selectedSort, pullY]);
 
   const handlePullScroll = useCallback((e) => {
     const y = e.nativeEvent.contentOffset.y;
@@ -496,11 +518,11 @@ const HomeScreen = () => {
                     styles.sortOptionCard, 
                     selectedSort === opt.id && styles.selectedSortOptionCard
                   ]}
-                  onPress={() => {
-                    setSelectedSort(opt.id);
-                    setShowSortModal(false);
-                    loadPosts();
-                  }}
+                    onPress={() => {
+                      setSelectedSort(opt.id);
+                      setShowSortModal(false);
+                      // loadPosts will be called automatically via useEffect dependency
+                    }}
                 >
                   <View style={[
                     styles.sortOptionIconContainer,

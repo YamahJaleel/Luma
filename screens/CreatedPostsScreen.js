@@ -5,8 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 import { useFirebase } from '../contexts/FirebaseContext';
-import { auth, db } from '../config/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { auth } from '../config/firebase';
+import { cachedPostService } from '../services/cachedServices';
 
 // Mock posts IDs to identify user-created posts (moved outside component)
 const MOCK_POSTS = [
@@ -32,27 +32,17 @@ const CreatedPostsScreen = ({ navigation }) => {
         return;
       }
 
-      // Fetch posts from Firebase where authorId matches current user
-      const postsRef = collection(db, 'posts');
-      const q = query(
-        postsRef, 
-        where('authorId', '==', currentUser.uid)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const posts = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Use cached service to fetch user posts
+      const posts = await cachedPostService.getUserPosts(currentUser.uid, false);
       
       // Sort by creation date, newest first
-      posts.sort((a, b) => {
+      const sortedPosts = posts.sort((a, b) => {
         const aDate = a.createdAt?.toDate?.() || new Date(0);
         const bDate = b.createdAt?.toDate?.() || new Date(0);
         return bDate - aDate;
       });
       
-      setData(posts);
+      setData(sortedPosts);
     } catch (e) {
       console.error('Error loading created posts:', e);
       setData([]);
